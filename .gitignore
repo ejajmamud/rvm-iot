@@ -1,0 +1,19 @@
+# Dependency Directories
+node_modules/
+webapp/node_modules/
+backend/seeder/node_modules/
+
+# Production Build Directories
+dist/
+webapp/dist/
+
+# Local Configurations & Secrets
+.env
+backend/seeder/.env
+esp32_bridge/config.h
+
+# Logs and system files
+*.log
+.DS_Store
+Thumbs.db
+.system_generated/

@@ -1,0 +1,30 @@
+name: rvm_mobile_app
+description: "Smart Recycling Reverse Vending Machine - IoT Mobile Companion"
+version: 1.0.0+1
+
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Firebase SDKs
+  firebase_core: ^2.27.0
+  cloud_firestore: ^4.15.5
+  firebase_auth: ^4.17.8
+  
+  # State management and UI utility
+  provider: ^6.1.1
+  google_fonts: ^6.1.0
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

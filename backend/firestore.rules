@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper: Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper: Get user record to verify roles
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Helper: Check if user has specific role
+    function hasRole(role) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             getUserData().role == role;
+    }
+    
+    // Helper: Check if user is Admin or Supervisor or Technician
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isSupervisor() {
+      return hasRole('supervisor') || isAdmin();
+    }
+    
+    function isTechnician() {
+      return hasRole('technician') || isAdmin();
+    }
+
+    // Rules for User Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      // Only the user themselves or an admin can create/edit their profile
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Rules for Machine Collection
+    match /machines/{machineId} {
+      allow read: if isAuthenticated();
+      // Allow write if admin, technician, or if the write comes from a authenticated ESP32 device
+      allow write: if isAuthenticated() && (isTechnician() || request.auth.token.email.matches(".*device.*") || request.auth.token.email.matches(".*rvm.*"));
+    }
+
+    // Rules for Events
+    match /events/{eventId} {
+      allow read: if isAuthenticated();
+      // Allow creation if user is authenticated (ESP32 is authenticated)
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // Rules for Alerts
+    match /alerts/{alertId} {
+      allow read: if isAuthenticated();
+      // Allow creation by authenticated clients (like ESP32)
+      allow create: if isAuthenticated();
+      // Technicians or Admins can acknowledge/resolve alerts
+      allow update: if isAuthenticated() && isTechnician();
+      allow delete: if isAdmin();
+    }
+
+    // Rules for Machine Settings
+    match /settings/{machineId} {
+      allow read: if isAuthenticated();
+      // Only admins can modify RVM mechanical configurations/thresholds
+      allow write: if isAuthenticated() && isAdmin();
+    }
+
+    // Rules for Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated() && isSupervisor();
+      // Any authenticated user can create an audit log to document their actions
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Audit logs are read-only / immutable once created
+    }
+  }
+}

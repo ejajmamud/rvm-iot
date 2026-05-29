@@ -1,0 +1,16 @@
+{
+  "name": "rvm-firebase-seeder",
+  "version": "1.0.0",
+  "description": "Enterprise seeder and real-time simulator for RVM Firebase Firestore",
+  "main": "seeder.js",
+  "type": "module",
+  "scripts": {
+    "seed": "node seeder.js --seed",
+    "simulate": "node seeder.js --simulate",
+    "clear": "node seeder.js --clear"
+  },
+  "dependencies": {
+    "firebase": "^10.8.0",
+    "dotenv": "^16.4.5"
+  }
+}
