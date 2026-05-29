@@ -365,7 +365,7 @@ export default function App() {
     localStorage.removeItem('rvm_logged_in_user');
   };
 
-  const logAudit = async (actorName, action, target) => {
+  const logAudit = async (actorName, action, target, isSimulated = false) => {
     const newLog = {
       id: "au_" + Date.now(),
       actor: actorName,
@@ -378,7 +378,7 @@ export default function App() {
     setAuditLogs(prev => [newLog, ...prev]);
 
     // Firestore push
-    if (isFirebaseConnected && fbConfig) {
+    if (isFirebaseConnected && fbConfig && !isSimulated) {
       try {
         const app = getApps()[0];
         const db = getFirestore(app);
@@ -620,11 +620,7 @@ export default function App() {
           lastSeenAt: new Date()
         };
         
-        if (isFirebaseConnected && isWiFiActive) {
-          const app = getApps()[0];
-          const db = getFirestore(app);
-          setDoc(doc(db, "machines", "RVM001"), updated, { merge: true });
-        }
+        // Standalone local simulation: do not write to Firestore
         return updated;
       });
 
@@ -641,25 +637,6 @@ export default function App() {
       };
       
       setEvents(prev => [newEvent, ...prev]);
-
-      if (isFirebaseConnected && isWiFiActive) {
-        try {
-          const app = getApps()[0];
-          const db = getFirestore(app);
-          addDoc(collection(db, "events"), {
-            machineId: "RVM001",
-            type: type,
-            acceptedCount: newEvent.acceptedCount,
-            rejectedCount: newEvent.rejectedCount,
-            penDispensedCount: newEvent.penCount,
-            binFull: newEvent.binFull,
-            timestamp: Timestamp.now(),
-            rawPayload: `{\"type\":\"${type}\",\"machineId\":\"RVM001\",\"acceptedCount\":${newEvent.acceptedCount},\"rejectedCount\":${newEvent.rejectedCount},\"penCount\":${newEvent.penCount},\"binFull\":false}`
-          });
-        } catch (err) {
-          console.error(err);
-        }
-      }
 
       if (isAccepted) {
         setLcdLine1("PET ACCEPTED    ");
@@ -714,7 +691,7 @@ export default function App() {
         }, 600);
         
         setTimeout(() => {
-          logAudit("Arduino Mega", "PEN_DISPENSED", "Physical streak reward issued");
+          logAudit("Arduino Mega", "PEN_DISPENSED", "Physical streak reward issued", true);
           setLcdLine1("INSERT BOTTLE   ");
           setLcdLine2("PET or CAN      ");
           setDepositStep('idle');
@@ -733,11 +710,6 @@ export default function App() {
     
     setMachine(prev => {
       const updated = { ...prev, binFull: nextState, status: nextState ? "maintenance" : "online" };
-      if (isFirebaseConnected) {
-        const app = getApps()[0];
-        const db = getFirestore(app);
-        setDoc(doc(db, "machines", "RVM001"), updated, { merge: true });
-      }
       return updated;
     });
 
@@ -760,28 +732,12 @@ export default function App() {
         createdAt: new Date()
       };
       setAlerts(prev => [alertItem, ...prev]);
-
-      if (isFirebaseConnected) {
-        try {
-          const app = getApps()[0];
-          const db = getFirestore(app);
-          await addDoc(collection(db, "alerts"), {
-            machineId: "RVM001",
-            type: "BIN_FULL",
-            severity: "critical",
-            status: "open",
-            createdAt: Timestamp.now()
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      }
     } else {
       setLcdLine1("INSERT BOTTLE");
       setLcdLine2("PET or CAN      ");
       setRedLedGlow(false);
       
-      logAudit(currentUser?.name || "Simulator", "BIN_CLEARED", "RVM001 Bin emptied");
+      logAudit(currentUser?.name || "Simulator", "BIN_CLEARED", "RVM001 Bin emptied", true);
     }
   };
 
