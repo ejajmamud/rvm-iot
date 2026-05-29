@@ -1,0 +1,17 @@
+{
+  "short_name": "RVM IoT",
+  "name": "Smart Recycling RVM IoT Admin Portal",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#03070f",
+  "theme_color": "#03070f",
+  "display": "standalone",
+  "orientation": "portrait"
+}
