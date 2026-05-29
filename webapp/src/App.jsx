@@ -1558,6 +1558,7 @@ export default function App() {
               { id: 'alerts', label: 'Alert Notification Center', icon: Bell, count: alerts.filter(a => a.status === 'open').length },
               { id: 'analytics', label: 'Analytics Console', icon: BarChart2 },
               { id: 'prototype', label: 'Physical RVM Gallery', icon: CircuitBoard },
+              { id: 'datasheets', label: 'Datasheet Explorer', icon: FileText },
               { id: 'users', label: 'Users & Roles', icon: Users },
               { id: 'settings', label: 'Machine Settings', icon: SettingsIcon },
               { id: 'maintenance', label: 'Maintenance Logs', icon: Wrench },
@@ -1745,6 +1746,7 @@ export default function App() {
               {activeTab === 'alerts' && "Alerts Notification Hub"}
               {activeTab === 'analytics' && "Data Analytics & Reporting"}
               {activeTab === 'prototype' && "Physical Hardware Showcase"}
+              {activeTab === 'datasheets' && "Component Datasheet Explorer"}
               {activeTab === 'users' && "User Directory & Access Controls"}
               {activeTab === 'settings' && "RVM Threshold Adjustments"}
               {activeTab === 'maintenance' && "Technician Operations Log"}
@@ -1756,7 +1758,8 @@ export default function App() {
               {activeTab === 'events' && "Continuous stream of chronological transactional telemetry."}
               {activeTab === 'alerts' && "Monitor active system malfunctions, full levels, and diagnostics."}
               {activeTab === 'analytics' && "Long-term historical rollups and system efficiency stats."}
-              {activeTab === 'prototype' && "Progress gallery, assembly timeline, and hardware datasheet explorer."}
+              {activeTab === 'prototype' && "Progress gallery and interactive construction milestones timeline."}
+              {activeTab === 'datasheets' && "Explore verified industrial sensor specifications and official signed reports."}
               {activeTab === 'users' && "Adjust roles, view account activities, and govern administrative clearances."}
               {activeTab === 'settings' && "Recalibrate the physical triggers and diagnostic check frequencies."}
               {activeTab === 'maintenance' && "Review service records and submit field maintenance updates."}
@@ -4369,28 +4372,68 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Component Datasheet Explorer Section */}
-              <div className="glass-panel" style={{ padding: '28px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-                  <Cpu size={24} style={{ color: 'var(--color-cyan)' }} />
-                  <div>
-                    <h3 style={{ fontSize: '1.3rem', lineHeight: 1.1 }}>Component Datasheet Explorer</h3>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>FYP2 Industrial Sensor & Board Specifications</span>
-                  </div>
+          {/* 11. STANDALONE COMPONENT DATASHEET EXPLORER & OFFICIAL SIGNED PDF CONSOLE */}
+          {activeTab === 'datasheets' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+              
+              {/* Official signed progress reports and files download bar */}
+              <div className="glass-panel" style={{
+                padding: '24px 28px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 20,
+                flexWrap: 'wrap',
+                background: 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%)'
+              }}>
+                <div>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+                    Official FYP2 Documentation Centre
+                  </h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    Download or review the verified progress reports and signed sensory component datasheets.
+                  </p>
                 </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <a 
+                    href="/progress_report_3.pdf" 
+                    download 
+                    className="btn-secondary" 
+                    style={{ textDecoration: 'none', padding: '10px 18px', fontSize: '0.8rem' }}
+                  >
+                    <Download size={14} />
+                    Download Progress Report 3 (PDF)
+                  </a>
+                  <a 
+                    href="/progress_report_2.pdf" 
+                    download 
+                    className="btn-primary" 
+                    style={{ textDecoration: 'none', padding: '10px 18px', fontSize: '0.8rem' }}
+                  >
+                    <Download size={14} />
+                    Download Signed Datasheets Report (PDF)
+                  </a>
+                </div>
+              </div>
 
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '250px 1fr',
-                  gap: 28,
-                  marginTop: 8
-                }}>
+              {/* Side-by-Side Detailed Specs & Embedded PDF Viewer */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)',
+                gap: 28
+              }}>
+                
+                {/* Left Column: Selector tabs & Super Detailed sensory specs */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                   
-                  {/* Selector tabs left column */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
+                  {/* Selector tab grid */}
+                  <div className="glass-panel" style={{
+                    padding: '12px',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
                     gap: 6
                   }}>
                     {[
@@ -4398,7 +4441,7 @@ export default function App() {
                       "HC-SR04 Ultrasonic",
                       "SG90 Micro Servo",
                       "TCRT5000 IR Sensor",
-                      "LJ12A3 Metal Sensor",
+                      "LJ12A3 Proximity",
                       "HD44780 LCD Display"
                     ].map((comp, idx) => {
                       const isSelected = activeComponentIdx === idx;
@@ -4407,133 +4450,272 @@ export default function App() {
                           key={idx}
                           onClick={() => setActiveComponentIdx(idx)}
                           style={{
-                            textAlign: 'left',
-                            padding: '12px 16px',
-                            background: isSelected ? 'rgba(6, 182, 212, 0.1)' : 'transparent',
-                            color: isSelected ? 'var(--color-cyan)' : 'var(--text-primary)',
-                            border: 'none',
+                            textAlign: 'center',
+                            padding: '12px 14px',
+                            background: isSelected ? 'rgba(6, 182, 212, 0.12)' : 'transparent',
+                            color: isSelected ? 'var(--color-cyan)' : 'var(--text-secondary)',
+                            border: `1px solid ${isSelected ? 'var(--color-cyan)' : 'transparent'}`,
                             borderRadius: 'var(--radius-sm)',
-                            fontWeight: isSelected ? 700 : 500,
-                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            fontSize: '0.78rem',
                             cursor: 'pointer',
                             transition: 'var(--transition-fast)',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 10
+                            justifyContent: 'center',
+                            gap: 8
                           }}
                         >
-                          <span style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: '50%',
-                            background: isSelected ? 'var(--color-cyan)' : 'transparent'
-                          }} />
+                          <Cpu size={14} />
                           {comp}
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* Component Details Card right column */}
+                  {/* High-Fidelity Specs Inspector Sheet */}
                   <div className="glass-panel glow-cyan" style={{
-                    padding: '24px 28px',
+                    padding: '28px',
                     borderColor: 'rgba(6, 182, 212, 0.25)',
+                    background: 'rgba(255,255,255,0.01)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 16
+                    gap: 20
                   }}>
                     {[
                       {
                         name: "Arduino Mega 2560 Rev3",
-                        type: "Core Microcontroller Board",
-                        specs: "ATmega2560 | 16 MHz | 54 Digital I/O | 16 Analog Inputs | 8 KB SRAM",
-                        desc: "The primary industrial controller board that coordinates all real-time sensory inputs, logic gates, LCD displays, buzzer tones, and actuator servo sweeps.",
-                        voltage: "5V (Logic) | 7-12V (Input)"
+                        type: "Core Microcontroller Development Board",
+                        model: "SKU: A000067 (Hitachi ATmega2560 Core)",
+                        specs: [
+                          { label: "Processor Core", value: "ATmega2560 (8-bit AVR RISC)" },
+                          { label: "Clock Frequency", value: "16 MHz" },
+                          { label: "Operating Voltage", value: "5.0V DC (Vcc)" },
+                          { label: "Input Voltage (Vin)", value: "7.0V - 12.0V DC (Recommended)" },
+                          { label: "Digital I/O Pins", value: "54 Pins (15 PWM output channels)" },
+                          { label: "Analog Input Pins", value: "16 Channels (10-bit resolution)" },
+                          { label: "Flash memory", value: "256 KB (of which 8 KB for bootloader)" },
+                          { label: "SRAM / EEPROM", value: "8 KB SRAM / 4 KB EEPROM" },
+                          { label: "DC Current per I/O", value: "20.0 mA (Max limit)" }
+                        ],
+                        desc: "The primary industrial central processing hub that coordinates all RVM telemetry actions. Integrates all sensors via dedicated TTL registers, schedules continuous gate actuation sweeps, triggers rewards dispensers, and communicates with ESP32 cloud co-processors via high-speed serial UART lines.",
+                        pinout: "D22-D53 Left/Right header rows, serial Rx0/Tx0 to Rx3/Tx3 channels, I2C SCL[21] / SDA[20] buses."
                       },
                       {
-                        name: "HC-SR04 Sonar Sensor",
-                        type: "Ultrasonic Proximity Sensor",
-                        specs: "Sensing Range: 2 cm–400 cm | Frequency: 40 kHz | Resolution: 3 mm",
-                        desc: "Used for measuring bin capacity levels. Fires ultrasonic bursts and calculates the return echo time-of-flight to determine structural waste levels.",
-                        voltage: "5V DC"
+                        name: "HC-SR04 Proximity Sonar",
+                        type: "Ultrasonic Distance Sensor",
+                        model: "Chassis Dome Proximity Range Detector",
+                        specs: [
+                          { label: "Operating Voltage", value: "5.0V DC" },
+                          { label: "Working Current", value: "15.0 mA" },
+                          { label: "Ultrasonic Frequency", value: "40.0 kHz" },
+                          { label: "Sensing Range", value: "2.0 cm - 400.0 cm" },
+                          { label: "Measurement Angle", value: "< 15 degrees" },
+                          { label: "Precision/Resolution", value: "3.0 mm (Standard calibration)" },
+                          { label: "Trigger Pulse Input", value: "10µs TTL high pulse" },
+                          { label: "Echo Pulse Output", value: "TTL high level, width = time-of-flight" },
+                          { label: "Distance Formula", value: "Distance = (Echo Time * Sound Speed) / 2" }
+                        ],
+                        desc: "Mounted at the upper dome of the RVM cabinet. Fires 40kHz ultrasound bursts downward and calculates return echo timings in microseconds to check the vertical waste capacity levels, triggering automated cabinet lock alarms when capacity reaches 100%.",
+                        pinout: "4-pin connector: Vcc (+5V), Trig (Digital trigger input), Echo (Digital echo feedback), GND."
                       },
                       {
                         name: "SG90 Micro Servo Motor",
-                        type: "High-Torque Actuator Servo",
-                        specs: "Torque: 1.6 kg/cm | Operating Speed: 0.12s / 60° | Weight: 9g",
-                        desc: "Two units are integrated: one sweeps the entry gate to direct accepted bottles, and the other triggers the mechanical pen dispenser.",
-                        voltage: "4.8V - 6V"
+                        type: "High-Torque Actuation Servo",
+                        model: "Rotary Intake Gate & Streak Reward Dispenser",
+                        specs: [
+                          { label: "Operating Voltage", value: "4.8V - 6.0V DC" },
+                          { label: "Stall Torque (4.8V)", value: "1.6 kg/cm" },
+                          { label: "Stall Torque (6.0V)", value: "1.8 kg/cm" },
+                          { label: "Sweeping Speed", value: "0.12s / 60 degrees (at 4.8V)" },
+                          { label: "Rotational range", value: "0 - 180 degrees" },
+                          { label: "Actuator Weight", value: "9.0 grams" },
+                          { label: "Pulse Period", value: "20.0 ms (50 Hz PWM frequency)" },
+                          { label: "Control Pulse Width", value: "500 µs (0°) - 2500 µs (180°)" },
+                          { label: "Gear Assembly", value: "Nylon/Plastic compound" }
+                        ],
+                        desc: "Two units are integrated: one drives the continuous intake gate actuation sweep (CLOSED = 0°, OPEN = 90°) to route recyclable bottles. The second acts as the mechanical pen reward dispenser, rotating 90° to dispense a reward into the retrieval slot.",
+                        pinout: "3-wire harness: Orange (PWM signal line), Red (Power +5V), Brown (Ground/GND)."
                       },
                       {
-                        name: "TCRT5000 IR Sensor",
-                        type: "Reflective Photoelectric Sensor",
-                        specs: "Operating Distance: 0.2 mm–15 mm | Wavelength: 950 nm",
-                        desc: "Fitted inside the entry chute to detect the physical presence of a bottle or can, immediately waking up the microcontroller logic.",
-                        voltage: "3.3V - 5V"
+                        name: "TCRT5000 Reflective IR",
+                        type: "Photoelectric Optical Obstacle Sensor",
+                        model: "Chassis Intake Entrance Beam-Break Detector",
+                        specs: [
+                          { label: "Sensing Range", value: "0.2 mm - 15.0 mm" },
+                          { label: "Peak Emitter Wave", value: "950 nm (GaAs Infrared Emitting LED)" },
+                          { label: "Collector Type", value: "Silicon NPN Phototransistor" },
+                          { label: "Output Format", value: "Digital TTL (High/Low) and Analog voltage" },
+                          { label: "Reflection Filter", value: "Daylight blocking filter integrated" },
+                          { label: "Forward Current", value: "60.0 mA (Emitter diode)" },
+                          { label: "Power Dissipation", value: "100.0 mW (Phototransistor)" },
+                          { label: "Mounting Style", value: "PCB leaded snap-in pins" },
+                          { label: "Response Time", value: "10.0 µs (Rise/Fall switch rate)" }
+                        ],
+                        desc: "Positioned directly inside the intake chute entry. Serves as a beam-break trigger, creating an active-low input when a bottle breaks the infrared reflective beam. This instantly wakes up the main controller and triggers the item classification phase.",
+                        pinout: "4-pin PCB header: Vcc (+3.3V/5V), GND, OUT_D (Digital TTL), OUT_A (Analog Vout)."
                       },
                       {
-                        name: "LJ12A3-4-Z/BX Sensor",
-                        type: "Inductive Proximity Sensor",
-                        specs: "Sensing Distance: 4 mm | Output: NPN NO | Sensing Object: Metal",
-                        desc: "Integrated inside the scanner slot to segregate recyclable items, creating an active-low pulse when a metal can is scanned.",
-                        voltage: "6V - 36V"
+                        name: "LJ12A3-4-Z/BX Proximity",
+                        type: "Inductive Metallic Proximity Sensor",
+                        model: "Chassis Entry Segregation Classifier",
+                        specs: [
+                          { label: "Sensing Distance", value: "4.0 mm" },
+                          { label: "Output Configuration", value: "NPN Normally Open (NO) 3-wire" },
+                          { label: "Sensing Target", value: "Magnetic metals (Iron, Steel, Aluminum)" },
+                          { label: "Supply Voltage", value: "6.0V - 36.0V DC (Calibrated to 12V)" },
+                          { label: "Max Load Current", value: "300.0 mA" },
+                          { label: "Response Frequency", value: "500.0 Hz" },
+                          { label: "Indicator light", value: "Rear red LED active loop indicator" },
+                          { label: "Hysteresis Limit", value: "< 10% of sensing range" },
+                          { label: "Chassis Shielding", value: "Nickel-plated brass casing (IP67)" }
+                        ],
+                        desc: "Integrated underneath the scanning chute. When an item enters the classification zone, this inductive sensor detects the magnetic flux changes of metallic elements, creating an active-low pulse to segregate aluminum cans from PET plastic bottles.",
+                        pinout: "3-core cable: Brown (+12V Vin rail), Blue (Ground/GND), Black (NPN open-collector output)."
                       },
                       {
-                        name: "HD44780 LCD 16x2 Display",
-                        type: "Liquid Crystal Character Screen",
-                        specs: "16 Characters × 2 Lines | I2C Sub-bus Expander Board",
-                        desc: "Mounted on the front panel to provide prompt character instructions to users (e.g., 'INSERT BOTTLE', 'CLASSIFYING...', 'THANK YOU!').",
-                        voltage: "5V DC"
+                        name: "Hitachi HD44780 LCD",
+                        type: "Liquid Crystal Dot-Matrix Screen Controller",
+                        model: "Front Panel Status & Greeting Character LCD",
+                        specs: [
+                          { label: "Display Capacity", value: "16 Characters × 2 Lines" },
+                          { label: "Control IC Model", value: "Hitachi HD44780U / PCF8574T I2C Expander" },
+                          { label: "Display Matrix", value: "5 × 8 Dot-matrix characters" },
+                          { label: "Operating Voltage", value: "5.0V DC" },
+                          { label: "Working Current", value: "2.0 mA (120 mA with backlight)" },
+                          { label: "I2C Bus Address", value: "0x27 or 0x3F (Selectable)" },
+                          { label: "Bus Speed", value: "100.0 kHz (Standard I2C mode)" },
+                          { label: "Backlight Glow", value: "Royal Blue LED background" },
+                          { label: "Character Sets", value: "208 built-in dot-matrix characters" }
+                        ],
+                        desc: "Mounted securely on the front user-facing cabinet panel. Driven via I2C to save digital I/O lines. Displays clear, chronological status instructions to users throughout the recycling sequence, showing real-time text logs and reward details.",
+                        pinout: "4-pin connector: GND, Vcc (+5V), SDA (Serial Data pin), SCL (Serial Clock pin)."
                       }
                     ].map((comp, idx) => {
                       if (activeComponentIdx !== idx) return null;
                       return (
-                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                          
+                          {/* Title Block */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-primary)', paddingBottom: 12 }}>
                             <div>
-                              <h4 style={{ fontSize: '1.25rem', color: '#fff', fontWeight: 700 }}>{comp.name}</h4>
+                              <h4 style={{ fontSize: '1.3rem', color: '#fff', fontWeight: 700, letterSpacing: '0.04em' }}>{comp.name}</h4>
                               <span style={{ fontSize: '0.8rem', color: 'var(--color-cyan)', fontWeight: 700 }}>{comp.type}</span>
                             </div>
                             <span style={{
-                              fontSize: '0.75rem',
+                              fontSize: '0.7rem',
                               background: 'rgba(6, 182, 212, 0.1)',
                               color: 'var(--color-cyan)',
                               padding: '4px 10px',
                               borderRadius: '4px',
-                              fontWeight: 700
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.08em'
                             }}>
-                              Specs Verified
+                              Official Specs
                             </span>
                           </div>
 
+                          {/* Detail Table */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                              Electrical & Physical Ratings
+                            </span>
+                            <div className="table-container">
+                              <table className="custom-table" style={{ fontSize: '0.78rem' }}>
+                                <tbody>
+                                  {comp.specs.map((spec, sIdx) => (
+                                    <tr key={sIdx}>
+                                      <td style={{ color: 'var(--text-secondary)', padding: '8px 12px', fontWeight: 600 }}>{spec.label}</td>
+                                      <td style={{ color: '#fff', padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{spec.value}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+
+                          {/* Pinout Details */}
                           <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: 16,
                             background: 'rgba(255,255,255,0.01)',
                             padding: 16,
                             borderRadius: 'var(--radius-sm)',
                             border: '1px solid var(--border-subtle)'
                           }}>
-                            <div>
-                              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Sensing Specs</span>
-                              <strong style={{ fontSize: '0.85rem', color: '#fff' }}>{comp.specs}</strong>
-                            </div>
-                            <div>
-                              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Operating Voltage</span>
-                              <strong style={{ fontSize: '0.85rem', color: '#fff' }}>{comp.voltage}</strong>
-                            </div>
+                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+                              Pin Mappings & Signal Logic
+                            </span>
+                            <strong style={{ fontSize: '0.82rem', color: 'var(--color-cyan)' }}>{comp.pinout}</strong>
                           </div>
 
+                          {/* Functional description */}
                           <div>
-                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Functional Role Description</span>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{comp.desc}</p>
+                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+                              Hardware Role & Cloud Logic
+                            </span>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                              {comp.desc}
+                            </p>
                           </div>
                         </div>
                       );
                     })}
                   </div>
                 </div>
+
+                {/* Right Column: Interactive Embedded Official Signed PDF Viewer */}
+                <div className="glass-panel" style={{
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  boxSizing: 'border-box',
+                  background: 'linear-gradient(180deg, #091324 0%, #040810 100%)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <FileText size={18} style={{ color: 'var(--color-green)' }} />
+                      Official Signed Datasheet
+                    </h3>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--text-muted)'
+                    }}>
+                      Appended Report Page: {[8, 43, 47, 49, 57, 59][activeComponentIdx]}
+                    </span>
+                  </div>
+
+                  {/* Embedded PDF iframe */}
+                  <div style={{
+                    width: '100%',
+                    flex: 1,
+                    height: '680px',
+                    borderRadius: 'var(--radius-md)',
+                    overflow: 'hidden',
+                    border: '1px solid var(--border-primary)',
+                    background: '#03070f',
+                    position: 'relative'
+                  }}>
+                    <iframe 
+                      key={activeComponentIdx}
+                      src={`/progress_report_2.pdf#page=${[8, 43, 47, 49, 57, 59][activeComponentIdx]}`} 
+                      width="100%" 
+                      height="100%" 
+                      style={{ border: 'none' }}
+                      title="Signed Official Datasheet Viewport"
+                    />
+                  </div>
+
+                  <div style={{
+                    fontSize: '0.72rem',
+                    color: 'var(--text-muted)',
+                    textAlign: 'center',
+                    lineHeight: 1.4
+                  }}>
+                    💡 Pro Tip: The PDF viewer automatically navigates directly to the official manufacturer datasheet page! Expand or download the document using the top navigation bar.
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
