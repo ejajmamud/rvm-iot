@@ -263,7 +263,7 @@ void loop() {
       lcd.setCursor(0, 0);
       lcd.print("INSERT BOTTLE   ");
       lcd.setCursor(0, 1);
-      lcd.print("PET BOTTLE ONLY ");
+      lcd.print("PET or CAN      ");
       
       // If IR entry beam is broken (object inserted)
       if (readIR() == 1) {
