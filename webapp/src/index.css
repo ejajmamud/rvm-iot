@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════════
-   SMART RECYCLING IoT RVM — INDUSTRIAL COMMAND CENTER DESIGN SYSTEM
-   Inspired by: Bloomberg Terminal, Grafana, SpaceX Mission Control, SCADA HMI
+   SMART RECYCLING IoT RVM — BILLION DOLLAR INDUSTRIAL TELEMETRY COMMAND CENTER
+   Inspired by: SpaceX Crew Dragon, Tesla Telemetry, Grafana, Altium Designer HMI
    ══════════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -8,37 +8,37 @@
   --font-sans: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
 
-  /* ── Zinc Scale (True Industrial Dark) ── */
-  --bg-base: #09090b;
-  --bg-surface: #18181b;
-  --bg-elevated: #1c1c1f;
-  --bg-hover: #232326;
-  --border-primary: #27272a;
-  --border-subtle: #1f1f23;
+  /* ── Cosmic Dark Theme (SpaceX Control Room) ── */
+  --bg-base: #050508;
+  --bg-surface: linear-gradient(180deg, #101115 0%, #07080b 100%);
+  --bg-elevated: #111319;
+  --bg-hover: #191c25;
+  --border-primary: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.03);
 
   /* ── Text Scale ── */
   --text-primary: #fafafa;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
-  --text-dim: #52525b;
-  --text-inverse: #09090b;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+  --text-inverse: #050508;
 
-  /* ── Accent Colors (Calibrated, Muted) ── */
-  --color-green: #22c55e;
-  --color-green-dim: rgba(34, 197, 94, 0.12);
+  /* ── Accent Colors (Calibrated Premium Glows) ── */
+  --color-green: #10b981;
+  --color-green-glow: rgba(16, 185, 129, 0.12);
   --color-blue: #3b82f6;
-  --color-blue-dim: rgba(59, 130, 246, 0.12);
+  --color-blue-glow: rgba(59, 130, 246, 0.12);
   --color-red: #ef4444;
-  --color-red-dim: rgba(239, 68, 68, 0.12);
+  --color-red-glow: rgba(239, 68, 68, 0.12);
   --color-amber: #f59e0b;
-  --color-amber-dim: rgba(245, 158, 11, 0.12);
+  --color-amber-glow: rgba(245, 158, 11, 0.12);
   --color-cyan: #06b6d4;
-  --color-cyan-dim: rgba(6, 182, 212, 0.12);
+  --color-cyan-glow: rgba(6, 182, 212, 0.12);
 
-  /* ── Shadows (Minimal, Grounding) ── */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.5);
-  --shadow-lg: 0 4px 16px rgba(0,0,0,0.6);
+  /* ── Shadows (Depth Layering) ── */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.8);
 
   /* ── Borders & Radii ── */
   --radius-sm: 6px;
@@ -46,41 +46,41 @@
   --radius-lg: 16px;
 
   /* ── Transitions ── */
-  --transition-fast: all 0.15s ease;
-  --transition-base: all 0.2s ease;
+  --transition-fast: all 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ── Light Theme Override ── */
+/* ── Light Theme Override (Elegantly Muted Premium White) ── */
 .light-theme {
-  --bg-base: #fafafa;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f4f4f5;
-  --bg-hover: #e4e4e7;
-  --border-primary: #d4d4d8;
-  --border-subtle: #e4e4e7;
+  --bg-base: #f4f5f8;
+  --bg-surface: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+  --bg-elevated: #f3f4f6;
+  --bg-hover: #e5e7eb;
+  --border-primary: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.04);
 
-  --text-primary: #09090b;
-  --text-secondary: #52525b;
-  --text-muted: #71717a;
-  --text-dim: #a1a1aa;
-  --text-inverse: #fafafa;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --text-inverse: #ffffff;
 
-  --color-green: #16a34a;
-  --color-green-dim: rgba(22, 163, 74, 0.08);
+  --color-green: #059669;
+  --color-green-glow: rgba(5, 150, 105, 0.08);
   --color-blue: #2563eb;
-  --color-blue-dim: rgba(37, 99, 235, 0.08);
+  --color-blue-glow: rgba(37, 99, 235, 0.08);
   --color-red: #dc2626;
-  --color-red-dim: rgba(220, 38, 38, 0.08);
+  --color-red-glow: rgba(220, 38, 38, 0.08);
   --color-amber: #d97706;
   --color-amber-dim: rgba(217, 119, 6, 0.08);
 
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-lg: 0 4px 16px rgba(0,0,0,0.1);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
 /* ══════════════════════════════════════════════
-   GLOBAL RESET
+   GLOBAL RESET & PHYSICALLY TEXTURED BACKGROUND
    ══════════════════════════════════════════════ */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -92,21 +92,22 @@ body {
   font-family: var(--font-sans);
   font-size: 0.875rem;
   line-height: 1.5;
-  background-color: var(--bg-base);
+  background: radial-gradient(circle at 50% 0%, #0c0e18 0%, #050508 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Subtle noise grain overlay — adds physical texture like Bloomberg terminal */
+/* Premium Carbon Fiber/Noise overlay texture for physical look */
 body::before {
   content: '';
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.99' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 9999;
 }
@@ -114,11 +115,10 @@ body::before {
 h1, h2, h3, h4 {
   font-family: var(--font-sans);
   font-weight: 700;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
-/* ── Monospace Utility ── */
 .mono {
   font-family: var(--font-mono);
 }
@@ -127,45 +127,73 @@ h1, h2, h3, h4 {
    CUSTOM SCROLLBAR
    ══════════════════════════════════════════════ */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-primary);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 /* ══════════════════════════════════════════════
-   SURFACE PANELS (replaces glass-panel)
-   Solid surfaces. No blur. No transparency gimmicks.
+   SURFACE PANELS & PREMIUM BORDER GLOWS
    ══════════════════════════════════════════════ */
 .glass-panel {
   background: var(--bg-surface);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition-fast);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition: var(--transition-base);
 }
 
-/* No hover border change — zero visual jitter */
 .glass-panel:hover {
-  border-color: var(--border-primary);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-/* ── Stat Card with Left Accent ── */
+/* ── Status Card with Left Accent & Large-Radius Glow Halo ── */
 .stat-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-primary);
   border-left: 4px solid var(--color-green);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md), 
+              0 0 35px -10px var(--color-green-glow), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.02);
   padding: 20px 24px;
+  transition: var(--transition-base);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow-lg), 
+              0 0 45px -5px var(--color-green-glow), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Telemetry Glow Overrides ── */
+.glow-green {
+  box-shadow: 0 0 35px -8px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+.glow-blue {
+  box-shadow: 0 0 35px -8px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border-color: rgba(59, 130, 246, 0.25) !important;
+}
+.glow-red {
+  box-shadow: 0 0 35px -8px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border-color: rgba(239, 68, 68, 0.25) !important;
+}
+.glow-amber {
+  box-shadow: 0 0 35px -8px rgba(245, 158, 11, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border-color: rgba(245, 158, 11, 0.25) !important;
 }
 
 /* ══════════════════════════════════════════════
@@ -191,20 +219,21 @@ h1, h2, h3, h4 {
   font-family: var(--font-sans);
   font-size: 0.8125rem;
   transition: var(--transition-fast);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .form-input:focus {
   border-color: var(--color-green);
-  box-shadow: 0 0 0 2px var(--color-green-dim);
+  box-shadow: 0 0 0 2px var(--color-green-dim), inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* ══════════════════════════════════════════════
    BUTTONS
    ══════════════════════════════════════════════ */
 .btn-primary {
-  background: var(--color-green);
-  color: #000;
-  border: none;
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  border: 1px solid rgba(16, 185, 129, 0.2);
   padding: 10px 20px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -213,22 +242,23 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: var(--transition-fast);
-  box-shadow: none;
+  transition: var(--transition-base);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .btn-primary:hover {
-  background: #16a34a;
-  box-shadow: none;
+  background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .btn-primary:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-secondary {
-  background: transparent;
+  background: linear-gradient(180deg, #181922 0%, #0e0f14 100%);
   color: var(--text-primary);
   border: 1px solid var(--border-primary);
   padding: 10px 20px;
@@ -239,12 +269,14 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: var(--transition-fast);
+  transition: var(--transition-base);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-hover);
-  border-color: var(--text-dim);
+  border-color: rgba(255, 255, 255, 0.15);
+  background: linear-gradient(180deg, #22242f 0%, #101116 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .btn-secondary:disabled {
@@ -253,14 +285,13 @@ h1, h2, h3, h4 {
 }
 
 /* ══════════════════════════════════════════════
-   ANIMATIONS (Minimal — only functional)
+   ANIMATIONS (Functional only)
    ══════════════════════════════════════════════ */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.45; }
 }
 
-/* Static breathing — no scale transform, no bounce */
 .pulse-indicator {
   animation: pulse 2.5s ease-in-out infinite;
 }
@@ -271,19 +302,20 @@ h1, h2, h3, h4 {
 }
 
 .spin-loading {
-  animation: spin-slow 1.2s linear infinite;
+  animation: spin-slow 1.5s linear infinite;
 }
 
 /* ══════════════════════════════════════════════
-   I2C 16x2 BLUE LCD DISPLAY
+   I2C 16x2 BLUE LCD DISPLAY (Photorealistic CRT)
    ══════════════════════════════════════════════ */
 .blue-lcd-container {
-  background-color: #000820;
-  border: 6px solid #27272a;
-  border-radius: 4px;
-  padding: 12px 16px;
-  box-shadow: inset 0 0 20px rgba(0, 40, 200, 0.6),
-              0 4px 12px rgba(0, 0, 0, 0.6);
+  background-color: #00092c;
+  border: 6px solid #1e2029;
+  border-radius: 6px;
+  padding: 14px 18px;
+  box-shadow: inset 0 0 25px rgba(0, 80, 255, 0.55),
+              0 0 15px rgba(0, 80, 255, 0.15),
+              0 8px 30px rgba(0, 0, 0, 0.8);
   width: 100%;
   max-width: 380px;
   aspect-ratio: 16 / 5;
@@ -295,44 +327,42 @@ h1, h2, h3, h4 {
   overflow: hidden;
 }
 
-/* LCD glass reflection */
 .blue-lcd-container::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%);
   z-index: 2;
   pointer-events: none;
 }
 
-/* LCD scanlines */
 .blue-lcd-container::after {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-image: linear-gradient(rgba(255,255,255,0.01) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(0, 120, 255, 0.04) 1px, transparent 1px);
   background-size: 100% 3px;
   z-index: 3;
   pointer-events: none;
 }
 
 .blue-lcd-container.power-off {
-  background-color: #050708 !important;
-  box-shadow: inset 0 0 12px rgba(0,0,0,0.95), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
-  border-color: #1a1a1e !important;
+  background-color: #050609 !important;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.95), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  border-color: #121318 !important;
 }
 
 .blue-lcd-container.power-off .blue-lcd-line {
-  color: rgba(255, 255, 255, 0.01) !important;
+  color: rgba(255, 255, 255, 0.005) !important;
   text-shadow: none !important;
 }
 
 .blue-lcd-line {
-  color: #b8d4ff;
+  color: #a3c9ff;
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  text-shadow: 0 0 5px rgba(160, 200, 255, 0.7), 0 0 10px rgba(0, 60, 220, 0.5);
+  text-shadow: 0 0 6px rgba(163, 201, 255, 0.8), 0 0 12px rgba(0, 80, 255, 0.6);
   height: 22px;
   line-height: 22px;
   white-space: pre;
@@ -347,6 +377,7 @@ h1, h2, h3, h4 {
 .table-container {
   overflow-x: auto;
   border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary);
 }
 
 .custom-table {
@@ -357,17 +388,17 @@ h1, h2, h3, h4 {
 
 .custom-table th {
   background: var(--bg-elevated);
-  padding: 10px 14px;
-  font-weight: 600;
-  font-size: 0.7rem;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 0.725rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
   border-bottom: 1px solid var(--border-primary);
 }
 
 .custom-table td {
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-subtle);
   font-size: 0.8125rem;
   transition: var(--transition-fast);
@@ -378,11 +409,11 @@ h1, h2, h3, h4 {
 }
 
 .custom-table tbody tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.008);
+  background: rgba(255, 255, 255, 0.005);
 }
 
 /* ══════════════════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE DESIGN
    ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .dashboard-grid {
@@ -391,9 +422,8 @@ h1, h2, h3, h4 {
 }
 
 /* ══════════════════════════════════════════════
-   HARDWARE SIMULATOR — INDUSTRIAL CONSOLE
+   HARDWARE SIMULATOR — INDUSTRIAL CABINET
    ══════════════════════════════════════════════ */
-
 .perspective-container {
   display: flex;
   justify-content: center;
@@ -405,7 +435,7 @@ h1, h2, h3, h4 {
   position: relative;
   width: 100%;
   max-width: 460px;
-  background: #0f0f12;
+  background: #090a0d;
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-primary);
@@ -414,62 +444,58 @@ h1, h2, h3, h4 {
 .cabinet-front-panel {
   position: relative;
   width: 100%;
-  padding: 24px 20px;
+  padding: 26px 22px;
   border-radius: 11px;
-  background: linear-gradient(180deg, #151518 0%, #0c0c0e 100%);
-  border: 3px solid #27272a;
+  background: linear-gradient(180deg, #111216 0%, #07080b 100%);
+  border: 3px solid #1f212a;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
   z-index: 2;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02), 0 10px 40px rgba(0, 0, 0, 0.85);
 }
 
-.cabinet-depth-right, .cabinet-depth-bottom {
-  display: none;
-}
-
-/* ── Physical LED Indicators ── */
+/* ── Physical Glowing LED Indicators ── */
 .physical-led {
   position: relative;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  border: 2px solid #3f3f46;
-  background: #18181b;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
-  transition: background 0.1s ease, box-shadow 0.1s ease;
+  border: 2px solid #333642;
+  background: #101216;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.85);
+  transition: var(--transition-base);
 }
 
 .physical-led::after {
   content: '';
   position: absolute;
-  top: 2px; left: 2px;
-  width: 4px; height: 4px;
+  top: 3px; left: 3px;
+  width: 5px; height: 5px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.3);
 }
 
 .physical-led.green-on {
-  background: var(--color-green);
-  box-shadow: 0 0 12px var(--color-green), inset 0 1px 2px rgba(255,255,255,0.4);
-  border-color: #4ade80;
+  background: #10b981;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.85), inset 0 1px 2px rgba(255,255,255,0.4);
+  border-color: #34d399;
 }
 
 .physical-led.red-on {
-  background: var(--color-red);
-  box-shadow: 0 0 12px var(--color-red), inset 0 1px 2px rgba(255,255,255,0.4);
+  background: #ef4444;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.85), inset 0 1px 2px rgba(255,255,255,0.4);
   border-color: #f87171;
 }
 
 /* ── Passive Buzzer ── */
 .physical-buzzer {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #3f3f46 0%, #0f0f12 75%);
-  border: 2px solid #09090b;
+  background: radial-gradient(circle at 35% 35%, #474b5c 0%, #0d0f14 75%);
+  border: 2px solid #050608;
   box-shadow: 0 2px 4px rgba(0,0,0,0.5);
   position: relative;
   cursor: pointer;
@@ -479,20 +505,20 @@ h1, h2, h3, h4 {
   content: '';
   position: absolute;
   top: 50%; left: 50%;
-  width: 7px; height: 7px;
+  width: 8px; height: 8px;
   border-radius: 50%;
-  background: #09090b;
+  background: #050608;
   transform: translate(-50%, -50%);
 }
 
 /* ── Rocker Power Switch ── */
 .rocker-switch-3d {
-  width: 30px;
-  height: 48px;
-  background: #0f0f12;
+  width: 32px;
+  height: 50px;
+  background: #08090c;
   border-radius: 4px;
-  border: 2px solid #27272a;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  border: 2px solid #242733;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
   position: relative;
   cursor: pointer;
   overflow: hidden;
@@ -503,56 +529,56 @@ h1, h2, h3, h4 {
   left: 0;
   width: 100%;
   height: 50%;
-  background: #2e090b;
+  background: #200405;
   border: 1px solid #000;
-  transition: top 0.1s ease, background-color 0.1s ease;
+  transition: top 0.1s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.1s ease;
 }
 
 .rocker-switch-3d.powered-on .rocker-switch-actuator {
   top: 0;
-  background: var(--color-red);
-  box-shadow: inset 0 2px 3px rgba(255,255,255,0.3),
-              0 0 6px rgba(239, 68, 68, 0.4);
+  background: #ef4444;
+  box-shadow: inset 0 2px 3px rgba(255,255,255,0.35),
+              0 0 8px rgba(239, 68, 68, 0.5);
 }
 
 .rocker-switch-3d.powered-off .rocker-switch-actuator {
   top: 50%;
-  background: #2a0507;
+  background: #180203;
 }
 
 /* ── 7-Segment Buck Voltage Display ── */
 .seven-segment-display {
-  background-color: #0a0000;
-  border: 1.5px solid #2a0505;
+  background-color: #0b0000;
+  border: 1.5px solid #330000;
   padding: 3px 6px;
   border-radius: 3px;
   font-family: var(--font-mono);
-  color: var(--color-red);
+  color: #ff3b3b;
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  text-shadow: 0 0 5px rgba(239, 68, 68, 0.6);
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.9);
+  text-shadow: 0 0 8px rgba(255, 59, 59, 0.8), 0 0 15px rgba(255, 59, 59, 0.4);
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.95);
   display: inline-block;
   min-width: 56px;
   text-align: center;
 }
 
 .seven-segment-display.dark-display {
-  color: rgba(239, 68, 68, 0.01) !important;
+  color: rgba(255, 59, 59, 0.005) !important;
   text-shadow: none !important;
-  background-color: #040000 !important;
-  border-color: #1a0202 !important;
+  background-color: #030000 !important;
+  border-color: #100000 !important;
 }
 
-/* ── Microcontroller Diagnostic Bay ── */
+/* ── Microcontroller Diagnostic Viewport ── */
 .diagnostic-viewport-panel {
   width: 100%;
-  background: #0e0e11;
-  border: 1.5px solid #27272a;
+  background: #08090c;
+  border: 1.5px solid #242733;
   border-radius: 6px;
-  padding: 10px;
-  box-shadow: inset 0 0 16px rgba(0,0,0,0.8);
+  padding: 12px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
   position: relative;
   overflow: hidden;
 }
@@ -566,27 +592,28 @@ h1, h2, h3, h4 {
   z-index: 10;
 }
 
-/* ── Waste Collection Bin Viewport ── */
 .waste-viewport-bin {
   width: 100%;
   height: 110px;
-  background: #0e0e11;
-  border: 1.5px solid #3f3f46;
+  background: #08090c;
+  border: 1.5px solid #333642;
   border-radius: 6px;
-  box-shadow: inset 0 0 12px rgba(0,0,0,0.9);
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.95);
   position: relative;
   overflow: hidden;
 }
 
-/* ── Wiring Schematic Canvas ── */
+/* ══════════════════════════════════════════════
+   ALTIUM DESIGNER VECTOR PCB SCHEMATIC GRID
+   ══════════════════════════════════════════════ */
 .wiring-chassis-wrapper {
   position: relative;
-  background: #0a0a0d;
-  border: 3px solid #1c1c1f;
+  background: #040507;
+  border: 3px solid #14161c;
   border-radius: 10px;
-  padding: 20px;
+  padding: 22px;
   overflow: hidden;
-  box-shadow: inset 0 0 24px rgba(0,0,0,0.85), var(--shadow-lg);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.95), var(--shadow-lg);
   min-height: 560px;
 }
 
@@ -594,101 +621,99 @@ h1, h2, h3, h4 {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
   background-image:
-    linear-gradient(rgba(255,255,255,0.008) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.008) 1px, transparent 1px);
+    linear-gradient(rgba(16, 185, 129, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.012) 1px, transparent 1px);
   background-size: 20px 20px;
   z-index: 1;
 }
 
-/* ── Interactive Component Hover ── */
 .interactive-component {
   position: relative;
   z-index: 5;
   cursor: help;
-  transition: filter 0.1s ease;
+  transition: filter 0.15s ease, transform 0.15s ease;
 }
 
 .interactive-component:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.15) drop-shadow(0 0 4px rgba(255,255,255,0.1));
 }
 
-/* ── Engineering Tooltips ── */
+/* ── Altium PCB Tooltips ── */
 .rvm-tooltip {
   visibility: hidden;
   position: absolute;
-  bottom: 115%;
+  bottom: 118%;
   left: 50%;
   transform: translateX(-50%);
-  background: #09090b;
-  color: #a1a1aa;
+  background: #050608;
+  color: #94a3b8;
   border: 1px solid var(--color-green);
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: var(--radius-sm);
-  width: 230px;
-  font-size: 0.7rem;
-  line-height: 1.4;
-  box-shadow: var(--shadow-lg);
+  width: 250px;
+  font-size: 0.725rem;
+  line-height: 1.45;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(16, 185, 129, 0.15);
   z-index: 1000;
   opacity: 0;
-  transition: opacity 0.1s ease;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
 }
 
 .interactive-component:hover .rvm-tooltip {
   visibility: visible;
   opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
 }
 
 .rvm-tooltip-header {
   font-weight: 700;
   color: var(--color-green);
-  margin-bottom: 4px;
-  border-bottom: 1px solid var(--border-primary);
-  padding-bottom: 2px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 4px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-sans);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
-/* ── Servo Mechanics ── */
+/* ── Servo Horn Sweeps ── */
 .servo-arm {
   transform-origin: 27px 27px;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ── Schematic Wires ── */
+/* ── Schematic CAD Wires ── */
 .schematic-wire {
-  transition: stroke-width 0.15s ease, filter 0.15s ease;
+  transition: stroke-width 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
   cursor: help;
+  opacity: 0.82;
 }
 
 .schematic-wire:hover {
-  stroke-width: 3px !important;
-  filter: drop-shadow(0 0 3px currentColor);
+  stroke-width: 3.5px !important;
+  filter: drop-shadow(0 0 4px currentColor);
+  opacity: 1;
 }
 
 /* ══════════════════════════════════════════════
    INLINE TOAST NOTIFICATION
    ══════════════════════════════════════════════ */
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .inline-toast {
-  animation: toast-in 0.2s ease-out;
-  padding: 8px 14px;
+  animation: toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 10px 16px;
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-/* Removed glow-green and glow-blue hover classes — no decorative hover glows */
-.glow-green:hover, .glow-blue:hover {
-  box-shadow: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }

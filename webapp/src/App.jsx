@@ -1304,15 +1304,15 @@ export default function App() {
               {/* KPI Cards Grid */}
               <div className="dashboard-grid">
                 {[
-                  { title: "PET Accepted", value: machine.acceptedCount, desc: "Total Plastic Recycled", color: "var(--color-green)" },
-                  { title: "Metal Cans Rejected", value: machine.rejectedCount, desc: "Cans Blocked & Safe", color: "var(--color-red)" },
-                  { title: "Pens Dispensed", value: machine.penDispensedCount, desc: "Streak Rewards Issued", color: "var(--color-blue)" },
-                  { title: "Active Alarms", value: alerts.filter(a => a.status === 'open').length, desc: "Requiring Attention", color: "var(--color-amber)" }
+                  { title: "PET Accepted", value: machine.acceptedCount, desc: "Total Plastic Recycled", color: "var(--color-green)", glow: "glow-green" },
+                  { title: "Metal Cans Rejected", value: machine.rejectedCount, desc: "Cans Blocked & Safe", color: "var(--color-red)", glow: "glow-red" },
+                  { title: "Pens Dispensed", value: machine.penDispensedCount, desc: "Streak Rewards Issued", color: "var(--color-blue)", glow: "glow-blue" },
+                  { title: "Active Alarms", value: alerts.filter(a => a.status === 'open').length, desc: "Requiring Attention", color: "var(--color-amber)", glow: "glow-amber" }
                 ].map((kpi, idx) => (
-                  <div key={idx} className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={idx} className={`stat-card ${kpi.glow}`} style={{ borderLeftColor: kpi.color, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{kpi.title}</span>
-                      <h2 style={{ fontSize: '2.2rem', margin: '8px 0', color: kpi.color }}>{kpi.value}</h2>
+                      <span style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{kpi.title}</span>
+                      <h2 style={{ fontSize: '2.5rem', margin: '4px 0', color: kpi.color, fontFamily: 'var(--font-mono)', fontWeight: 800, letterSpacing: '-0.03em' }}>{kpi.value}</h2>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{kpi.desc}</span>
                     </div>
                   </div>
@@ -2270,95 +2270,132 @@ export default function App() {
                         
                         {/* 1. 12V Main DC Adapter Feeds (Red/Black) */}
                         <path d="M 20 80 Q 200 30 430 50" stroke="#ef4444" strokeWidth="2.5" fill="none" className="schematic-wire" color="#ef4444">
-                          <title>VCC 12V Input (Red): Direct raw adapter feed routed to LM2596 Buck 1 input.</title>
+                          <title>VCC 12V Input (Red): Direct raw adapter feed routed to LM2596 Buck 1 In+ input.</title>
                         </path>
                         <path d="M 20 80 Q 200 120 430 145" stroke="#ef4444" strokeWidth="2.5" fill="none" className="schematic-wire" color="#ef4444">
-                          <title>VCC 12V Input (Red): Direct raw adapter feed routed to LM2596 Buck 2 input.</title>
+                          <title>VCC 12V Input (Red): Direct raw adapter feed routed to LM2596 Buck 2 In+ input.</title>
                         </path>
-                        <path d="M 20 95 Q 200 70 430 65" stroke="#111" strokeWidth="2.5" fill="none" className="schematic-wire" color="#111">
-                          <title>Common ground return adapter feed (Black).</title>
-                        </path>
-
-                        {/* 2. 7.58V Proximity Sensors Power Rail */}
-                        <path d="M 545 75 Q 660 70 660 330 Q 695 330 730 330" stroke="#f59e0b" strokeWidth="2.2" fill="none" className="schematic-wire" color="#f59e0b">
-                          <title>Sensors Power Rail (7.58V DC): Tuning output feed from Buck 1 specifically driving LJC18A3 Cap sensor.</title>
-                        </path>
-                        <path d="M 545 75 Q 670 85 670 420 Q 700 420 730 420" stroke="#f59e0b" strokeWidth="2.2" fill="none" className="schematic-wire" color="#f59e0b">
-                          <title>Sensors Power Rail (7.58V DC): Tuning output feed from Buck 1 specifically driving LJ12A3 Ind sensor.</title>
+                        <path d="M 20 95 Q 200 70 430 95" stroke="#111" strokeWidth="2.5" fill="none" className="schematic-wire" color="#111">
+                          <title>Common ground return adapter feed (Black) to Buck 1 In-.</title>
                         </path>
 
-                        {/* 3. 5.00V Servos Power Rail */}
-                        <path d="M 545 170 Q 690 170 690 50 Q 710 50 730 50" stroke="#ef4444" strokeWidth="2.2" fill="none" className="schematic-wire" color="#ef4444">
-                          <title>Servos Power Rail (5.00V DC): Output feed from Buck 2 driving SG90 Gate servo.</title>
+                        {/* 2. 7.58V Proximity Sensors Power Rail (Buck 1 Out+ -> Sensor VCC) */}
+                        <path d="M 545 50 Q 640 50 640 270 L 730 270" stroke="#f59e0b" strokeWidth="2.2" fill="none" className="schematic-wire" color="#f59e0b">
+                          <title>Sensors Power Rail (7.58V DC): Tuning output feed from Buck 1 Out+ specifically driving LJC18A3 Cap sensor VCC.</title>
                         </path>
-                        <path d="M 545 170 Q 700 185 700 140 Q 715 140 730 140" stroke="#ef4444" strokeWidth="2.2" fill="none" className="schematic-wire" color="#ef4444">
-                          <title>Servos Power Rail (5.00V DC): Output feed from Buck 2 driving SG90 Reward servo.</title>
+                        <path d="M 545 50 Q 650 50 650 370 L 730 370" stroke="#f59e0b" strokeWidth="2.2" fill="none" className="schematic-wire" color="#f59e0b">
+                          <title>Sensors Power Rail (7.58V DC): Tuning output feed from Buck 1 Out+ specifically driving LJ12A3 Ind sensor VCC.</title>
+                        </path>
+
+                        {/* 3. 5.00V Servos Power Rail (Buck 2 Out+ -> Servos VCC) */}
+                        <path d="M 545 145 Q 680 145 680 48 L 730 48" stroke="#ef4444" strokeWidth="2.2" fill="none" className="schematic-wire" color="#ef4444">
+                          <title>Servos Power Rail (5.00V DC): Output feed from Buck 2 Out+ driving SG90 Gate servo VCC.</title>
+                        </path>
+                        <path d="M 545 145 Q 670 145 670 138 L 730 138" stroke="#ef4444" strokeWidth="2.2" fill="none" className="schematic-wire" color="#ef4444">
+                          <title>Servos Power Rail (5.00V DC): Output feed from Buck 2 Out+ driving SG90 Reward servo VCC.</title>
                         </path>
 
                         {/* 4. Common GND Reference ties */}
-                        <path d="M 160 490 Q 240 520 370 410" stroke="#0f172a" strokeWidth="2.2" fill="none" className="schematic-wire" color="#0f172a">
-                          <title>Common Ground Bridge: Ties Arduino Mega GND socket directly to ESP32 board GND.</title>
+                        <path d="M 281 277 Q 160 277 160 408 L 61 408" stroke="#0f172a" strokeWidth="2.2" fill="none" className="schematic-wire" color="#0f172a">
+                          <title>Common Ground Bridge: Ties ESP32 Board GND directly to Arduino Mega GND.</title>
                         </path>
-                        <path d="M 370 410 Q 320 460 320 430" stroke="#0f172a" strokeWidth="2" fill="none" className="schematic-wire" color="#0f172a" />
-                        <path d="M 545 200 Q 640 210 640 450 Q 685 450 730 450" stroke="#111" strokeWidth="2" fill="none" className="schematic-wire" color="#111" />
-                        <path d="M 545 200 Q 630 220 630 350 Q 680 350 730 350" stroke="#111" strokeWidth="2" fill="none" className="schematic-wire" color="#111" />
+                        <path d="M 545 95 Q 630 95 630 304 L 730 304" stroke="#111" strokeWidth="2" fill="none" className="schematic-wire" color="#111">
+                          <title>Capacitive Proximity GND: Buck 1 Out- to LJC18A3 Cap Sensor GND.</title>
+                        </path>
+                        <path d="M 545 95 Q 640 95 640 404 L 730 404" stroke="#111" strokeWidth="2" fill="none" className="schematic-wire" color="#111">
+                          <title>Inductive Proximity GND: Buck 1 Out- to LJ12A3 Ind Sensor GND.</title>
+                        </path>
+                        <path d="M 545 190 Q 690 190 690 56 L 730 56" stroke="#111" strokeWidth="2" fill="none" className="schematic-wire" color="#111">
+                          <title>Gate Servo GND: Buck 2 Out- to Gate Servo GND.</title>
+                        </path>
+                        <path d="M 545 190 Q 680 190 680 146 L 730 146" stroke="#111" strokeWidth="2" fill="none" className="schematic-wire" color="#111">
+                          <title>Reward Servo GND: Buck 2 Out- to Reward Servo GND.</title>
+                        </path>
 
                         {/* 5. Proximity Sensor outputs -> Resistor Dividers -> Arduino Pins */}
-                        <path d="M 730 310 Q 560 310 560 445 Q 450 445 380 445" stroke="#10b981" strokeWidth="1.8" fill="none" className="schematic-wire" color="#10b981">
-                          <title>Capacitive Proximity Output (7.58V peak): passes signal to Breadboard Dividers.</title>
+                        <path d="M 730 287 Q 560 287 560 445 L 280 445" stroke="#10b981" strokeWidth="1.8" fill="none" className="schematic-wire" color="#10b981">
+                          <title>Capacitive Proximity Output (7.58V peak): passes signal to Breadboard Divider 1.</title>
                         </path>
-                        <path d="M 730 400 Q 550 400 550 455 Q 450 455 380 455" stroke="#84cc16" strokeWidth="1.8" fill="none" className="schematic-wire" color="#84cc16">
-                          <title>Inductive Proximity Output (7.58V peak): passes signal to Breadboard Dividers.</title>
+                        <path d="M 730 387 Q 550 387 550 445 L 340 445" stroke="#84cc16" strokeWidth="1.8" fill="none" className="schematic-wire" color="#84cc16">
+                          <title>Inductive Proximity Output (7.58V peak): passes signal to Breadboard Divider 2.</title>
                         </path>
-                        <path d="M 270 445 Q 220 445 160 365" stroke="#10b981" strokeWidth="1.8" fill="none" className="schematic-wire" color="#10b981">
+                        <path d="M 300 445 Q 200 445 160 380 Q 120 380 61 318" stroke="#10b981" strokeWidth="1.8" fill="none" className="schematic-wire" color="#10b981">
                           <title>Divided safe Capacitive peak (3.79V TTL) entering Arduino Mega Pin D5.</title>
                         </path>
-                        <path d="M 270 455 Q 210 455 160 355" stroke="#84cc16" strokeWidth="1.8" fill="none" className="schematic-wire" color="#84cc16">
+                        <path d="M 360 445 Q 210 455 160 390 Q 110 390 61 308" stroke="#84cc16" strokeWidth="1.8" fill="none" className="schematic-wire" color="#84cc16">
                           <title>Divided safe Inductive peak (3.79V TTL) entering Arduino Mega Pin D4.</title>
                         </path>
 
                         {/* 6. TCRT5000 IR & HC-SR04 signals to Mega */}
-                        <path d="M 250 70 Q 200 70 160 375" stroke="#a855f7" strokeWidth="1.8" fill="none" className="schematic-wire" color="#a855f7">
+                        <path d="M 250 70 Q 150 70 61 378" stroke="#a855f7" strokeWidth="1.8" fill="none" className="schematic-wire" color="#a855f7">
                           <title>TCRT5000 Presence IR Signal (5V active-LOW) entering Arduino Mega Pin D11.</title>
                         </path>
-                        <path d="M 250 160 Q 210 165 160 395" stroke="#3b82f6" strokeWidth="1.8" fill="none" className="schematic-wire" color="#3b82f6">
+                        <path d="M 250 160 Q 210 160 209 268" stroke="#3b82f6" strokeWidth="1.8" fill="none" className="schematic-wire" color="#3b82f6">
                           <title>HC-SR04 Trigger pulse line connected to Mega D22.</title>
                         </path>
-                        <path d="M 250 180 Q 220 180 160 405" stroke="#06b6d4" strokeWidth="1.8" fill="none" className="schematic-wire" color="#06b6d4">
+                        <path d="M 250 175 Q 220 175 209 278" stroke="#06b6d4" strokeWidth="1.8" fill="none" className="schematic-wire" color="#06b6d4">
                           <title>HC-SR04 Echo capture pulse line connected to Mega D23.</title>
                         </path>
 
                         {/* 7. SG90 Servos PWM wires from Mega D9 & D10 */}
-                        <path d="M 160 345 Q 380 20 730 25" stroke="#3b82f6" strokeWidth="1.8" fill="none" className="schematic-wire" color="#3b82f6">
+                        <path d="M 61 358 Q 380 20 730 40" stroke="#3b82f6" strokeWidth="1.8" fill="none" className="schematic-wire" color="#3b82f6">
                           <title>Gate Servo control (Mega PWM Pin D9).</title>
                         </path>
-                        <path d="M 160 335 Q 390 120 730 115" stroke="#6366f1" strokeWidth="1.8" fill="none" className="schematic-wire" color="#6366f1">
+                        <path d="M 61 368 Q 390 120 730 130" stroke="#6366f1" strokeWidth="1.8" fill="none" className="schematic-wire" color="#6366f1">
                           <title>Reward Servos trigger control (Mega PWM Pin D10).</title>
                         </path>
 
                         {/* 8. ESP32 UART2 Bridge wiring routes (Mega D18 & D19) */}
-                        <path d="M 160 425 Q 230 465 270 465" stroke="#f97316" strokeWidth="2" fill="none" id="wire-mega-tx" className="schematic-wire" color="#f97316">
-                          <title>Mega UART1 TX1 (Pin 18): Sends 9600 baud serial lines into Resistor Divider.</title>
+                        <path d="M 61 448 Q 170 475 280 475" stroke="#f97316" strokeWidth="2" fill="none" id="wire-mega-tx" className="schematic-wire" color="#f97316">
+                          <title>Mega UART1 TX1 (Pin 18): Sends 5V serial lines into Breadboard Divider 3.</title>
                         </path>
-                        <path d="M 270 475 Q 285 475 285 360 Q 300 360 325 360" stroke="#facc15" strokeWidth="2" fill="none" id="wire-esp-rx" className="schematic-wire" color="#facc15">
+                        <path d="M 300 475 Q 300 321 281 321" stroke="#facc15" strokeWidth="2" fill="none" id="wire-esp-rx" className="schematic-wire" color="#facc15">
                           <title>Divided safe UART Signal: 3.3V serial package entering ESP32 RX2 (GPIO16).</title>
                         </path>
-                        <path d="M 325 375 Q 220 375 160 435" stroke="#ec4899" strokeWidth="2" fill="none" className="schematic-wire" color="#ec4899">
+                        <path d="M 281 332 Q 170 332 61 458" stroke="#ec4899" strokeWidth="2" fill="none" className="schematic-wire" color="#ec4899">
                           <title>ESP32 UART2 TX2 (GPIO17) to Mega RX1 (Pin 19) direct connection.</title>
                         </path>
 
                         {/* ==========================================
                            ANIMATED DATA PACKET MOTION DOTS
                            ========================================== */}
-                        {depositStep === 'uart' && (
-                          <circle r="5" fill="#f97316">
-                            <animateMotion dur="0.6s" repeatCount="indefinite" path="M 160 425 Q 230 465 270 465" />
+                        {depositStep === 'entry' && (
+                          <circle r="4" fill="#a855f7" filter="drop-shadow(0 0 3px #a855f7)">
+                            <animateMotion dur="0.5s" repeatCount="indefinite" path="M 250 70 Q 150 70 61 378" />
                           </circle>
                         )}
+                        
+                        {depositStep === 'scanning' && depositItem === 'pet' && (
+                          <>
+                            <circle r="4.5" fill="#10b981" filter="drop-shadow(0 0 3px #10b981)">
+                              <animateMotion dur="0.8s" repeatCount="indefinite" path="M 730 287 Q 560 287 560 445 L 280 445" />
+                            </circle>
+                            <circle r="3.5" fill="#10b981" filter="drop-shadow(0 0 3px #10b981)">
+                              <animateMotion dur="0.8s" repeatCount="indefinite" path="M 300 445 Q 200 445 160 380 Q 120 380 61 318" />
+                            </circle>
+                          </>
+                        )}
+
+                        {depositStep === 'scanning' && depositItem === 'metal' && (
+                          <>
+                            <circle r="4.5" fill="#facc15" filter="drop-shadow(0 0 3px #facc15)">
+                              <animateMotion dur="0.8s" repeatCount="indefinite" path="M 730 387 Q 550 387 550 445 L 340 445" />
+                            </circle>
+                            <circle r="3.5" fill="#facc15" filter="drop-shadow(0 0 3px #facc15)">
+                              <animateMotion dur="0.8s" repeatCount="indefinite" path="M 360 445 Q 210 455 160 390 Q 110 390 61 308" />
+                            </circle>
+                          </>
+                        )}
+
                         {depositStep === 'uart' && (
-                          <circle r="4.5" fill="#facc15">
-                            <animateMotion dur="0.6s" repeatCount="indefinite" path="M 270 475 Q 285 475 285 360 Q 300 360 325 360" />
-                          </circle>
+                          <>
+                            <circle r="4.5" fill="#f97316" filter="drop-shadow(0 0 3px #f97316)">
+                              <animateMotion dur="0.6s" repeatCount="indefinite" path="M 61 448 Q 170 475 280 475" />
+                            </circle>
+                            <circle r="4" fill="#facc15" filter="drop-shadow(0 0 3px #facc15)">
+                              <animateMotion dur="0.6s" repeatCount="indefinite" path="M 300 475 Q 300 321 281 321" />
+                            </circle>
+                          </>
                         )}
 
                         {/* ==========================================
