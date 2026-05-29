@@ -59,8 +59,13 @@ const INITIAL_HISTORICAL_DATA = [
 export default function App() {
   const [theme, setTheme] = useState('dark');
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('rvm_logged_in_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('rvm_logged_in_user') !== null;
+  });
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
@@ -342,6 +347,7 @@ export default function App() {
     if (foundUser) {
       setIsLoggedIn(true);
       setCurrentUser(foundUser);
+      localStorage.setItem('rvm_logged_in_user', JSON.stringify(foundUser));
       logAudit(foundUser.name, "USER_LOGIN", "Logged into admin portal");
     } else {
       setAuthError("Unauthorized user. Only registered university accounts can log in.");
@@ -356,6 +362,7 @@ export default function App() {
     setCurrentUser(null);
     setEmailInput('');
     setPasswordInput('');
+    localStorage.removeItem('rvm_logged_in_user');
   };
 
   const logAudit = async (actorName, action, target) => {
@@ -951,6 +958,7 @@ export default function App() {
                   if (foundUser) {
                     setIsLoggedIn(true);
                     setCurrentUser(foundUser);
+                    localStorage.setItem('rvm_logged_in_user', JSON.stringify(foundUser));
                     logAudit(foundUser.name, "QUICK_DEMO_LOGIN", `Authenticated as ${u.role}`);
                   } else {
                     // Fallback
@@ -963,6 +971,7 @@ export default function App() {
                     };
                     setIsLoggedIn(true);
                     setCurrentUser(fallbackUser);
+                    localStorage.setItem('rvm_logged_in_user', JSON.stringify(fallbackUser));
                   }
                 }}
                 className="btn-secondary"
