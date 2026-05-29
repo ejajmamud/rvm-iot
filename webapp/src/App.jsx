@@ -4442,31 +4442,56 @@ export default function App() {
                       "SG90 Micro Servo",
                       "TCRT5000 IR Sensor",
                       "LJ12A3 Proximity",
-                      "HD44780 LCD Display"
+                      "HD44780 LCD Display",
+                      "ESP32 DevKit V1"
                     ].map((comp, idx) => {
                       const isSelected = activeComponentIdx === idx;
+                      const compIcons = [
+                        '/arduino_icon.jpg',
+                        '/sonar_icon.png',
+                        '/servo_icon.jpg',
+                        '/ir_icon.jpg',
+                        '/proximity_icon.jpg',
+                        '/lcd_icon.png',
+                        '/esp32_icon.png'
+                      ];
                       return (
                         <button
                           key={idx}
                           onClick={() => setActiveComponentIdx(idx)}
                           style={{
-                            textAlign: 'center',
-                            padding: '12px 14px',
+                            textAlign: 'left',
+                            padding: '10px 14px',
                             background: isSelected ? 'rgba(6, 182, 212, 0.12)' : 'transparent',
                             color: isSelected ? 'var(--color-cyan)' : 'var(--text-secondary)',
                             border: `1px solid ${isSelected ? 'var(--color-cyan)' : 'transparent'}`,
                             borderRadius: 'var(--radius-sm)',
                             fontWeight: 700,
                             fontSize: '0.78rem',
+                            fontFamily: 'Marcellus, Georgia, serif',
                             cursor: 'pointer',
                             transition: 'var(--transition-fast)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 8
+                            justifyContent: 'flex-start',
+                            gap: 12
                           }}
                         >
-                          <Cpu size={14} />
+                          <img 
+                            src={compIcons[idx]} 
+                            alt={comp}
+                            onError={(e) => { e.target.onerror = null; e.target.src = '/gear_icon.svg'; }}
+                            style={{ 
+                              width: 24, 
+                              height: 24, 
+                              objectFit: 'contain',
+                              borderRadius: '4px',
+                              border: `1px solid ${isSelected ? 'rgba(6, 182, 212, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                              background: 'rgba(255,255,255,0.03)',
+                              padding: 2,
+                              transition: 'all 0.2s ease'
+                            }} 
+                          />
                           {comp}
                         </button>
                       );
@@ -4590,6 +4615,24 @@ export default function App() {
                         ],
                         desc: "Mounted securely on the front user-facing cabinet panel. Driven via I2C to save digital I/O lines. Displays clear, chronological status instructions to users throughout the recycling sequence, showing real-time text logs and reward details.",
                         pinout: "4-pin connector: GND, Vcc (+5V), SDA (Serial Data pin), SCL (Serial Clock pin)."
+                      },
+                      {
+                        name: "ESP32 DevKit V1",
+                        type: "Wi-Fi + Bluetooth IoT Microcontroller Module",
+                        model: "Espressif ESP-WROOM-32 (Dual-Core Xtensa® LX6)",
+                        specs: [
+                          { label: "CPU Cores", value: "Dual-core Xtensa® LX6 @ up to 240 MHz" },
+                          { label: "Wi-Fi Standard", value: "IEEE 802.11b/g/n 2.4 GHz (150 Mbps)" },
+                          { label: "Bluetooth", value: "Bluetooth 4.2 + BLE (Classic & Low Energy)" },
+                          { label: "Flash Memory", value: "4 MB (SPI Flash on-module)" },
+                          { label: "SRAM", value: "520 KB (Internal SRAM)" },
+                          { label: "Operating Voltage", value: "3.3V DC Logic / 5V USB input" },
+                          { label: "GPIO Pins", value: "30 Digital I/O (12 ADC channels, 2 DAC)" },
+                          { label: "Serial Interfaces", value: "UART × 3, SPI × 4, I2C × 2, I2S × 2" },
+                          { label: "Security Engine", value: "AES / SHA-2 / RSA / ECC hardware acceleration" }
+                        ],
+                        desc: "Acts as the cloud communication co-processor in the Smart RVM system. Receives classified item data from the Arduino Mega via UART serial, then transmits it in real-time to the Firebase Realtime Database via Wi-Fi. Also handles MQTT event publishing, OTA firmware updates, and manages the RVM reward ledger synchronization with the cloud backend.",
+                        pinout: "UART: TX0/RX0 to Arduino Mega. 3V3 pin powers 3.3V logic peripherals. GPIO2 = onboard LED indicator. EN pin = hardware reset. USB-Micro for programming."
                       }
                     ].map((comp, idx) => {
                       if (activeComponentIdx !== idx) return null;
@@ -4599,8 +4642,8 @@ export default function App() {
                           {/* Title Block */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-primary)', paddingBottom: 12 }}>
                             <div>
-                              <h4 style={{ fontSize: '1.3rem', color: '#fff', fontWeight: 700, letterSpacing: '0.04em' }}>{comp.name}</h4>
-                              <span style={{ fontSize: '0.8rem', color: 'var(--color-cyan)', fontWeight: 700 }}>{comp.type}</span>
+                              <h4 style={{ fontSize: '1.3rem', color: '#fff', fontWeight: 700, letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>{comp.name}</h4>
+                              <span style={{ fontSize: '0.8rem', color: 'var(--color-cyan)', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{comp.type}</span>
                             </div>
                             <span style={{
                               fontSize: '0.7rem',
@@ -4610,7 +4653,8 @@ export default function App() {
                               borderRadius: '4px',
                               fontWeight: 700,
                               textTransform: 'uppercase',
-                              letterSpacing: '0.08em'
+                              letterSpacing: '0.08em',
+                              fontFamily: 'Marcellus, Georgia, serif'
                             }}>
                               Official Specs
                             </span>
@@ -4618,16 +4662,16 @@ export default function App() {
 
                           {/* Detail Table */}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>
                               Electrical & Physical Ratings
                             </span>
                             <div className="table-container">
-                              <table className="custom-table" style={{ fontSize: '0.78rem' }}>
+                              <table className="custom-table" style={{ fontSize: '0.78rem', fontFamily: 'Marcellus, Georgia, serif' }}>
                                 <tbody>
                                   {comp.specs.map((spec, sIdx) => (
                                     <tr key={sIdx}>
-                                      <td style={{ color: 'var(--text-secondary)', padding: '8px 12px', fontWeight: 600 }}>{spec.label}</td>
-                                      <td style={{ color: '#fff', padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{spec.value}</td>
+                                      <td style={{ color: 'var(--text-secondary)', padding: '8px 12px', fontWeight: 600, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.label}</td>
+                                      <td style={{ color: '#fff', padding: '8px 12px', textAlign: 'right', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.value}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -4642,18 +4686,18 @@ export default function App() {
                             borderRadius: 'var(--radius-sm)',
                             border: '1px solid var(--border-subtle)'
                           }}>
-                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
                               Pin Mappings & Signal Logic
                             </span>
-                            <strong style={{ fontSize: '0.82rem', color: 'var(--color-cyan)' }}>{comp.pinout}</strong>
+                            <strong style={{ fontSize: '0.82rem', color: 'var(--color-cyan)', fontFamily: 'Marcellus, Georgia, serif' }}>{comp.pinout}</strong>
                           </div>
 
                           {/* Functional description */}
                           <div>
-                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
                               Hardware Role & Cloud Logic
                             </span>
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, fontFamily: 'Marcellus, Georgia, serif' }}>
                               {comp.desc}
                             </p>
                           </div>
@@ -4673,17 +4717,18 @@ export default function App() {
                   background: 'linear-gradient(180deg, #091324 0%, #040810 100%)'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Marcellus, Georgia, serif' }}>
                       <FileText size={18} style={{ color: 'var(--color-green)' }} />
                       Official Manufacturer Datasheet
                     </h3>
                     <a
-                      href={`/${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.pdf', 'hd44780_datasheet.pdf'][activeComponentIdx]}`}
+                      href={`/${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.html', 'hd44780_datasheet.pdf', 'esp32_datasheet.pdf'][activeComponentIdx]}`}
                       download
                       className="btn-secondary"
                       style={{
                         padding: '6px 12px',
                         fontSize: '0.75rem',
+                        fontFamily: 'Marcellus, Georgia, serif',
                         display: 'flex',
                         alignItems: 'center',
                         gap: 6,
@@ -4695,7 +4740,7 @@ export default function App() {
                     </a>
                   </div>
 
-                  {/* Embedded PDF iframe */}
+                  {/* Embedded PDF / HTML Datasheet iframe */}
                   <div style={{
                     width: '100%',
                     flex: 1,
@@ -4708,7 +4753,7 @@ export default function App() {
                   }}>
                     <iframe 
                       key={activeComponentIdx}
-                      src={`/${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.pdf', 'hd44780_datasheet.pdf'][activeComponentIdx]}`} 
+                      src={`/${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.html', 'hd44780_datasheet.pdf', 'esp32_datasheet.pdf'][activeComponentIdx]}`} 
                       width="100%" 
                       height="100%" 
                       style={{ border: 'none' }}

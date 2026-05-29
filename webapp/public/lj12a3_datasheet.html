@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LJ12A3-4-Z/BX Inductive Proximity Sensor – Technical Datasheet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Marcellus&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #020c1a;
+    color: #c8d6e5;
+    font-family: 'Marcellus', 'Georgia', serif;
+    padding: 32px 40px;
+    min-height: 100vh;
+  }
+  .header {
+    border-bottom: 2px solid #06b6d4;
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .header-left h1 { font-size: 1.6rem; color: #fff; letter-spacing: 0.04em; }
+  .header-left h2 { font-size: 0.95rem; color: #06b6d4; font-weight: 400; margin-top: 4px; }
+  .badge {
+    background: rgba(6,182,212,0.12);
+    border: 1px solid #06b6d4;
+    color: #06b6d4;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .section { margin-bottom: 28px; }
+  .section-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #4a6b8a;
+    border-bottom: 1px solid rgba(6,182,212,0.15);
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+  tr:hover { background: rgba(6,182,212,0.04); }
+  td { padding: 10px 14px; font-size: 0.88rem; }
+  td:first-child { color: #7fa8c9; font-weight: 400; width: 45%; }
+  td:last-child { color: #fff; font-weight: 700; text-align: right; }
+  .pinout-box {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    padding: 16px 20px;
+  }
+  .pin-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .pin-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .pin-name { font-weight: 700; color: #fff; font-size: 0.88rem; width: 80px; }
+  .pin-desc { color: #7fa8c9; font-size: 0.84rem; }
+  .desc-box {
+    background: rgba(6,182,212,0.04);
+    border-left: 3px solid #06b6d4;
+    border-radius: 0 6px 6px 0;
+    padding: 16px 20px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: #c8d6e5;
+  }
+  .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .app-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .app-card h4 { font-size: 0.85rem; color: #06b6d4; margin-bottom: 4px; }
+  .app-card p { font-size: 0.8rem; color: #7fa8c9; line-height: 1.5; }
+  .footer {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 16px;
+    margin-top: 32px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: #4a6b8a;
+  }
+  .warning-box {
+    background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: #fbbf24;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>LJ12A3-4-Z/BX</h1>
+    <h2>Inductive Cylindrical Proximity Sensor — Technical Reference</h2>
+  </div>
+  <div class="badge">Official Spec Sheet</div>
+</div>
+
+<div class="section">
+  <div class="section-title">Electrical &amp; Physical Ratings</div>
+  <table>
+    <tr><td>Sensing Distance (Sn)</td><td>4.0 mm (Nominal) ±10%</td></tr>
+    <tr><td>Output Configuration</td><td>NPN — Normally Open (NO), 3-wire DC</td></tr>
+    <tr><td>Supply Voltage (Vcc)</td><td>6.0 V – 36.0 V DC</td></tr>
+    <tr><td>Rated Supply Voltage</td><td>12.0 V DC (Calibrated in RVM Circuit)</td></tr>
+    <tr><td>No-Load Supply Current</td><td>≤ 10.0 mA</td></tr>
+    <tr><td>Max. Continuous Load Current</td><td>300.0 mA</td></tr>
+    <tr><td>Voltage Drop (Vd) at 200mA</td><td>≤ 2.5 V (NPN output)</td></tr>
+    <tr><td>Response Frequency</td><td>500.0 Hz (typ.)</td></tr>
+    <tr><td>Hysteresis</td><td>&lt; 10% of Sn (Sensing Distance)</td></tr>
+    <tr><td>Repeatability</td><td>≤ 1.0 mm</td></tr>
+    <tr><td>Housing Diameter</td><td>12.0 mm (Cylindrical Flush-mount)</td></tr>
+    <tr><td>Housing Material</td><td>Nickel-Plated Brass (IP67 Rating)</td></tr>
+    <tr><td>Sensing Target Material</td><td>Ferrous/Non-ferrous metals (Steel, Aluminum)</td></tr>
+    <tr><td>Operating Temperature</td><td>-25°C to +70°C</td></tr>
+    <tr><td>IP Protection Rating</td><td>IP67 (Dustproof + 30 min waterproof)</td></tr>
+    <tr><td>Indicator Light</td><td>Rear-mounted RED LED (active loop indicator)</td></tr>
+    <tr><td>Wiring Cable</td><td>3-core PVC shielded cable, 2m standard</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Pin Wiring &amp; Connections</div>
+  <div class="pinout-box">
+    <div class="pin-row">
+      <div class="pin-dot" style="background:#c0392b"></div>
+      <div class="pin-name">Brown</div>
+      <div class="pin-desc">VCC — Positive Power Supply Rail (+6V to +36V DC)</div>
+    </div>
+    <div class="pin-row">
+      <div class="pin-dot" style="background:#2980b9"></div>
+      <div class="pin-name">Blue</div>
+      <div class="pin-desc">GND — Negative Power Return / Ground</div>
+    </div>
+    <div class="pin-row" style="border-bottom: none">
+      <div class="pin-dot" style="background:#1a1a1a; border:1px solid #888"></div>
+      <div class="pin-name">Black</div>
+      <div class="pin-desc">OUT — NPN Open-Collector Signal Output (sinks to GND when target detected)</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">RVM Integration — Hardware Role &amp; Signal Logic</div>
+  <div class="desc-box">
+    The LJ12A3-4-Z/BX is flush-mounted beneath the Smart RVM scanning chute, positioned at a 4mm offset from the expected item travel path. When a waste item enters the classification zone, the sensor's inductive field detects the magnetic permeability change caused by metallic elements (aluminum cans), generating an active-LOW NPN pulse on the black output wire. This signal is read by the Arduino Mega's digital input to distinguish aluminum cans from PET plastic bottles in real-time, routing the servo gate accordingly. The rear RED LED pulses with each detection event for visual debug confirmation.
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Sensing Distance vs. Target Material Correction Factors</div>
+  <table>
+    <tr><td>Iron (Fe) — Reference Material (Sr)</td><td>4.0 mm (100% — Rated)</td></tr>
+    <tr><td>Structural Carbon Steel</td><td>3.2 mm (~ 80% of Sn)</td></tr>
+    <tr><td>Stainless Steel (304 grade)</td><td>2.4 mm (~ 60% of Sn)</td></tr>
+    <tr><td>Aluminum (Al) — RVM Target</td><td>2.0 mm (~ 50% of Sn)</td></tr>
+    <tr><td>Brass / Copper</td><td>1.8 mm (~ 45% of Sn)</td></tr>
+    <tr><td>PET Plastic (Non-conductive)</td><td>Not Detected</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Application Notes</div>
+  <div class="app-grid">
+    <div class="app-card">
+      <h4>Metal Segregation Logic</h4>
+      <p>Differentiates aluminum cans from PET bottles at the point of entry. LOW output = metal detected = aluminum sorting path activated.</p>
+    </div>
+    <div class="app-card">
+      <h4>NPN Pull-Up Requirement</h4>
+      <p>Connect a 10kΩ pull-up resistor from the BLACK output wire to Vcc (+5V) when interfacing with Arduino digital input for reliable HIGH/LOW switching.</p>
+    </div>
+    <div class="app-card">
+      <h4>Flush vs. Non-Flush Mounting</h4>
+      <p>Flush-mount: Embed fully in metal panel (no side-lobe interference). Non-flush: 3× Sn spacing from adjacent metal surfaces required.</p>
+    </div>
+    <div class="app-card">
+      <h4>Vibration &amp; Shock Resistance</h4>
+      <p>Rated for 10–55 Hz vibration environments and 10G shock pulses. Suitable for dynamic mechanical RVM cabinet environments.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Absolute Maximum Ratings</div>
+  <div class="warning-box">
+    ⚠ Do NOT exceed 36V DC supply. Do NOT reverse polarity — no internal protection diode. Short-circuit protection is NOT included; always use current-limiting resistors or fuses. Operating beyond 70°C ambient will permanently degrade sensing accuracy.
+  </div>
+</div>
+
+<div class="footer">
+  <span>LJ12A3-4-Z/BX — Technical Reference Sheet | Smart RVM FYP2 Project</span>
+  <span>Industry Standard: IEC 60947-5-2 (Proximity Switches)</span>
+</div>
+
+</body>
+</html>
