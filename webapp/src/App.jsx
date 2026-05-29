@@ -120,6 +120,16 @@ export default function App() {
   const [serialBlinkTx, setSerialBlinkTx] = useState(false);
   const [serialBlinkRx, setSerialBlinkRx] = useState(false);
 
+  // Extra granular simulation states for 100% complete physical simulation
+  const [depositItem, setDepositItem] = useState(null); // null | 'pet' | 'metal'
+  const [depositStep, setDepositStep] = useState('idle'); // 'idle' | 'entry' | 'scanning' | 'uart' | 'firebase' | 'gate' | 'reward' | 'complete'
+  const [scanProgress, setScanProgress] = useState(0);
+  const [isWiFiActive, setIsWiFiActive] = useState(true);
+  const [offlineQueueCount, setOfflineQueueCount] = useState(0);
+  const [espSerialBlinkRx, setEspSerialBlinkRx] = useState(false);
+  const [espSerialBlinkTx, setEspSerialBlinkTx] = useState(false);
+  const [isPenInDrawer, setIsPenInDrawer] = useState(false);
+
   // Web Audio API Synth to play retro passive buzzer square wave tones!
   const playBuzzerTone = (frequency, durationMs) => {
     if (isMuted || !isPowerOn) return;
@@ -497,37 +507,94 @@ export default function App() {
       alert("Intake Locked: The simulated dustbin is at capacity (BIN FULL). Empty the bin using the simulator button to resume recycling operations.");
       return;
     }
+    if (depositStep !== 'idle') {
+      return; // Already running a deposit sequence!
+    }
 
     const isAccepted = type === "PET_ACCEPTED";
+    setDepositItem(isAccepted ? 'pet' : 'metal');
+    setDepositStep('entry');
     
-    // 1. Ingestion Phase: Trigger IR entry sensor beam (D11) & flash Rx serial blink on ESP32
+    // --- STAGE 1: Object Entry (TCRT5000 IR reflective sensor beam broken) ---
     setSensorIRActive(true);
     setSerialBlinkRx(true);
-    setTimeout(() => setSerialBlinkRx(false), 200);
-    setTimeout(() => setSensorIRActive(false), 800);
-
-    // Debounce delay & transition to CLASSIFYING state (Timing matching line 270 in main_updated.ino)
+    setEspSerialBlinkTx(true);
     setTimeout(() => {
-      setLcdLine1("CLASSIFYING...");
-      setLcdLine2("PLEASE WAIT");
-      
-      // 2. Proximity Sensing: Capacitive (D5) & Inductive (D4) scan window starts
+      setSerialBlinkRx(false);
+      setEspSerialBlinkTx(false);
+    }, 200);
+    
+    playBuzzerTone(1000, 100);
+    setLcdLine1("OBJECT DETECTED ");
+    setLcdLine2("WAKING UP STATE ");
+    
+    // --- STAGE 2: Scanning (Proximity classification window) ---
+    setTimeout(() => {
+      setDepositStep('scanning');
+      setSensorIRActive(false);
       setSensorCapActive(true);
       if (!isAccepted) {
         setSensorIndActive(true); // Inductive spots metal can
       }
-    }, 300);
-
-    // 3. Execution Phase: Process deposit decision at end of 1.5s scanning window
-    setTimeout(async () => {
-      // Release sensors
+      
+      setLcdLine1("CLASSIFYING...  ");
+      setScanProgress(0);
+      
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += 10;
+        setScanProgress(progress);
+        const barLength = Math.floor(progress / 10);
+        const barChar = "■";
+        setLcdLine2(barChar.repeat(barLength).padEnd(16, " "));
+        
+        if (progress >= 100) {
+          clearInterval(progressInterval);
+        }
+      }, 150);
+      
+    }, 800);
+    
+    // --- STAGE 3: Mega UART Ingestion Packet Compilation ---
+    setTimeout(() => {
+      setDepositStep('uart');
       setSensorCapActive(false);
       setSensorIndActive(false);
       
-      // Flash Tx Serial LED indicating Mega compiles JSON Lines UART payload
+      setLcdLine1("TRANSMITTING...");
+      setLcdLine2("UART UART UART  ");
+      
       setSerialBlinkTx(true);
-      setTimeout(() => setSerialBlinkTx(false), 250);
-
+      setEspSerialBlinkRx(true);
+      playBuzzerTone(1600, 80);
+      
+      setTimeout(() => {
+        setSerialBlinkTx(false);
+        setEspSerialBlinkRx(false);
+      }, 400);
+    }, 2500); // 800ms + 1700ms scan window
+    
+    // --- STAGE 4: ESP32 Cloud Upload or Offline Cache buffering ---
+    setTimeout(() => {
+      setDepositStep('firebase');
+      
+      if (isWiFiActive) {
+        setLcdLine1("SYNCING TO CLOUD");
+        setLcdLine2("SECURE TLS 1.3  ");
+        setEspSerialBlinkTx(true);
+        setTimeout(() => setEspSerialBlinkTx(false), 500);
+      } else {
+        setLcdLine1("WIFI OFFLINE!   ");
+        setLcdLine2("SAVING TO CACHE ");
+        setOfflineQueueCount(prev => prev + 1);
+        playBuzzerTone(300, 200); // warning tone
+      }
+    }, 3300);
+    
+    // --- STAGE 5: Gate Actuation decision sweep ---
+    setTimeout(() => {
+      setDepositStep('gate');
+      
       // Updates local machine states in database
       setMachine(prev => {
         const updated = {
@@ -538,7 +605,7 @@ export default function App() {
           lastSeenAt: new Date()
         };
         
-        if (isFirebaseConnected) {
+        if (isFirebaseConnected && isWiFiActive) {
           const app = getApps()[0];
           const db = getFirestore(app);
           setDoc(doc(db, "machines", "RVM001"), updated, { merge: true });
@@ -560,11 +627,11 @@ export default function App() {
       
       setEvents(prev => [newEvent, ...prev]);
 
-      if (isFirebaseConnected) {
+      if (isFirebaseConnected && isWiFiActive) {
         try {
           const app = getApps()[0];
           const db = getFirestore(app);
-          await addDoc(collection(db, "events"), {
+          addDoc(collection(db, "events"), {
             machineId: "RVM001",
             type: type,
             acceptedCount: newEvent.acceptedCount,
@@ -579,10 +646,9 @@ export default function App() {
         }
       }
 
-      // 4. Actuator Sweeps & Audio Synthesizer Triggers
       if (isAccepted) {
-        setLcdLine1("PET ACCEPTED");
-        setLcdLine2("THANK YOU!");
+        setLcdLine1("PET ACCEPTED    ");
+        setLcdLine2("THANK YOU!      ");
         setGreenLedGlow(true);
         setRedLedGlow(false);
         
@@ -597,33 +663,10 @@ export default function App() {
           setGateAngle(0);
           setGreenLedGlow(false);
         }, 1800);
-
-        // Dispense Reward Pen Sequence (Timing matches line 188 in Mega firmware)
-        setTimeout(() => {
-          setLcdLine2("DISPENSING PEN..");
-          // Rotate pen servo to drop slot: HOLD = 90deg, DROP = 0deg
-          setPenAngle(0);
-          playBuzzerTone(1200, 180);
-          setSimulatedPenRewardCount(prev => Math.max(0, prev - 1));
-          
-          // Return servo to default hold positions
-          setTimeout(() => {
-            setPenAngle(90);
-          }, 600);
-          
-          // Push PEN_DISPENSED event to audit trail
-          setTimeout(() => {
-            logAudit("Arduino Mega", "PEN_DISPENSED", "Physical streak reward issued");
-            // Return LCD screen to default idle
-            setLcdLine1("INSERT BOTTLE");
-            setLcdLine2("PET or CAN      ");
-          }, 800);
-        }, 2200);
-
       } else {
         // Can Rejected Sequence
-        setLcdLine1("METAL DETECTED");
-        setLcdLine2("PLEASE REMOVE!");
+        setLcdLine1("METAL DETECTED  ");
+        setLcdLine2("PLEASE REMOVE!  ");
         setRedLedGlow(true);
         setGreenLedGlow(false);
         
@@ -633,11 +676,37 @@ export default function App() {
         // Retain Red LED and hold gate locked for 3 seconds to let user clear chute
         setTimeout(() => {
           setRedLedGlow(false);
-          setLcdLine1("INSERT BOTTLE");
+          setLcdLine1("INSERT BOTTLE   ");
           setLcdLine2("PET or CAN      ");
+          setDepositStep('idle');
+          setDepositItem(null);
         }, 3000);
       }
-    }, 1800); // end of classify sampling window
+    }, 4300);
+
+    // --- STAGE 6: Pen Reward Dispensing (for accepted plastic bottles) ---
+    if (isAccepted) {
+      setTimeout(() => {
+        setDepositStep('reward');
+        setLcdLine2("DISPENSING PEN..");
+        setPenAngle(0);
+        playBuzzerTone(1200, 180);
+        setSimulatedPenRewardCount(prev => Math.max(0, prev - 1));
+        setIsPenInDrawer(true); // Drop a pen into the interactive retrieval slot!
+        
+        setTimeout(() => {
+          setPenAngle(90);
+        }, 600);
+        
+        setTimeout(() => {
+          logAudit("Arduino Mega", "PEN_DISPENSED", "Physical streak reward issued");
+          setLcdLine1("INSERT BOTTLE   ");
+          setLcdLine2("PET or CAN      ");
+          setDepositStep('idle');
+          setDepositItem(null);
+        }, 800);
+      }, 6200);
+    }
   };
 
   const simulateToggleBinFull = async () => {
@@ -1399,140 +1468,488 @@ export default function App() {
                   
                   {/* CONDITIONAL RENDER VIEW */}
                   {!showInternalChassis ? (
-                    /* Front Panel View */
-                    <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <h3 style={{ fontSize: '1.1rem', marginBottom: 16, width: '100%' }}>RVM 3D Cabinet Simulator</h3>
+                    /* Revamped Flat Obsidian Titanium Front Panel View */
+                    <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: '16px' }}>
+                      <h3 style={{ fontSize: '1.1rem', marginBottom: '8px', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>📺 RVM Industrial Console Panel</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>100% Hardware Simulated</span>
+                      </h3>
                       
-                      <div className="perspective-container">
+                      <div className="perspective-container" style={{ width: '100%' }}>
                         <div className="cabinet-3d-model">
-                          <div className="cabinet-depth-right"></div>
-                          <div className="cabinet-depth-bottom"></div>
-                          
                           <div className="cabinet-front-panel">
-                            {/* Blue 16x2 character LCD Screen */}
+                            
+                            {/* SECTION 1: Blue 16x2 character LCD Screen */}
                             <div className={`blue-lcd-container interactive-component ${(!isPowerOn || (isBooting && lcdLine1 === "")) ? "power-off" : ""}`}>
                               <div className="rvm-tooltip">
                                 <div className="rvm-tooltip-header">
-                                  <span>I2C LCD 1602 Display</span>
-                                  <span style={{ fontSize: '0.6rem', color: 'var(--color-secondary)' }}>0x27</span>
+                                  <span>Hitachi HD44780 LCD</span>
+                                  <span style={{ fontSize: '0.6rem', color: 'var(--color-secondary)' }}>I2C address: 0x27</span>
                                 </div>
-                                character Matrix Liquid Crystal Display. Runs on 5.0V. Connects to Mega SDA (Pin 20) / SCL (Pin 21) lines. Displays real-time operational feedback.
+                                Alphanumeric Liquid Crystal Display. Powered by 5.0V. Integrates parallel matrix drivers over SCL/SDA lines. Displays state messages.
                               </div>
                               <div className="blue-lcd-line">{lcdLine1.padEnd(16)}</div>
                               <div className="blue-lcd-line">{lcdLine2.padEnd(16)}</div>
                             </div>
 
-                            {/* LEDs, Buzzer diagnostics */}
-                            <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%', alignItems: 'center', marginTop: 8 }}>
-                              {/* Green LED */}
-                              <div className="interactive-component" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                            {/* SECTION 2: Tactile Status Row (Accept LED, Buzzer, Reject LED) */}
+                            <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%', alignItems: 'center', marginTop: 4 }}>
+                              {/* Accept Green LED (D7) */}
+                              <div className="interactive-component" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                                 <div className="rvm-tooltip">
-                                  <div className="rvm-tooltip-header">Accept Green LED</div>
-                                  Connected to digital pin **D7**. Lights up upon successful PET plastic classification.
+                                  <div className="rvm-tooltip-header">Green Accept LED</div>
+                                  Connected to digital pin **D7**. Lights up upon successful PET plastic bottle classification.
                                 </div>
                                 <div className={`physical-led ${greenLedGlow ? "green-on" : ""}`}></div>
-                                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>ACCEPT LED (D7)</span>
+                                <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-muted)' }}>ACCEPT LED (D7)</span>
                               </div>
 
-                              {/* Passive Buzzer */}
-                              <div className="interactive-component" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                              {/* Passive Buzzer (D8) */}
+                              <div className="interactive-component" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                                 <div className="rvm-tooltip">
-                                  <div className="rvm-tooltip-header">Passive Buzzer</div>
-                                  Connected to digital pin **D8**. Utilizes square-wave `tone()` loops to emit startup checks, success beeps (2kHz), and rejects. Click to test sound!
+                                  <div className="rvm-tooltip-header">Passive Buzzer (D8)</div>
+                                  Tuned to active digital pin **D8**. Utilizes microcontroller PWM `tone()` loops to emit startups, success sweeps, and warnings.
                                 </div>
-                                <div className="physical-buzzer" onClick={() => playBuzzerTone(1000, 150)}></div>
-                                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>BUZZER (D8)</span>
+                                <div style={{ position: 'relative' }}>
+                                  <div className="physical-buzzer" onClick={() => playBuzzerTone(1000, 150)}></div>
+                                  {isPowerOn && depositStep !== 'idle' && depositStep !== 'scanning' && depositStep !== 'firebase' && (
+                                    <div style={{
+                                      position: 'absolute',
+                                      top: '-6px', left: '-6px', right: '-6px', bottom: '-6px',
+                                      border: '1px dashed var(--color-danger)',
+                                      borderRadius: '50%',
+                                      animation: 'pulse 1s infinite'
+                                    }} />
+                                  )}
+                                </div>
+                                <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-muted)' }}>BUZZER (D8)</span>
                               </div>
 
-                              {/* Red LED */}
-                              <div className="interactive-component" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                              {/* Reject Red LED (D6) */}
+                              <div className="interactive-component" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                                 <div className="rvm-tooltip">
-                                  <div className="rvm-tooltip-header">Reject / Full Red LED</div>
-                                  Connected to digital pin **D6**. Triggers on metal rejects, ultrasonic bin full thresholds, or hardware faults.
+                                  <div className="rvm-tooltip-header">Red Reject/Fault LED</div>
+                                  Connected to digital pin **D6**. Triggers on metal rejects, ultrasonic bin full lockouts, or hardware alarms.
                                 </div>
                                 <div className={`physical-led ${redLedGlow ? "red-on" : ""}`}></div>
-                                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>REJECT LED (D6)</span>
+                                <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-muted)' }}>REJECT LED (D6)</span>
                               </div>
                             </div>
 
-                            {/* Power Rocker Switch and Sound Toggle Row */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 8px', alignItems: 'center', marginTop: 8 }}>
-                              {/* Audio mute controller */}
-                              <button 
-                                onClick={() => setIsMuted(!isMuted)} 
-                                className="btn-secondary" 
-                                style={{ padding: '6px 12px', fontSize: '0.7rem', borderColor: isMuted ? 'var(--color-danger)' : 'var(--border-glass)', background: 'rgba(0,0,0,0.3)' }}
-                              >
-                                {isMuted ? "🔇 SOUND MUTED" : "🔊 SOUND ACTIVE"}
-                              </button>
+                            {/* SECTION 3: High-Tech Interactive Waste Intake Chamber */}
+                            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>📥 WASTE CLASSIFICATION CHAMBER VIEW</span>
+                              
+                              <div style={{ position: 'relative', width: '100%', height: '180px' }}>
+                                <svg viewBox="0 0 380 180" style={{ width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.8)', border: '2.5px solid #334155', borderRadius: '8px', overflow: 'visible' }}>
+                                  <defs>
+                                    <linearGradient id="chute-bg-grad" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="0%" stopColor="#070a13" />
+                                      <stop offset="100%" stopColor="#0e1627" />
+                                    </linearGradient>
+                                    <linearGradient id="laser-collar" x1="0" y1="0" x2="1" y2="0">
+                                      <stop offset="0%" stopColor="rgba(59, 130, 246, 0.4)" />
+                                      <stop offset="50%" stopColor="rgba(191, 219, 254, 0.7)" />
+                                      <stop offset="100%" stopColor="rgba(59, 130, 246, 0.4)" />
+                                    </linearGradient>
+                                  </defs>
+                                  
+                                  {/* Chamber backing */}
+                                  <rect width="380" height="180" fill="url(#chute-bg-grad)" rx="6" />
+                                  <path d="M 0 0 L 380 0 M 0 30 L 380 30 M 0 150 L 380 150 M 120 0 L 120 180 M 260 0 L 260 180" stroke="rgba(255,255,255,0.015)" strokeWidth="1" />
+                                  
+                                  {/* Intake hopper chute slides */}
+                                  <path d="M 120 0 L 142 35 L 142 142 L 120 180" fill="none" stroke="#334155" strokeWidth="2.5" />
+                                  <path d="M 260 0 L 238 35 L 238 142 L 260 180" fill="none" stroke="#334155" strokeWidth="2.5" />
+                                  
+                                  {/* TCRT5000 IR Collar sensor module */}
+                                  <g transform="translate(85, 12)" className="interactive-component">
+                                    <rect x="0" y="0" width="30" height="18" fill="#1e3a8a" rx="2" stroke="#2563eb" strokeWidth="0.8" />
+                                    <circle cx="8" cy="9" r="3.2" fill="#0c0a09" stroke="#444" strokeWidth="0.5" /> {/* Emitter */}
+                                    <circle cx="22" cy="9" r="3.2" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="0.5" /> {/* Photodiode */}
+                                    <circle cx="15" cy="4" r="1.2" fill={sensorIRActive ? "#ef4444" : "#022c22"} />
+                                    <title>TCRT5000 IR sensor: Monitors entry throat. Emits a 950nm beam to sense objects (broken = wakes up Mega D11).</title>
+                                  </g>
+                                  
+                                  {/* IR entry collar laser line */}
+                                  <line x1="120" y1="21" x2="260" y2="21" 
+                                        stroke={sensorIRActive ? "#ef4444" : "#a855f7"} 
+                                        strokeWidth={sensorIRActive ? "2.5" : "1.2"} 
+                                        strokeDasharray={sensorIRActive ? "4,4" : "0"} 
+                                        style={{ opacity: isPowerOn ? 0.85 : 0.05 }} />
 
-                              {/* Rocker Switch */}
-                              <div className="interactive-component rocker-switch-container">
-                                <div className="rvm-tooltip">
-                                  <div className="rvm-tooltip-header">Rocker Power Switch</div>
-                                  Red illuminated rocker switch. Cuts/completes the 12V VCC V-in power lines entering the step-down buck converters. Click to toggle RVM power!
-                                </div>
-                                <div onClick={handlePowerToggle} className={`rocker-switch-3d ${isPowerOn ? "powered-on" : "powered-off"}`}>
-                                  <div className="rocker-switch-actuator"></div>
-                                </div>
-                                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>VCC 12V POWER</span>
+                                  {/* LJC18A3 Capacitive Sensor on the left */}
+                                  <g transform="translate(68, 65)" className="interactive-component">
+                                    <rect x="0" y="0" width="50" height="20" fill="url(#steel-metallic-grad)" stroke="#475569" strokeWidth="0.8" rx="2" />
+                                    <rect x="42" y="0" width="8" height="20" fill="#ef4444" rx="1" /> {/* Red face */}
+                                    <circle cx="25" cy="10" r="4" fill={sensorCapActive ? "#10b981" : "#1e293b"} stroke="#fff" strokeWidth="0.4" />
+                                    <title>LJC18A3 Capacitive Proximity Sensor: Utilizes capacitive coupling fields to sense non-metallic objects (connected to D5).</title>
+                                  </g>
+                                  {sensorCapActive && (
+                                    <g>
+                                      <path d="M 125 70 Q 133 75 125 80" fill="none" stroke="#10b981" strokeWidth="1.5" />
+                                      <path d="M 129 65 Q 140 75 129 85" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.6" />
+                                    </g>
+                                  )}
+
+                                  {/* LJ12A3 Inductive Sensor on the right */}
+                                  <g transform="translate(262, 65)" className="interactive-component">
+                                    <rect x="0" y="0" width="50" height="20" fill="url(#steel-metallic-grad)" stroke="#475569" strokeWidth="0.8" rx="2" />
+                                    <rect x="0" y="0" width="8" height="20" fill="#eab308" rx="1" /> {/* Yellow face */}
+                                    <circle cx="25" cy="10" r="4" fill={sensorIndActive ? "#ef4444" : "#1e293b"} stroke="#fff" strokeWidth="0.4" />
+                                    <title>LJ12A3-4-Z/BX Inductive Proximity Sensor: Detects electromagnetic changes to identify metallic cans (connected to D4).</title>
+                                  </g>
+                                  {sensorIndActive && (
+                                    <g>
+                                      <path d="M 255 70 Q 247 75 255 80" fill="none" stroke="#ef4444" strokeWidth="1.5" />
+                                      <path d="M 251 65 Q 240 75 251 85" fill="none" stroke="#ef4444" strokeWidth="1" opacity="0.6" />
+                                    </g>
+                                  )}
+
+                                  {/* SG90 Gate Servo body mounted bottom left */}
+                                  <g transform="translate(68, 135)" className="interactive-component">
+                                    <rect width="36" height="28" fill="#2563eb" stroke="#1d4ed8" strokeWidth="0.8" rx="3" />
+                                    <circle cx="26" cy="14" r="8" fill="#1d4ed8" />
+                                    <circle cx="26" cy="14" r="4.5" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.4" />
+                                    
+                                    {/* White sweep horn rotating */}
+                                    <g transform={`rotate(${gateAngle}, 26, 14)`} className="servo-arm" style={{ transformOrigin: '26px 14px' }}>
+                                      <path d="M 23 14 L 23 -8 A 3 3 0 0 1 29 -8 L 29 14 Z" fill="#fff" stroke="#cbd5e1" strokeWidth="0.4" />
+                                      <circle cx="26" cy="-5" r="0.8" fill="#475569" />
+                                      <circle cx="26" cy="14" r="1.8" fill="#94a3b8" />
+                                    </g>
+                                    <title>SG90 Gate Servo Motor: Rotates horn to sweep open hopper gate bar (Pin D9 PWM).</title>
+                                  </g>
+
+                                  {/* Sliding physical gate bar */}
+                                  <rect x={depositStep === 'gate' && depositItem === 'pet' ? "95" : "142"} 
+                                        y="142" width="96" height="8" fill="#475569" stroke="#1e293b" strokeWidth="1" rx="2" 
+                                        style={{ transition: 'x 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
+                                    <title>Mechanical RVM intake gate bar linked to D9 Servo.</title>
+                                  </rect>
+
+                                  {/* SLIDING HIGH-FIDELITY DEPOSIT ITEM */}
+                                  {isPowerOn && depositItem && (
+                                    <g transform={`translate(190, ${
+                                      depositStep === 'entry' ? 21 :
+                                      depositStep === 'scanning' ? 75 :
+                                      depositStep === 'uart' || depositStep === 'firebase' ? 75 :
+                                      depositStep === 'gate' && depositItem === 'pet' ? 142 : 75
+                                    })`} style={{ transition: 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)', opacity: depositStep === 'idle' ? 0 : 1 }}>
+                                      
+                                      {depositItem === 'pet' ? (
+                                        <g>
+                                          <rect x="-9" y="-20" width="18" height="34" fill="url(#pet-bottle-grad)" stroke="#3b82f6" strokeWidth="0.8" rx="4" />
+                                          <rect x="-5" y="-25" width="10" height="5" fill="url(#pet-bottle-grad)" stroke="#3b82f6" strokeWidth="0.8" rx="0.8" />
+                                          <rect x="-6" y="-28" width="12" height="3" fill="#2563eb" rx="0.5" /> {/* Cap */}
+                                          <rect x="-9" y="-8" width="18" height="8" fill="rgba(255,255,255,0.4)" />
+                                          <text x="0" y="-2" fill="#1e3a8a" fontSize="5.5" fontWeight="900" textAnchor="middle">PET</text>
+                                        </g>
+                                      ) : (
+                                        <g>
+                                          <rect x="-9" y="-17" width="18" height="30" fill="url(#metal-can-grad)" stroke="#475569" strokeWidth="0.8" rx="2.5" />
+                                          <ellipse cx="0" cy="-17" rx="9" ry="1.8" fill="#cbd5e1" stroke="#475569" strokeWidth="0.5" />
+                                          <ellipse cx="0" cy="13" rx="9" ry="1.8" fill="#64748b" stroke="#475569" strokeWidth="0.5" />
+                                          <rect x="-9" y="-7" width="18" height="12" fill="rgba(239,68,68,0.18)" />
+                                          <text x="0" y="2" fill="#b91c1c" fontSize="6" fontWeight="900" textAnchor="middle">CAN</text>
+                                        </g>
+                                      )}
+                                    </g>
+                                  )}
+                                </svg>
                               </div>
                             </div>
 
-                            {/* Pringles Tube Recessed Chute and Pen dispenser drawer */}
-                            <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: 16, marginTop: 8 }}>
-                              {/* Recessed entry chute */}
-                              <div className="interactive-component" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                                <div className="rvm-tooltip">
-                                  <div className="rvm-tooltip-header">Angled Intake Chute</div>
-                                  Recessed feed tube crafted from an angled Pringles tube shell. Directs objects past proximity sensors down to the mid-gate servo.
+                            {/* SECTION 4: Voltage Displays, Power switch & Wifi status panel */}
+                            <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '14px', alignItems: 'center' }}>
+                              
+                              {/* Rocker and Mute Buttons */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                <div className="interactive-component rocker-switch-container">
+                                  <div className="rvm-tooltip">
+                                    <div className="rvm-tooltip-header">VCC Rocker Switch</div>
+                                    Red neon rocker. Completes/cuts the VCC 12V raw adapter feeds into Buck regulators.
+                                  </div>
+                                  <div onClick={handlePowerToggle} className={`rocker-switch-3d ${isPowerOn ? "powered-on" : "powered-off"}`}>
+                                    <div className="rocker-switch-actuator"></div>
+                                  </div>
+                                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-muted)' }}>VCC 12V POWER</span>
                                 </div>
-                                <div className="pringles-chute-hole">
-                                  <div className="pringles-chute-tube"></div>
-                                </div>
-                                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-muted)' }}>INTAKE CHUTE</span>
+
+                                <button 
+                                  onClick={() => setIsMuted(!isMuted)} 
+                                  className="btn-secondary" 
+                                  style={{ padding: '6px', fontSize: '0.65rem', justifyContent: 'center', borderColor: isMuted ? 'var(--color-danger)' : 'var(--border-glass)', background: 'rgba(0,0,0,0.3)', borderRadius: 4 }}
+                                >
+                                  {isMuted ? "🔇 MUTED" : "🔊 AUDIO ON"}
+                                </button>
                               </div>
 
-                              {/* Pen Dispenser out drawer */}
-                              <div className="interactive-component" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                                <div className="rvm-tooltip">
-                                  <div className="rvm-tooltip-header">Dispenser Reward Drawer</div>
-                                  Physical drawer dropping streak reward pens. Triggered by dual D10 SG90 servos. Remaining stock: **{simulatedPenRewardCount} / 50**.
+                              {/* LM2596 Digital Outputs & WiFi signal grid */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <div className="glass-panel" style={{ padding: '8px 10px', background: 'rgba(0,0,0,0.2)', borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.62rem' }}>
+                                    <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>BUCK 1 (SENSORS):</span>
+                                    <div className={`seven-segment-display ${!isPowerOn ? "dark-display" : ""}`} style={{ fontSize: '0.75rem', padding: '2px 4px', minWidth: '46px' }}>
+                                      {isPowerOn ? "7.58" : "0.00"}V
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.62rem' }}>
+                                    <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>BUCK 2 (SERVOS):</span>
+                                    <div className={`seven-segment-display ${!isPowerOn ? "dark-display" : ""}`} style={{ fontSize: '0.75rem', padding: '2px 4px', minWidth: '46px' }}>
+                                      {isPowerOn ? "5.00" : "0.00"}V
+                                    </div>
+                                  </div>
                                 </div>
-                                <div style={{
-                                  width: 90,
-                                  height: 80,
-                                  background: '#1e293b',
+
+                                <div className="glass-panel" style={{ padding: '6px 8px', background: 'rgba(0,0,0,0.2)', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 700 }}>📶 ESP32 BRIDGE:</span>
+                                  <span style={{
+                                    fontSize: '0.62rem',
+                                    fontWeight: 700,
+                                    color: !isPowerOn ? 'var(--text-muted)' : isWiFiActive ? 'var(--color-primary)' : 'var(--color-danger)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 3
+                                  }}>
+                                    <span style={{
+                                      width: 6,
+                                      height: 6,
+                                      borderRadius: '50%',
+                                      background: !isPowerOn ? '#475569' : isWiFiActive ? 'var(--color-primary)' : 'var(--color-danger)'
+                                    }} className={isPowerOn && isWiFiActive ? "pulse-indicator" : ""} />
+                                    {!isPowerOn ? "POWER OFF" : isWiFiActive ? `ONLINE (DB)` : `OFFLINE (${offlineQueueCount})`}
+                                  </span>
+                                </div>
+                              </div>
+
+                            </div>
+
+                            {/* SECTION 5: Transparent Microcontroller Glass Diagnostic Bay */}
+                            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>⚡ TEMPERED GLASS CONTROLLER VIEWPORT</span>
+                              
+                              <div className="diagnostic-viewport-panel" style={{ height: '95px' }}>
+                                <svg viewBox="0 0 340 70" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                                  
+                                  {/* UART Orange/Yellow cable with flying dot sync packets */}
+                                  <path d="M 125 35 Q 165 42 205 35" stroke="#f97316" strokeWidth="1.2" fill="none" style={{ opacity: isPowerOn ? 0.6 : 0.05 }} />
+                                  <path d="M 205 28 Q 165 22 125 28" stroke="#ec4899" strokeWidth="1.2" fill="none" style={{ opacity: isPowerOn ? 0.6 : 0.05 }} />
+                                  {isPowerOn && depositStep === 'uart' && (
+                                    <circle r="2.5" fill="#f97316">
+                                      <animateMotion dur="0.4s" repeatCount="indefinite" path="M 125 35 Q 165 42 205 35" />
+                                    </circle>
+                                  )}
+                                  {isPowerOn && depositStep === 'uart' && (
+                                    <circle r="2.5" fill="#ec4899">
+                                      <animateMotion dur="0.4s" repeatCount="indefinite" path="M 205 28 Q 165 22 125 28" />
+                                    </circle>
+                                  )}
+
+                                  {/* ARDUINO MEGA CARD */}
+                                  <g transform="translate(5, 5)" className="interactive-component">
+                                    <rect width="120" height="60" fill="url(#mega-pcb-grad)" rx="4" stroke="#1e40af" strokeWidth="1" />
+                                    <rect x="3" y="3" width="114" height="54" fill="none" stroke="rgba(255,255,255,0.12)" rx="3" />
+                                    <rect x="8" y="18" width="18" height="24" fill="url(#ic-body-grad)" stroke="#475569" rx="1.5" />
+                                    <text x="17" y="32" fill="#fff" fontSize="5" fontWeight="800" textAnchor="middle">MEGA</text>
+                                    
+                                    {/* Arduino Mega RX/TX leds */}
+                                    <circle cx="85" cy="20" r="1.5" fill={isPowerOn && serialBlinkTx ? "#ef4444" : "#3b0709"} />
+                                    <circle cx="85" cy="26" r="1.5" fill={isPowerOn && serialBlinkRx ? "#10b981" : "#022c22"} />
+                                    <text x="91" y="21" fill="#64748b" fontSize="4.5">TX</text>
+                                    <text x="91" y="27" fill="#64748b" fontSize="4.5">RX</text>
+
+                                    <rect x="5" y="-3" width="15" height="10" fill="url(#silver-metallic-grad)" rx="0.5" /> {/* USB */}
+                                    <text x="60" y="52" fill="#fff" fontSize="7" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ARDUINO MEGA</text>
+                                    <title>Arduino Mega 2560 board: central logic unit. Controls D9/D10 servos, reads proximity lines, and serializes packets.</title>
+                                  </g>
+
+                                  {/* ESP32 BRIDGE CARD */}
+                                  <g transform="translate(215, 5)" className="interactive-component">
+                                    <rect width="120" height="60" fill="url(#esp32-pcb-grad)" rx="4" stroke="#292524" strokeWidth="1" />
+                                    <rect x="3" y="3" width="114" height="54" fill="none" stroke="rgba(255,255,255,0.08)" rx="3" />
+                                    <rect x="18" y="14" width="30" height="32" fill="url(#silver-metallic-grad)" stroke="#475569" rx="1.5" />
+                                    <text x="33" y="32" fill="#1e293b" fontSize="5" fontWeight="900" textAnchor="middle">ESP32</text>
+                                    
+                                    {/* WiFi glowing status LED on ESP32 board */}
+                                    <circle cx="85" cy="22" r="2.8" fill={
+                                      !isPowerOn ? "#1e293b" :
+                                      !isWiFiActive ? "#ef4444" :
+                                      (depositStep === 'firebase' ? "#3b82f6" : "#10b981")
+                                    } className={isPowerOn && isWiFiActive && depositStep === 'firebase' ? "pulse-indicator" : ""} />
+                                    <text x="85" y="32" fill="#64748b" fontSize="4.5" textAnchor="middle" fontWeight="800">WIFI LED</text>
+
+                                    {/* ESP32 serial blinks */}
+                                    <circle cx="104" cy="18" r="1.5" fill={isPowerOn && espSerialBlinkRx ? "#10b981" : "#022c22"} />
+                                    <circle cx="104" cy="24" r="1.5" fill={isPowerOn && espSerialBlinkTx ? "#ef4444" : "#3b0709"} />
+
+                                    <rect x="50" y="56" width="15" height="7" fill="url(#silver-metallic-grad)" rx="0.5" /> {/* MicroUSB */}
+                                    <text x="60" y="50" fill="#fff" fontSize="6.5" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ESP32 DevKit V1</text>
+                                    <title>ESP32 DevKit V1: WiFi & Database bridge. Ingests packages over TX1/RX2, rings offline memory if internet fails.</title>
+                                  </g>
+
+                                </svg>
+                              </div>
+                            </div>
+
+                            {/* SECTION 6: Viewport splits (Ultrasonic collection bin and Dispenser drawer) */}
+                            <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1.4fr 1.6fr', gap: '14px' }}>
+                              
+                              {/* A. Waste bin with HC-SR04 ultrasonic */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--text-muted)' }}>🗑️ COLLECTION BIN</span>
+                                
+                                <div className="waste-viewport-bin">
+                                  <svg viewBox="0 0 160 110" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                                    {/* Bin glass tint */}
+                                    <rect width="160" height="110" fill={machine.binFull ? "rgba(239, 68, 68, 0.08)" : "rgba(15, 23, 42, 0.2)"} rx="6" />
+                                    
+                                    {/* HC-SR04 Ultrasonic sensor modules pointing down */}
+                                    <g transform="translate(48, 5)" className="interactive-component">
+                                      <rect width="64" height="24" fill="#0369a1" rx="2" stroke="#0284c7" strokeWidth="0.8" />
+                                      <circle cx="18" cy="12" r="9" fill="url(#steel-metallic-grad)" stroke="#334155" strokeWidth="0.5" />
+                                      <circle cx="18" cy="12" r="6" fill="#0f172a" />
+                                      <circle cx="46" cy="12" r="9" fill="url(#steel-metallic-grad)" stroke="#334155" strokeWidth="0.5" />
+                                      <circle cx="46" cy="12" r="6" fill="#0f172a" />
+                                      <title>HC-SR04 Ultrasonic Sensor: measures bin depth content. Lockouts machine if waste height reaches D22/D23 threshold (8 cm).</title>
+                                    </g>
+
+                                    {/* Sonar emission wave arcs */}
+                                    {isPowerOn && (
+                                      <g style={{ opacity: machine.binFull ? 0.8 : 0.4 }}>
+                                        <line x1="66" y1="32" x2="66" y2="70" stroke="var(--color-primary)" strokeWidth="1" strokeDasharray="3,3" />
+                                        <line x1="94" y1="32" x2="94" y2="70" stroke="var(--color-primary)" strokeWidth="1" strokeDasharray="3,3" />
+                                      </g>
+                                    )}
+
+                                    {/* Visual representation of accumulated bottles at the bottom */}
+                                    {machine.binFull ? (
+                                      <g>
+                                        {/* Filled to full capacity */}
+                                        <rect x="10" y="45" width="140" height="60" fill="rgba(239,68,68,0.25)" rx="4" />
+                                        <ellipse cx="80" cy="45" rx="70" ry="8" fill="rgba(239,68,68,0.3)" />
+                                        
+                                        {/* Random bottles */}
+                                        <rect x="25" y="55" width="26" height="12" fill="url(#pet-bottle-grad)" rx="2" transform="rotate(15, 25, 55)" />
+                                        <rect x="65" y="70" width="26" height="12" fill="url(#metal-can-grad)" rx="2" transform="rotate(-30, 65, 70)" />
+                                        <rect x="110" y="60" width="26" height="12" fill="url(#pet-bottle-grad)" rx="2" transform="rotate(45, 110, 60)" />
+                                        <rect x="45" y="80" width="26" height="12" fill="url(#pet-bottle-grad)" rx="2" transform="rotate(-10, 45, 80)" />
+                                        <rect x="95" y="82" width="26" height="12" fill="url(#metal-can-grad)" rx="2" transform="rotate(20, 95, 82)" />
+                                      </g>
+                                    ) : machine.acceptedCount > 0 ? (
+                                      <g>
+                                        {/* Moderate fill */}
+                                        <rect x="10" y="80" width="140" height="25" fill="rgba(16, 185, 129, 0.08)" rx="4" />
+                                        <ellipse cx="80" cy="80" rx="70" ry="4" fill="rgba(16, 185, 129, 0.12)" />
+                                        
+                                        {/* Single bottle at bottom */}
+                                        <rect x="40" y="86" width="26" height="11" fill="url(#pet-bottle-grad)" rx="2.5" transform="rotate(-8, 40, 86)" />
+                                        {machine.acceptedCount > 2 && (
+                                          <rect x="90" y="85" width="26" height="11" fill="url(#pet-bottle-grad)" rx="2.5" transform="rotate(25, 90, 85)" />
+                                        )}
+                                      </g>
+                                    ) : (
+                                      <text x="80" y="85" fill="#475569" fontSize="6.5" fontWeight="700" textAnchor="middle">BIN EMPTY</text>
+                                    )}
+
+                                    {/* Measurement HUD */}
+                                    <rect x="15" y="88" width="130" height="16" fill="rgba(0,0,0,0.75)" rx="3" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
+                                    <text x="80" y="99" fill={machine.binFull ? "var(--color-danger)" : "var(--color-primary)"} fontSize="7" fontWeight="900" textAnchor="middle" fontFamily="monospace">
+                                      {machine.binFull ? "8.0 cm (100% FULL)" : `${(26.4 - Math.min(15, machine.acceptedCount * 0.4)).toFixed(1)} cm (24%)`}
+                                    </text>
+                                  </svg>
+                                </div>
+                              </div>
+
+                              {/* B. Reward dispenser drawer (Carousel & slide drawer) */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--text-muted)' }}>🎁 REWARD STOCK</span>
+                                  <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--color-secondary)' }}>{simulatedPenRewardCount}/50</span>
+                                </div>
+
+                                <div className="glass-panel" style={{
+                                  height: '110px',
+                                  background: 'rgba(15, 23, 42, 0.75)',
                                   borderRadius: 8,
-                                  border: '3px solid #334155',
+                                  border: '2px solid #475569',
                                   position: 'relative',
                                   overflow: 'hidden',
-                                  boxShadow: 'inset 0 0 10px rgba(0,0,0,0.8)'
+                                  boxShadow: 'inset 0 0 15px rgba(0,0,0,0.9)'
                                 }}>
-                                  {/* Sliding pen animation */}
+                                  {/* Pen stock compartment view */}
+                                  <div style={{ position: 'absolute', top: 5, left: 10, width: 45, height: 45, border: '1px dashed #334155', borderRadius: 4, display: 'flex', flexDirection: 'column-reverse', gap: 3, padding: 3, background: 'rgba(0,0,0,0.2)' }}>
+                                    {Array.from({ length: Math.min(4, Math.ceil(simulatedPenRewardCount / 12)) }).map((_, i) => (
+                                      <div key={i} style={{ width: '100%', height: '5px', background: 'linear-gradient(90deg, #3b82f6, #60a5fa)', borderRadius: 2, boxShadow: '0 1px 2px rgba(0,0,0,0.5)' }} />
+                                    ))}
+                                  </div>
+
+                                  {/* SG90 Pen reward servo details */}
+                                  <div className="interactive-component" style={{ position: 'absolute', top: 5, right: 10 }}>
+                                    <svg width="34" height="34" viewBox="0 0 54 54" style={{ overflow: 'visible' }}>
+                                      <rect width="54" height="54" fill="#2563eb" stroke="#1d4ed8" strokeWidth="1.8" rx="6" />
+                                      <circle cx="27" cy="27" r="10" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="1" />
+                                      
+                                      {/* Reward horn rotate */}
+                                      <g transform={`rotate(${penAngle}, 27, 27)`} className="servo-arm" style={{ transformOrigin: '27px 27px' }}>
+                                        <path d="M 24 27 L 24 -15 A 3 3 0 0 1 30 -15 L 30 27 Z" fill="#fff" stroke="#cbd5e1" strokeWidth="0.5" />
+                                        <circle cx="27" cy="-10" r="1.5" fill="#475569" />
+                                        <circle cx="27" cy="27" r="3" fill="#94a3b8" />
+                                      </g>
+                                    </svg>
+                                    <title>SG90 Reward Servo: Rotates white sweep horn to drop reward pens (connected to Mega PWM Pin D10).</title>
+                                  </div>
+
+                                  {/* Retrieval slot drawer */}
                                   <div style={{
                                     position: 'absolute',
-                                    bottom: penAngle === 0 ? 10 : 90,
-                                    left: 10,
-                                    width: 65,
-                                    height: 8,
-                                    background: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
-                                    borderRadius: 4,
-                                    transition: 'bottom 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
-                                  }} />
-                                  <div style={{
-                                    position: 'absolute',
-                                    bottom: 0,
-                                    width: '100%',
-                                    height: 25,
-                                    background: '#0f172a',
-                                    borderTop: '2px solid #1e293b'
-                                  }} />
+                                    bottom: 0, left: 0, right: 0,
+                                    height: '42px',
+                                    background: isPenInDrawer ? 'rgba(16, 185, 129, 0.08)' : '#070a13',
+                                    borderTop: '2px solid #475569',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.3s ease'
+                                  }}>
+                                    {isPenInDrawer ? (
+                                      <div 
+                                        onClick={() => {
+                                          setIsPenInDrawer(false);
+                                          playBuzzerTone(1500, 100);
+                                          setTimeout(() => playBuzzerTone(1800, 150), 120);
+                                          logAudit(currentUser?.name || "User", "CLAIM_REWARD", "Dispensed pen retrieved from drawer");
+                                          alert("🎉 Reward Claimed: You retrieved 1 high-quality Streak Pen reward! Outstanding work!");
+                                        }}
+                                        style={{
+                                          width: '90%',
+                                          height: '24px',
+                                          background: 'linear-gradient(90deg, #10b981, #059669)',
+                                          borderRadius: 4,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          cursor: 'pointer',
+                                          color: '#fff',
+                                          fontSize: '0.62rem',
+                                          fontWeight: '900',
+                                          boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)',
+                                          letterSpacing: '0.02em',
+                                          animation: 'pulse 1s infinite'
+                                        }}
+                                      >
+                                        🎁 CLICK TO CLAIM PEN
+                                      </div>
+                                    ) : (
+                                      <div style={{ fontSize: '0.62rem', color: '#334155', fontWeight: 800 }}>DRAWER EMPTY</div>
+                                    )}
+                                  </div>
+
                                 </div>
-                                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-muted)' }}>REWARD DRAWER</span>
                               </div>
+
                             </div>
+
                           </div>
                         </div>
                       </div>
@@ -1635,6 +2052,47 @@ export default function App() {
                       >
                         🗑️ {machine.binFull ? "Empty simulated dustbin (GND Reset)" : "Fill simulated dustbin to capacity (BIN FULL)"}
                       </button>
+
+                      {/* ESP32 WiFi / Offline Buffer Simulation Controllers */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12, borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: 12 }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>📶 ESP32 Bridge Network Status</span>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button
+                            onClick={() => {
+                              const nextWifi = !isWiFiActive;
+                              setIsWiFiActive(nextWifi);
+                              if (nextWifi && offlineQueueCount > 0) {
+                                // Flush offline queue like real ESP32 recovery!
+                                setLcdLine1("FLUSHING CACHE  ");
+                                setLcdLine2(`UPLOADING ${offlineQueueCount} EVTS`);
+                                playBuzzerTone(1500, 300);
+                                setTimeout(() => {
+                                  setOfflineQueueCount(0);
+                                  setLcdLine1("INSERT BOTTLE   ");
+                                  setLcdLine2("PET or CAN      ");
+                                }, 1800);
+                              }
+                            }}
+                            className="btn-secondary"
+                            style={{ flex: 1, padding: '8px', fontSize: '0.75rem', justifyContent: 'center', borderColor: isWiFiActive ? 'var(--color-primary)' : 'var(--color-danger)', color: isWiFiActive ? 'var(--color-primary)' : 'var(--color-danger)' }}
+                            disabled={!isPowerOn}
+                          >
+                            {isWiFiActive ? "🌐 WiFi Connected" : "⚠️ WiFi Disconnected"}
+                          </button>
+                          {offlineQueueCount > 0 && (
+                            <button
+                              onClick={() => {
+                                setOfflineQueueCount(0);
+                                playBuzzerTone(400, 200);
+                              }}
+                              className="btn-secondary"
+                              style={{ padding: '8px', fontSize: '0.75rem', color: 'var(--color-danger)', borderColor: 'rgba(239,68,68,0.2)' }}
+                            >
+                              Reset Queue ({offlineQueueCount})
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1647,222 +2105,574 @@ export default function App() {
                     {/* SVG wiring panel canvas */}
                     <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 3 }}>
                       <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>⚡ exact 3D wiring and schematic layout</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>hover for tooltips & details</span>
+                        <span>⚡ EXACT HARDWARE WIRING & PHOTOREALISTIC SCHEMATIC</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>hover components for pins & calibrations</span>
                       </h4>
 
-                      <svg viewBox="0 0 740 500" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                      <svg viewBox="0 0 850 550" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
                         
-                        {/* WIRING PATHS: COLOR-CODED DC BUSES */}
-                        {/* 12V Main DC Power Wires (Red / Black) */}
-                        <path d="M 20 440 L 40 440 L 40 100 L 320 100" stroke="#ef4444" strokeWidth="2.5" fill="none" className="schematic-wire" color="#ef4444">
-                          <title>VCC 12V Power Line: Direct DC feed from power switch to LM2596 buck inputs.</title>
+                        {/* PHOTOREALISTIC GRAPHICS DEFINITIONS */}
+                        <defs>
+                          {/* Board PCB substrates */}
+                          <linearGradient id="mega-pcb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#1e3a8a" />
+                            <stop offset="60%" stopColor="#172554" />
+                            <stop offset="100%" stopColor="#0f172a" />
+                          </linearGradient>
+
+                          <linearGradient id="esp32-pcb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#1c1917" />
+                            <stop offset="50%" stopColor="#0c0a09" />
+                            <stop offset="100%" stopColor="#1c1917" />
+                          </linearGradient>
+
+                          <linearGradient id="buck-pcb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#0284c7" />
+                            <stop offset="100%" stopColor="#075985" />
+                          </linearGradient>
+
+                          {/* Metallic cylinders */}
+                          <linearGradient id="steel-metallic-grad" x1="0%" y1="50%" x2="100%" y2="50%">
+                            <stop offset="0%" stopColor="#cbd5e1" />
+                            <stop offset="25%" stopColor="#f1f5f9" />
+                            <stop offset="50%" stopColor="#94a3b8" />
+                            <stop offset="85%" stopColor="#475569" />
+                            <stop offset="100%" stopColor="#334155" />
+                          </linearGradient>
+
+                          <linearGradient id="silver-metallic-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#94a3b8" />
+                            <stop offset="30%" stopColor="#f1f5f9" />
+                            <stop offset="70%" stopColor="#cbd5e1" />
+                            <stop offset="100%" stopColor="#64748b" />
+                          </linearGradient>
+
+                          <linearGradient id="brass-screw-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#fbbf24" />
+                            <stop offset="50%" stopColor="#d97706" />
+                            <stop offset="100%" stopColor="#78350f" />
+                          </linearGradient>
+
+                          {/* Passive Components */}
+                          <linearGradient id="capacitor-grad" x1="0%" y1="50%" x2="100%" y2="50%">
+                            <stop offset="0%" stopColor="#1e293b" />
+                            <stop offset="80%" stopColor="#0f172a" />
+                            <stop offset="100%" stopColor="#334155" />
+                          </linearGradient>
+
+                          <linearGradient id="copper-toroid-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#f59e0b" />
+                            <stop offset="35%" stopColor="#b45309" />
+                            <stop offset="70%" stopColor="#f59e0b" />
+                            <stop offset="100%" stopColor="#78350f" />
+                          </linearGradient>
+
+                          <linearGradient id="ic-body-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#334155" />
+                            <stop offset="50%" stopColor="#1e293b" />
+                            <stop offset="100%" stopColor="#0f172a" />
+                          </linearGradient>
+
+                          {/* Translucent light blue PET gradient */}
+                          <linearGradient id="pet-bottle-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="rgba(59, 130, 246, 0.4)" />
+                            <stop offset="30%" stopColor="rgba(191, 219, 254, 0.75)" />
+                            <stop offset="70%" stopColor="rgba(59, 130, 246, 0.5)" />
+                            <stop offset="100%" stopColor="rgba(29, 78, 216, 0.6)" />
+                          </linearGradient>
+
+                          {/* Metallic can sheen */}
+                          <linearGradient id="metal-can-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#94a3b8" />
+                            <stop offset="40%" stopColor="#f8fafc" />
+                            <stop offset="80%" stopColor="#cbd5e1" />
+                            <stop offset="100%" stopColor="#475569" />
+                          </linearGradient>
+                        </defs>
+
+                        {/* ==========================================
+                           INTAKE CHUTE AND PHYSICAL OBJECT ANIMATIONS
+                           ========================================== */}
+                        {/* Transparent grey intake tube outline */}
+                        <path d="M 590 10 L 710 230" stroke="rgba(255,255,255,0.06)" strokeWidth="65" strokeLinecap="round" fill="none" />
+                        <path d="M 590 10 L 710 230" stroke="rgba(148, 163, 184, 0.12)" strokeWidth="60" strokeLinecap="round" fill="none" />
+                        
+                        {/* Slide bottle / can visual indicators */}
+                        {depositItem === 'pet' && (
+                          <g transform={`translate(${
+                            depositStep === 'entry' ? '590, 10' :
+                            depositStep === 'scanning' ? '640, 100' :
+                            depositStep === 'gate' ? '680, 180' : '710, 240'
+                          })`} style={{ transition: 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
+                            {/* Translucent PET plastic bottle cylinder */}
+                            <rect x="-14" y="-30" width="28" height="50" fill="url(#pet-bottle-grad)" stroke="#3b82f6" strokeWidth="1.2" rx="6" />
+                            <rect x="-8" y="-38" width="16" height="8" fill="url(#pet-bottle-grad)" stroke="#3b82f6" strokeWidth="1.2" rx="1.5" />
+                            <rect x="-10" y="-42" width="20" height="4" fill="#2563eb" rx="1" /> {/* Blue bottle cap */}
+                            <rect x="-14" y="-12" width="28" height="12" fill="rgba(255,255,255,0.4)" /> {/* Plastic label */}
+                            <text x="0" y="-3" fill="#1e3a8a" fontSize="6" fontWeight="900" textAnchor="middle">PET</text>
+                          </g>
+                        )}
+
+                        {depositItem === 'metal' && (
+                          <g transform={`translate(${
+                            depositStep === 'entry' ? '590, 10' :
+                            depositStep === 'scanning' ? '640, 100' : '655, 130'
+                          })`} style={{ transition: 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
+                            {/* Aluminum Beverage Can */}
+                            <rect x="-13" y="-25" width="26" height="46" fill="url(#metal-can-grad)" stroke="#475569" strokeWidth="1.2" rx="4" />
+                            <ellipse cx="0" cy="-25" rx="13" ry="3" fill="#cbd5e1" stroke="#475569" strokeWidth="0.8" />
+                            <ellipse cx="0" cy="21" rx="13" ry="3" fill="#64748b" stroke="#475569" strokeWidth="0.8" />
+                            {/* Coca-cola-like red accent lines */}
+                            <rect x="-13" y="-12" width="26" height="20" fill="rgba(239,68,68,0.2)" />
+                            <text x="0" y="2" fill="#b91c1c" fontSize="7" fontWeight="900" textAnchor="middle">CAN</text>
+                          </g>
+                        )}
+
+                        {/* ==========================================
+                           NATURAL SAG JUMPER WIRES (BEZIER CURVES)
+                           ========================================== */}
+                        
+                        {/* 1. 12V Main DC Adapter Feeds (Red/Black) */}
+                        <path d="M 20 80 Q 200 30 430 50" stroke="#ef4444" strokeWidth="2.5" fill="none" className="schematic-wire" color="#ef4444">
+                          <title>VCC 12V Input (Red): Direct raw adapter feed routed to LM2596 Buck 1 input.</title>
                         </path>
-                        <path d="M 20 460 L 60 460 L 60 120 L 320 120" stroke="#000" strokeWidth="2.5" fill="none" className="schematic-wire" color="#000">
-                          <title>Main Ground: Common ground connection from adapter input.</title>
+                        <path d="M 20 80 Q 200 120 430 145" stroke="#ef4444" strokeWidth="2.5" fill="none" className="schematic-wire" color="#ef4444">
+                          <title>VCC 12V Input (Red): Direct raw adapter feed routed to LM2596 Buck 2 input.</title>
+                        </path>
+                        <path d="M 20 95 Q 200 70 430 65" stroke="#111" strokeWidth="2.5" fill="none" className="schematic-wire" color="#111">
+                          <title>Common ground return adapter feed (Black).</title>
                         </path>
 
-                        {/* 7.58V Proximity Sensors rail (Red/Yellow) */}
-                        <path d="M 430 90 L 520 90 L 520 320 L 600 320" stroke="#f59e0b" strokeWidth="2" fill="none" className="schematic-wire" color="#f59e0b">
-                          <title>7.58V Buck Output: Regulated power feed dedicated strictly for NPN proximity sensors.</title>
+                        {/* 2. 7.58V Proximity Sensors Power Rail */}
+                        <path d="M 545 75 Q 660 70 660 330 Q 695 330 730 330" stroke="#f59e0b" strokeWidth="2.2" fill="none" className="schematic-wire" color="#f59e0b">
+                          <title>Sensors Power Rail (7.58V DC): Tuning output feed from Buck 1 specifically driving LJC18A3 Cap sensor.</title>
                         </path>
-                        <path d="M 430 90 L 520 90 L 520 380 L 600 380" stroke="#f59e0b" strokeWidth="2" fill="none" className="schematic-wire" color="#f59e0b" />
-
-                        {/* 5.00V Servos power rail (Red) */}
-                        <path d="M 430 200 L 500 200 L 500 65 L 600 65" stroke="#ef4444" strokeWidth="2" fill="none" className="schematic-wire" color="#ef4444">
-                          <title>5.00V Buck Output: High-amperage current rail powering the gate and dispenser servos.</title>
-                        </path>
-                        <path d="M 500 200 L 500 170 L 600 170" stroke="#ef4444" strokeWidth="2" fill="none" className="schematic-wire" color="#ef4444" />
-
-                        {/* Proximity active logic lines to D4/D5 via 10k divider */}
-                        <path d="M 600 340 L 460 340 L 460 400 L 220 400" stroke="#10b981" strokeWidth="1.5" fill="none" className="schematic-wire" color="#10b981">
-                          <title>Capacitive Proximity Signal (D5): divided down from 7.58V logic peak to safe 5.0V peak for Mega pin D5.</title>
-                        </path>
-                        <path d="M 600 400 L 220 410" stroke="#ef4444" strokeWidth="1.5" fill="none" className="schematic-wire" color="#ef4444">
-                          <title>Inductive Proximity Signal (D4): divided logic line sending metal detection events to Mega pin D4.</title>
+                        <path d="M 545 75 Q 670 85 670 420 Q 700 420 730 420" stroke="#f59e0b" strokeWidth="2.2" fill="none" className="schematic-wire" color="#f59e0b">
+                          <title>Sensors Power Rail (7.58V DC): Tuning output feed from Buck 1 specifically driving LJ12A3 Ind sensor.</title>
                         </path>
 
-                        {/* Servos logic signal lines (D9/D10 PWM) */}
-                        <path d="M 220 310 L 470 310 L 470 50 L 600 50" stroke="#3b82f6" strokeWidth="1.5" fill="none" className="schematic-wire" color="#3b82f6">
-                          <title>Gate Servo PWM signal (D9): Sends pulse-width modulation from Mega pin D9 to control sweeps.</title>
+                        {/* 3. 5.00V Servos Power Rail */}
+                        <path d="M 545 170 Q 690 170 690 50 Q 710 50 730 50" stroke="#ef4444" strokeWidth="2.2" fill="none" className="schematic-wire" color="#ef4444">
+                          <title>Servos Power Rail (5.00V DC): Output feed from Buck 2 driving SG90 Gate servo.</title>
                         </path>
-                        <path d="M 220 325 L 480 325 L 480 155 L 600 155" stroke="#6366f1" strokeWidth="1.5" fill="none" className="schematic-wire" color="#6366f1">
-                          <title>Dispenser Servos PWM (D10): Shared digital signal sweeping dual reward servos simultaneously.</title>
-                        </path>
-
-                        {/* I2C lines to LCD */}
-                        <path d="M 220 200 L 330 200" stroke="#a855f7" strokeWidth="1.5" fill="none" className="schematic-wire" color="#a855f7">
-                          <title>I2C SDA data (D20): Serial data communication to LiquidCrystal display.</title>
-                        </path>
-                        <path d="M 220 215 L 330 215" stroke="#ec4899" strokeWidth="1.5" fill="none" className="schematic-wire" color="#ec4899">
-                          <title>I2C SCL Clock (D21): Synchronized clock pulse driving display refresh.</title>
+                        <path d="M 545 170 Q 700 185 700 140 Q 715 140 730 140" stroke="#ef4444" strokeWidth="2.2" fill="none" className="schematic-wire" color="#ef4444">
+                          <title>Servos Power Rail (5.00V DC): Output feed from Buck 2 driving SG90 Reward servo.</title>
                         </path>
 
-                        {/* COMPONENT 1: ARDUINO MEGA 2560 BOARD */}
-                        <g transform="translate(60, 160)" className="interactive-component">
-                          <rect width="160" height="230" fill="#1e3a8a" stroke="#3b82f6" strokeWidth="3" rx="6" />
-                          <rect x="5" y="-15" width="30" height="40" fill="#475569" stroke="#334155" /> {/* USB */}
-                          <rect x="125" y="-10" width="25" height="30" fill="#000" /> {/* V-in */}
-                          
-                          {/* ATmega2560 chip */}
-                          <rect x="50" y="80" width="60" height="60" fill="#0f172a" stroke="#475569" rx="4" />
-                          <text x="80" y="115" fill="#94a3b8" fontSize="8" fontWeight="700" textAnchor="middle">MEGA 2560</text>
-                          
-                          {/* Blinking serial rx/tx leds */}
-                          <circle cx="25" cy="50" r="4" fill={serialBlinkTx ? "#ffcc00" : "#450a0a"} stroke="#ffcc00" strokeWidth="0.5" />
-                          <text x="35" y="53" fill="#94a3b8" fontSize="7">TX1</text>
-                          <circle cx="25" cy="65" r="4" fill={serialBlinkRx ? "#ff9900" : "#450a0a"} stroke="#ff9900" strokeWidth="0.5" />
-                          <text x="35" y="68" fill="#94a3b8" fontSize="7">RX1</text>
+                        {/* 4. Common GND Reference ties */}
+                        <path d="M 160 490 Q 240 520 370 410" stroke="#0f172a" strokeWidth="2.2" fill="none" className="schematic-wire" color="#0f172a">
+                          <title>Common Ground Bridge: Ties Arduino Mega GND socket directly to ESP32 board GND.</title>
+                        </path>
+                        <path d="M 370 410 Q 320 460 320 430" stroke="#0f172a" strokeWidth="2" fill="none" className="schematic-wire" color="#0f172a" />
+                        <path d="M 545 200 Q 640 210 640 450 Q 685 450 730 450" stroke="#111" strokeWidth="2" fill="none" className="schematic-wire" color="#111" />
+                        <path d="M 545 200 Q 630 220 630 350 Q 680 350 730 350" stroke="#111" strokeWidth="2" fill="none" className="schematic-wire" color="#111" />
 
-                          {/* Pin Header rails */}
-                          <rect x="5" y="10" width="10" height="130" fill="#0f172a" />
-                          <rect x="145" y="10" width="10" height="200" fill="#0f172a" />
+                        {/* 5. Proximity Sensor outputs -> Resistor Dividers -> Arduino Pins */}
+                        <path d="M 730 310 Q 560 310 560 445 Q 450 445 380 445" stroke="#10b981" strokeWidth="1.8" fill="none" className="schematic-wire" color="#10b981">
+                          <title>Capacitive Proximity Output (7.58V peak): passes signal to Breadboard Dividers.</title>
+                        </path>
+                        <path d="M 730 400 Q 550 400 550 455 Q 450 455 380 455" stroke="#84cc16" strokeWidth="1.8" fill="none" className="schematic-wire" color="#84cc16">
+                          <title>Inductive Proximity Output (7.58V peak): passes signal to Breadboard Dividers.</title>
+                        </path>
+                        <path d="M 270 445 Q 220 445 160 365" stroke="#10b981" strokeWidth="1.8" fill="none" className="schematic-wire" color="#10b981">
+                          <title>Divided safe Capacitive peak (3.79V TTL) entering Arduino Mega Pin D5.</title>
+                        </path>
+                        <path d="M 270 455 Q 210 455 160 355" stroke="#84cc16" strokeWidth="1.8" fill="none" className="schematic-wire" color="#84cc16">
+                          <title>Divided safe Inductive peak (3.79V TTL) entering Arduino Mega Pin D4.</title>
+                        </path>
 
-                          <text x="80" y="215" fill="#fff" fontSize="11" fontWeight="700" textAnchor="middle">ARDUINO MEGA</text>
-                          
-                          {/* Tooltip */}
+                        {/* 6. TCRT5000 IR & HC-SR04 signals to Mega */}
+                        <path d="M 250 70 Q 200 70 160 375" stroke="#a855f7" strokeWidth="1.8" fill="none" className="schematic-wire" color="#a855f7">
+                          <title>TCRT5000 Presence IR Signal (5V active-LOW) entering Arduino Mega Pin D11.</title>
+                        </path>
+                        <path d="M 250 160 Q 210 165 160 395" stroke="#3b82f6" strokeWidth="1.8" fill="none" className="schematic-wire" color="#3b82f6">
+                          <title>HC-SR04 Trigger pulse line connected to Mega D22.</title>
+                        </path>
+                        <path d="M 250 180 Q 220 180 160 405" stroke="#06b6d4" strokeWidth="1.8" fill="none" className="schematic-wire" color="#06b6d4">
+                          <title>HC-SR04 Echo capture pulse line connected to Mega D23.</title>
+                        </path>
+
+                        {/* 7. SG90 Servos PWM wires from Mega D9 & D10 */}
+                        <path d="M 160 345 Q 380 20 730 25" stroke="#3b82f6" strokeWidth="1.8" fill="none" className="schematic-wire" color="#3b82f6">
+                          <title>Gate Servo control (Mega PWM Pin D9).</title>
+                        </path>
+                        <path d="M 160 335 Q 390 120 730 115" stroke="#6366f1" strokeWidth="1.8" fill="none" className="schematic-wire" color="#6366f1">
+                          <title>Reward Servos trigger control (Mega PWM Pin D10).</title>
+                        </path>
+
+                        {/* 8. ESP32 UART2 Bridge wiring routes (Mega D18 & D19) */}
+                        <path d="M 160 425 Q 230 465 270 465" stroke="#f97316" strokeWidth="2" fill="none" id="wire-mega-tx" className="schematic-wire" color="#f97316">
+                          <title>Mega UART1 TX1 (Pin 18): Sends 9600 baud serial lines into Resistor Divider.</title>
+                        </path>
+                        <path d="M 270 475 Q 285 475 285 360 Q 300 360 325 360" stroke="#facc15" strokeWidth="2" fill="none" id="wire-esp-rx" className="schematic-wire" color="#facc15">
+                          <title>Divided safe UART Signal: 3.3V serial package entering ESP32 RX2 (GPIO16).</title>
+                        </path>
+                        <path d="M 325 375 Q 220 375 160 435" stroke="#ec4899" strokeWidth="2" fill="none" className="schematic-wire" color="#ec4899">
+                          <title>ESP32 UART2 TX2 (GPIO17) to Mega RX1 (Pin 19) direct connection.</title>
+                        </path>
+
+                        {/* ==========================================
+                           ANIMATED DATA PACKET MOTION DOTS
+                           ========================================== */}
+                        {depositStep === 'uart' && (
+                          <circle r="5" fill="#f97316">
+                            <animateMotion dur="0.6s" repeatCount="indefinite" path="M 160 425 Q 230 465 270 465" />
+                          </circle>
+                        )}
+                        {depositStep === 'uart' && (
+                          <circle r="4.5" fill="#facc15">
+                            <animateMotion dur="0.6s" repeatCount="indefinite" path="M 270 475 Q 285 475 285 360 Q 300 360 325 360" />
+                          </circle>
+                        )}
+
+                        {/* ==========================================
+                           PHOTOREALISTIC HARDWARE BOARD GRAPHICS
+                           ========================================== */}
+
+                        {/* COMPONENT 1: ARDUINO MEGA 2560 */}
+                        <g transform="translate(50, 240)" className="interactive-component">
+                          {/* Board substrate */}
+                          <rect width="170" height="260" fill="url(#mega-pcb-grad)" stroke="#1e40af" strokeWidth="2.5" rx="8" />
+                          <rect x="6" y="6" width="158" height="248" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1.2" rx="6" />
+
+                          {/* USB & Power jacks */}
+                          <rect x="15" y="-12" width="28" height="40" fill="url(#silver-metallic-grad)" stroke="#475569" rx="2" />
+                          <rect x="130" y="-10" width="24" height="32" fill="#0f172a" stroke="#1e293b" rx="2" />
+                          <circle cx="142" cy="18" r="4.5" fill="url(#silver-metallic-grad)" />
+
+                          {/* MCU Chip ATmega2560 */}
+                          <rect x="58" y="95" width="56" height="56" fill="url(#ic-body-grad)" stroke="#475569" rx="3" />
+                          {/* silver TQFP legs */}
+                          {Array.from({ length: 12 }).map((_, i) => (
+                            <g key={i}>
+                              <line x1="53" y1={String(100 + i * 4)} x2="58" y2={String(100 + i * 4)} stroke="#e2e8f0" strokeWidth="0.8" />
+                              <line x1="114" y1={String(100 + i * 4)} x2="119" y2={String(100 + i * 4)} stroke="#e2e8f0" strokeWidth="0.8" />
+                              <line x1={String(63 + i * 4)} y1="90" x2={String(63 + i * 4)} y2="95" stroke="#e2e8f0" strokeWidth="0.8" />
+                              <line x1={String(63 + i * 4)} y1="151" x2={String(63 + i * 4)} y2="156" stroke="#e2e8f0" strokeWidth="0.8" />
+                            </g>
+                          ))}
+                          <circle cx="64" cy="101" r="1.5" fill="#ca8a04" />
+                          <text x="86" y="127" fill="#e2e8f0" fontSize="8" fontWeight="800" textAnchor="middle" letterSpacing="0.05em">ATMEGA</text>
+
+                          {/* RX/TX blinkers */}
+                          <circle cx="28" cy="65" r="3" fill={serialBlinkTx ? "#ef4444" : "#450a0a"} stroke={serialBlinkTx ? "#f87171" : "#1e0000"} strokeWidth="0.5" />
+                          <text x="36" y="68" fill="#94a3b8" fontSize="6" fontWeight="700">TX</text>
+                          <circle cx="28" cy="77" r="3" fill={serialBlinkRx ? "#10b981" : "#022c22"} stroke={serialBlinkRx ? "#34d399" : "#021e14"} strokeWidth="0.5" />
+                          <text x="36" y="80" fill="#94a3b8" fontSize="6" fontWeight="700">RX</text>
+
+                          {/* Golden header pin blocks */}
+                          <rect x="6" y="20" width="10" height="225" fill="#0f172a" stroke="#334155" rx="1" />
+                          {Array.from({ length: 22 }).map((_, i) => (
+                            <circle key={i} cx="11" cy={28 + i * 10} r="1.5" fill="#ca8a04" />
+                          ))}
+                          <text x="20" y="28" fill="rgba(255,255,255,0.4)" fontSize="6">D0-D21</text>
+
+                          <rect x="154" y="20" width="10" height="225" fill="#0f172a" stroke="#334155" rx="1" />
+                          {Array.from({ length: 22 }).map((_, i) => (
+                            <circle key={i} cx="159" cy={28 + i * 10} r="1.5" fill="#ca8a04" />
+                          ))}
+                          <text x="148" y="28" fill="rgba(255,255,255,0.4)" fontSize="6" textAnchor="end">D22-D53</text>
+
+                          <text x="85" y="246" fill="#f8fafc" fontSize="10" fontWeight="900" textAnchor="middle" letterSpacing="0.08em">ARDUINO MEGA 2560</text>
+
                           <div className="rvm-tooltip">
-                            <div className="rvm-tooltip-header">ATmega2560 MCU</div>
-                            Primary embedded system processor. Drives state-machine cycles, samples digital sensors, sweeps gate/reward SG90s, and uploads telemetries.
+                            <div className="rvm-tooltip-header">Arduino Mega 2560</div>
+                            Central controller unit reading physical sensors and driving SG90 sweeps. Connects to ESP32 over serial line TX1/RX1.
                           </div>
                         </g>
 
-                        {/* COMPONENT 2: LM2596 BUCK CONVERTER (SENSORS) */}
-                        <g transform="translate(320, 50)" className="interactive-component">
-                          <rect width="110" height="65" fill="#1e293b" stroke="#f59e0b" strokeWidth="2" rx="4" />
-                          <rect x="10" y="15" width="20" height="20" fill="#000" /> {/* Coil */}
-                          <rect x="80" y="5" width="15" height="15" fill="#3b82f6" /> {/* Potentiometer */}
-                          <circle cx="87.5" cy="12.5" r="3.5" fill="#f59e0b" /> {/* Pot screw dial */}
+                        {/* COMPONENT 2: [NEW] ESP32 DEVKIT V1 BRIDGE */}
+                        <g transform="translate(270, 240)" className="interactive-component">
+                          {/* Board PCB substrate */}
+                          <rect width="110" height="160" fill="url(#esp32-pcb-grad)" stroke="#292524" strokeWidth="2.5" rx="6" />
+                          <rect x="4" y="4" width="102" height="152" fill="none" stroke="rgba(255,255,255,0.12)" rx="5" />
+
+                          {/* ESP32 WROOM metal shield module */}
+                          <rect x="30" y="15" width="50" height="60" fill="url(#silver-metallic-grad)" stroke="#475569" strokeWidth="1" rx="3" />
+                          <rect x="38" y="17" width="34" height="24" fill="none" stroke="#64748b" strokeWidth="0.8" />
+                          <text x="55" y="26" fill="#1e293b" fontSize="5" fontWeight="900" textAnchor="middle">ESP-WROOM-32</text>
+                          <text x="55" y="32" fill="#334155" fontSize="4.5" textAnchor="middle">FCC ID: 2AC7Z-ESPWROOM32</text>
+
+                          {/* WiFi wavy antenna lines on PCB head */}
+                          <path d="M 32 10 L 78 10 L 78 5 L 32 5 Z" fill="#0f172a" />
+                          <path d="M 35 12 L 40 8 L 45 12 L 50 8 L 55 12 L 60 8 L 65 12 L 70 8 L 75 12" stroke="#e2e8f0" strokeWidth="0.8" fill="none" />
+
+                          {/* Dual inline header sockets */}
+                          <rect x="6" y="20" width="10" height="130" fill="#0f172a" rx="1" />
+                          <rect x="94" y="20" width="10" height="130" fill="#0f172a" rx="1" />
+                          {Array.from({ length: 12 }).map((_, i) => (
+                            <g key={i}>
+                              <circle cx="11" cy={26 + i * 11} r="1.5" fill="#ca8a04" />
+                              <circle cx="99" cy={26 + i * 11} r="1.5" fill="#ca8a04" />
+                            </g>
+                          ))}
+
+                          {/* Status/WiFi Connection glowing LED */}
+                          <circle cx="22" cy="115" r="4.5" fill={
+                            !isPowerOn ? "#1e293b" :
+                            !isWiFiActive ? "#ef4444" : // Red for wifi disconnected
+                            (depositStep === 'firebase' ? "#3b82f6" : "#10b981") // Blue for upload ping, green for connected idle
+                          } className={isPowerOn && isWiFiActive && depositStep === 'firebase' ? "pulse-indicator" : ""} />
+                          <text x="22" y="127" fill="#78716c" fontSize="5" fontWeight="800" textAnchor="middle">WIFI LED</text>
+
+                          {/* RX/TX blinks for bridge Uart */}
+                          <circle cx="88" cy="115" r="2.5" fill={espSerialBlinkRx ? "#10b981" : "#062f19"} />
+                          <circle cx="88" cy="123" r="2.5" fill={espSerialBlinkTx ? "#ef4444" : "#4c050a"} />
+                          <text x="78" y="121" fill="#78716c" fontSize="5" fontWeight="700">RX2/TX2</text>
+
+                          {/* Micro USB Port */}
+                          <rect x="42" y="146" width="26" height="15" fill="url(#silver-metallic-grad)" stroke="#475569" rx="1.5" />
+
+                          <text x="55" y="92" fill="#fff" fontSize="8" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ESP32 DEVKIT</text>
+                          <text x="55" y="99" fill="var(--color-primary)" fontSize="6" fontWeight="700" textAnchor="middle">
+                            {isWiFiActive ? "ONLINE" : `OFFLINE (${offlineQueueCount})`}
+                          </text>
+
+                          <div className="rvm-tooltip">
+                            <div className="rvm-tooltip-header">ESP32 DevKit V1</div>
+                            IoT bridge board. Receives telemetry packets from Mega TX1, buffers offline events if WiFi drops, and patches documents securely to Firestore when online.
+                          </div>
+                        </g>
+
+                        {/* COMPONENT 3: [NEW] TCRT5000 IR REFLECTIVE SENSOR */}
+                        <g transform="translate(250, 40)" className="interactive-component">
+                          {/* Board substrate */}
+                          <rect width="80" height="60" fill="#1e3a8a" stroke="#2563eb" strokeWidth="1.5" rx="4" />
+                          <rect x="4" y="4" width="72" height="52" fill="none" stroke="rgba(255,255,255,0.12)" rx="2" />
+
+                          {/* Black Emitter and Blue photodiode pointing down (drawn side by side) */}
+                          <rect x="25" y="-12" width="12" height="15" fill="#1e293b" stroke="#475569" rx="1" />
+                          <circle cx="31" cy="-12" r="3.5" fill="#0f172a" stroke="#475569" /> {/* Emitter */}
                           
-                          {/* Volts LED segment screen */}
-                          <rect x="35" y="32" width="50" height="22" fill="#000" rx="2" />
-                          <text x="60" y="48" fill={isPowerOn ? "#ef4444" : "#2a0505"} fontSize="12" fontWeight="700" textAnchor="middle" fontFamily="monospace">
+                          <rect x="43" y="-12" width="12" height="15" fill="#1e293b" stroke="#475569" rx="1" />
+                          <circle cx="49" cy="-12" r="3.5" fill="#3b82f6" stroke="#2563eb" /> {/* Photodiode */}
+
+                          {/* Blue trim potentiometer screw */}
+                          <rect x="10" y="20" width="15" height="15" fill="#2563eb" rx="1.5" />
+                          <circle cx="17.5" cy="27.5" r="3" fill="url(#brass-screw-grad)" stroke="#a16207" strokeWidth="0.5" />
+
+                          <text x="50" y="28" fill="#fff" fontSize="6.5" fontWeight="900">TCRT5000</text>
+                          <text x="50" y="36" fill="#93c5fd" fontSize="5.5" fontWeight="700">IR ENTRY</text>
+
+                          {/* Status indicator line glow */}
+                          <circle cx="40" cy="48" r="3.5" fill={sensorIRActive ? "#ef4444" : "#1e293b"} />
+
+                          <div className="rvm-tooltip">
+                            <div className="rvm-tooltip-header">TCRT5000 IR Sensor</div>
+                            Reflective optical sensor mounted inside the entry collar. Uses a 950nm IR emitter to spot bottle entry (breaks D11 threshold).
+                          </div>
+                        </g>
+
+                        {/* COMPONENT 4: [NEW] HC-SR04 ULTRASONIC SENSOR */}
+                        <g transform="translate(250, 135)" className="interactive-component">
+                          {/* Board substrate */}
+                          <rect width="95" height="65" fill="#0369a1" stroke="#0284c7" strokeWidth="1.5" rx="4" />
+                          <rect x="4" y="4" width="87" height="57" fill="none" stroke="rgba(255,255,255,0.12)" rx="2" />
+
+                          {/* Two large steel eyes (Transducer cylinders) */}
+                          <circle cx="28" cy="25" r="18" fill="url(#steel-metallic-grad)" stroke="#475569" strokeWidth="1" />
+                          <circle cx="28" cy="25" r="14" fill="#0f172a" />
+                          <text x="28" y="28" fill="#334155" fontSize="8" fontWeight="800" textAnchor="middle">T</text>
+
+                          <circle cx="68" cy="25" r="18" fill="url(#steel-metallic-grad)" stroke="#475569" strokeWidth="1" />
+                          <circle cx="68" cy="25" r="14" fill="#0f172a" />
+                          <text x="68" y="28" fill="#334155" fontSize="8" fontWeight="800" textAnchor="middle">R</text>
+
+                          {/* Crystal and pins */}
+                          <rect x="44" y="48" width="8" height="12" fill="url(#silver-metallic-grad)" rx="2" />
+                          <text x="48" y="58" fill="#fff" fontSize="5" textAnchor="middle">HC-SR04</text>
+
+                          <div className="rvm-tooltip">
+                            <div className="rvm-tooltip-header">HC-SR04 Ultrasonic</div>
+                            Dustbin level sensor. Emits high-frequency ultrasonic waves (Trig D22) and reads return pulse (Echo D23) to measure depth in CM.
+                          </div>
+                        </g>
+
+                        {/* COMPONENT 5: LM2596 BUCK REGULATOR 1 */}
+                        <g transform="translate(430, 40)" className="interactive-component">
+                          <rect width="115" height="70" fill="url(#buck-pcb-grad)" stroke="#0284c7" strokeWidth="1.8" rx="6" />
+                          <rect x="4" y="4" width="107" height="62" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" rx="4" />
+
+                          {/* Gold Toroidal Inductor coil */}
+                          <circle cx="22" cy="24" r="13" fill="none" stroke="url(#copper-toroid-grad)" strokeWidth="4" />
+                          <circle cx="22" cy="24" r="9" fill="#78350f" stroke="#000" strokeWidth="0.8" />
+
+                          {/* Electrolyte Capacitor cylinder */}
+                          <rect x="6" y="44" width="14" height="20" fill="url(#capacitor-grad)" stroke="#475569" rx="1.5" />
+                          <ellipse cx="13" cy="44" rx="7" ry="2.5" fill="#94a3b8" stroke="#cbd5e1" strokeWidth="0.5" />
+
+                          {/* Potentiometer adjustment dial */}
+                          <rect x="85" y="6" width="16" height="16" fill="#1d4ed8" stroke="#172554" rx="1.5" />
+                          <circle cx="93" cy="14" r="3.2" fill="url(#brass-screw-grad)" stroke="#ca8a04" strokeWidth="0.5" />
+                          <line x1="91" y1="12" x2="95" y2="16" stroke="#451a03" strokeWidth="0.8" />
+
+                          {/* glowing segment display output */}
+                          <rect x="44" y="34" width="52" height="24" fill="#000" rx="3" stroke="#334155" strokeWidth="1" />
+                          <text x="70" y="51" fill={isPowerOn ? "#ef4444" : "#2d0606"} fontSize="13" fontWeight="900" textAnchor="middle" fontFamily="monospace" textShadow={isPowerOn ? "0 0 5px #ef4444" : "none"}>
                             {isPowerOn ? "7.58" : "0.00"}
                           </text>
 
-                          <text x="55" y="12" fill="#94a3b8" fontSize="7" textAnchor="middle">LM2596 SENSORS</text>
-                          
-                          {/* Tooltip */}
+                          <text x="65" y="14" fill="#e0f2fe" fontSize="6.5" fontWeight="800" textAnchor="middle">LM2596 SENSORS</text>
+
                           <div className="rvm-tooltip">
-                            <div className="rvm-tooltip-header">LM2596 Regulator 1</div>
-                            Dedicated proximity sensor buck regulator. Step-downs V-in 12.0V down to stable **7.58V** reference rail.
+                            <div className="rvm-tooltip-header">LM2596 Buck Regulator 1</div>
+                            Dedicated sensor step-down power rail. Drops raw 12V inputs down to a stable 7.58V required to trigger LJC18A3 proximity sensors accurately.
                           </div>
                         </g>
 
-                        {/* COMPONENT 3: LM2596 BUCK CONVERTER (SERVOS) */}
-                        <g transform="translate(320, 160)" className="interactive-component">
-                          <rect width="110" height="65" fill="#1e293b" stroke="#ef4444" strokeWidth="2" rx="4" />
-                          <rect x="10" y="15" width="20" height="20" fill="#000" />
-                          <rect x="80" y="5" width="15" height="15" fill="#3b82f6" />
-                          <circle cx="87.5" cy="12.5" r="3.5" fill="#ef4444" />
-                          
-                          <rect x="35" y="32" width="50" height="22" fill="#000" rx="2" />
-                          <text x="60" y="48" fill={isPowerOn ? "#ef4444" : "#2a0505"} fontSize="12" fontWeight="700" textAnchor="middle" fontFamily="monospace">
+                        {/* COMPONENT 6: LM2596 BUCK REGULATOR 2 */}
+                        <g transform="translate(430, 135)" className="interactive-component">
+                          <rect width="115" height="70" fill="url(#buck-pcb-grad)" stroke="#0284c7" strokeWidth="1.8" rx="6" />
+                          <rect x="4" y="4" width="107" height="62" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" rx="4" />
+
+                          <circle cx="22" cy="24" r="13" fill="none" stroke="url(#copper-toroid-grad)" strokeWidth="4" />
+                          <circle cx="22" cy="24" r="9" fill="#78350f" stroke="#000" strokeWidth="0.8" />
+
+                          <rect x="6" y="44" width="14" height="20" fill="url(#capacitor-grad)" stroke="#475569" rx="1.5" />
+                          <ellipse cx="13" cy="44" rx="7" ry="2.5" fill="#94a3b8" stroke="#cbd5e1" strokeWidth="0.5" />
+
+                          <rect x="85" y="6" width="16" height="16" fill="#1d4ed8" stroke="#172554" rx="1.5" />
+                          <circle cx="93" cy="14" r="3.2" fill="url(#brass-screw-grad)" stroke="#ca8a04" strokeWidth="0.5" />
+                          <line x1="91" y1="12" x2="95" y2="16" stroke="#451a03" strokeWidth="0.8" />
+
+                          <rect x="44" y="34" width="52" height="24" fill="#000" rx="3" stroke="#334155" strokeWidth="1" />
+                          <text x="70" y="51" fill={isPowerOn ? "#ef4444" : "#2d0606"} fontSize="13" fontWeight="900" textAnchor="middle" fontFamily="monospace" textShadow={isPowerOn ? "0 0 5px #ef4444" : "none"}>
                             {isPowerOn ? "5.00" : "0.00"}
                           </text>
 
-                          <text x="55" y="12" fill="#94a3b8" fontSize="7" textAnchor="middle">LM2596 SERVOS</text>
+                          <text x="65" y="14" fill="#e0f2fe" fontSize="6.5" fontWeight="800" textAnchor="middle">LM2596 SERVOS</text>
 
-                          {/* Tooltip */}
                           <div className="rvm-tooltip">
-                            <div className="rvm-tooltip-header">LM2596 Regulator 2</div>
-                            Dedicated Servo rail buck regulator. Step-downs 12V V-in down to high-current **5.00V** logic line powering SG90 servos.
+                            <div className="rvm-tooltip-header">LM2596 Buck Regulator 2</div>
+                            Dedicated servo step-down power rail. Drops raw 12V inputs down to 5.00V to deliver high-amperage feeds required to sweep SG90 servos.
                           </div>
                         </g>
 
-                        {/* COMPONENT 4: BREADBOARD VOLTAGE DIVIDERS (10k/10k) */}
-                        <g transform="translate(320, 360)" className="interactive-component">
-                          <rect width="110" height="50" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" rx="4" />
-                          <line x1="5" y1="15" x2="105" y2="15" stroke="#cbd5e1" strokeDasharray="3,3" />
-                          <line x1="5" y1="35" x2="105" y2="35" stroke="#cbd5e1" strokeDasharray="3,3" />
+                        {/* COMPONENT 7: BREADBOARD VOLTAGE DIVIDERS */}
+                        <g transform="translate(270, 430)" className="interactive-component">
+                          {/* White breadboard substrate */}
+                          <rect width="110" height="75" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2.5" rx="5" />
+                          <line x1="5" y1="8" x2="105" y2="8" stroke="#ef4444" strokeWidth="0.8" />
+                          <line x1="5" y1="67" x2="105" y2="67" stroke="#2563eb" strokeWidth="0.8" />
+
+                          {/* Resistor dividers pair */}
+                          <g transform="translate(15, 20)">
+                            <line x1="-5" y1="5" x2="35" y2="5" stroke="#cbd5e1" strokeWidth="1" />
+                            <rect width="25" height="10" fill="#fed7aa" stroke="#f97316" rx="2.5" />
+                            <rect x="4" y="0" width="2" height="10" fill="#78350f" /> {/* Brown */}
+                            <rect x="8" y="0" width="2" height="10" fill="#000" />    {/* Black */}
+                            <rect x="12" y="0" width="2" height="10" fill="#ea580c" />   {/* Orange */}
+                            <rect x="18" y="0" width="2" height="10" fill="#ca8a04" />   {/* Gold */}
+                          </g>
+
+                          <g transform="translate(65, 20)">
+                            <line x1="-5" y1="5" x2="35" y2="5" stroke="#cbd5e1" strokeWidth="1" />
+                            <rect width="25" height="10" fill="#fed7aa" stroke="#f97316" rx="2.5" />
+                            <rect x="4" y="0" width="2" height="10" fill="#78350f" />
+                            <rect x="8" y="0" width="2" height="10" fill="#000" />
+                            <rect x="12" y="0" width="2" height="10" fill="#ea580c" />
+                            <rect x="18" y="0" width="2" height="10" fill="#ca8a04" />
+                          </g>
+
+                          {/* Serial 1k/2k divider resistors */}
+                          <g transform="translate(15, 45)">
+                            <line x1="-5" y1="5" x2="35" y2="5" stroke="#cbd5e1" strokeWidth="1" />
+                            <rect width="25" height="10" fill="#fed7aa" stroke="#3b82f6" rx="2.5" />
+                            <rect x="4" y="0" width="2" height="10" fill="#78350f" /> {/* Brown */}
+                            <rect x="8" y="0" width="2" height="10" fill="#000" />    {/* Black */}
+                            <rect x="12" y="0" width="2" height="10" fill="#ea580c" />   {/* Red */}
+                            <rect x="18" y="0" width="2" height="10" fill="#ca8a04" />   {/* Gold */}
+                          </g>
+
+                          <text x="55" y="62" fill="#64748b" fontSize="6.5" fontWeight="900" textAnchor="middle">VOLTAGE DIVIDERS</text>
+
+                          <div className="rvm-tooltip">
+                            <div className="rvm-tooltip-header">Voltage Divider Board</div>
+                            10kΩ/10kΩ proximity dividers and 1kΩ/2kΩ serial dividers. Splits high-voltage peak signals down to safe operational logic levels readable by Mega / ESP32.
+                          </div>
+                        </g>
+
+                        {/* COMPONENT 8: SG90 SERVO GATE */}
+                        <g transform="translate(730, 30)" className="interactive-component">
+                          <rect width="54" height="54" fill="rgba(37, 99, 235, 0.9)" stroke="#1d4ed8" strokeWidth="1.8" rx="6" />
+                          <circle cx="27" cy="27" r="14" fill="rgba(245, 158, 11, 0.3)" stroke="rgba(217, 119, 6, 0.3)" strokeWidth="0.8" />
+                          <circle cx="27" cy="27" r="10" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="1" />
+
+                          {/* Dynamic horn sweep animation */}
+                          <g transform={`rotate(${gateAngle}, 27, 27)`} className="servo-arm">
+                            <path d="M 24 27 L 24 -15 A 3 3 0 0 1 30 -15 L 30 27 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
+                            <circle cx="27" cy="-10" r="1.5" fill="#475569" />
+                            <circle cx="27" cy="27" r="3" fill="#94a3b8" />
+                          </g>
+                          <text x="27" y="48" fill="#fff" fontSize="8" fontWeight="900" textAnchor="middle">GATE</text>
+
+                          <div className="rvm-tooltip">
+                            <div className="rvm-tooltip-header">SG90 Servo Gate (D9)</div>
+                            High-speed rotary servo sweeping plastic bottles down the intake hopper, or keeping locked for metal cans.
+                          </div>
+                        </g>
+
+                        {/* COMPONENT 9: SG90 REWARD SERVO */}
+                        <g transform="translate(730, 120)" className="interactive-component">
+                          <rect width="54" height="54" fill="rgba(37, 99, 235, 0.9)" stroke="#1d4ed8" strokeWidth="1.8" rx="6" />
+                          <circle cx="27" cy="27" r="14" fill="rgba(245, 158, 11, 0.3)" stroke="rgba(217, 119, 6, 0.3)" strokeWidth="0.8" />
+                          <circle cx="27" cy="27" r="10" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="1" />
+
+                          <g transform={`rotate(${penAngle}, 27, 27)`} className="servo-arm">
+                            <path d="M 24 27 L 24 -15 A 3 3 0 0 1 30 -15 L 30 27 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
+                            <circle cx="27" cy="-10" r="1.5" fill="#475569" />
+                            <circle cx="27" cy="27" r="3" fill="#94a3b8" />
+                          </g>
+                          <text x="27" y="48" fill="#fff" fontSize="8" fontWeight="900" textAnchor="middle">REWARD</text>
+
+                          <div className="rvm-tooltip">
+                            <div className="rvm-tooltip-header">SG90 Servo Reward (D10)</div>
+                            Dual share-drive dispenser servos. Sweeps holding frame to release a reward pen for accepted recyclables.
+                          </div>
+                        </g>
+
+                        {/* COMPONENT 10: LJC18A3 CAPACITIVE PROXIMITY SENSOR */}
+                        <g transform="translate(730, 260)" className="interactive-component">
+                          {/* metallic sleeve cylinder */}
+                          <rect x="14" y="14" width="28" height="34" fill="url(#steel-metallic-grad)" stroke="#475569" strokeWidth="0.8" />
+                          {Array.from({ length: 6 }).map((_, i) => (
+                            <line key={i} x1="14" y1={String(20 + i * 5)} x2="42" y2={String(20 + i * 5)} stroke="#334155" strokeWidth="0.8" />
+                          ))}
                           
-                          {/* Resistors */}
-                          <rect x="25" y="10" width="15" height="10" fill="#fef08a" stroke="#ca8a04" rx="2" />
-                          <rect x="25" y="30" width="15" height="10" fill="#fef08a" stroke="#ca8a04" rx="2" />
-                          <rect x="70" y="10" width="15" height="10" fill="#fef08a" stroke="#ca8a04" rx="2" />
-                          <rect x="70" y="30" width="15" height="10" fill="#fef08a" stroke="#ca8a04" rx="2" />
+                          {/* clamping brass hex nuts */}
+                          <rect x="10" y="24" width="36" height="6" fill="url(#brass-screw-grad)" stroke="#a16207" rx="1.5" />
 
-                          <text x="55" y="47" fill="#64748b" fontSize="8" fontWeight="700" textAnchor="middle">10K DIVIDERS</text>
+                          {/* red capacitive face cover */}
+                          <rect x="18" y="2" width="20" height="12" fill="#e11d48" rx="1" />
 
-                          {/* Tooltip */}
+                          {/* signal indicator glow */}
+                          <circle cx="28" cy="30" r="8" fill={sensorCapActive ? "#10b981" : "#1e293b"} stroke="#fff" strokeWidth="0.5" />
+                          <text x="28" y="33" fill="#fff" fontSize="7.5" fontWeight="900" textAnchor="middle">CAP</text>
+
                           <div className="rvm-tooltip">
-                            <div className="rvm-tooltip-header">Resistor Divider</div>
-                            10kΩ series and 10kΩ shunt divider logic. Lowers 7.58V sensor output peaks to safe 3.8V Arduino TTL ranges.
+                            <div className="rvm-tooltip-header">LJC18A3 Capacitive Sensor</div>
+                            Proximity switch calibrated to 7.58V power. Uses electric field shifts to detect non-metallic density (plastic bottle thickness).
                           </div>
                         </g>
 
-                        {/* COMPONENT 5: SG90 SERVO GATE (D9) */}
-                        <g transform="translate(600, 30)" className="interactive-component">
-                          <rect width="50" height="50" fill="#2563eb" stroke="#1d4ed8" strokeWidth="2" rx="4" />
-                          <circle cx="25" cy="25" r="10" fill="#e2e8f0" stroke="#94a3b8" />
-                          
-                          {/* Rotating horn */}
-                          <line x1="25" y1="25" x2={25 + Math.cos((gateAngle * Math.PI) / 180) * 20} y2={25 + Math.sin((gateAngle * Math.PI) / 180) * 20} stroke="#fff" strokeWidth="5" strokeLinecap="round" />
-                          <text x="25" y="45" fill="#fff" fontSize="8" fontWeight="700" textAnchor="middle">GATE</text>
+                        {/* COMPONENT 11: LJ12A3 INDUCTIVE PROXIMITY SENSOR */}
+                        <g transform="translate(730, 360)" className="interactive-component">
+                          <rect x="17" y="14" width="22" height="34" fill="url(#steel-metallic-grad)" stroke="#475569" strokeWidth="0.8" />
+                          {Array.from({ length: 6 }).map((_, i) => (
+                            <line key={i} x1="17" y1={String(20 + i * 5)} x2="39" y2={String(20 + i * 5)} stroke="#334155" strokeWidth="0.8" />
+                          ))}
 
-                          {/* Tooltip */}
+                          <rect x="13" y="24" width="30" height="6" fill="url(#brass-screw-grad)" stroke="#a16207" rx="1.5" />
+
+                          {/* yellow inductive plastic cap face */}
+                          <rect x="20" y="2" width="16" height="12" fill="#eab308" rx="1" />
+
+                          <circle cx="28" cy="30" r="8" fill={sensorIndActive ? "#ef4444" : "#1e293b"} stroke="#fff" strokeWidth="0.5" />
+                          <text x="28" y="33" fill="#fff" fontSize="7.5" fontWeight="900" textAnchor="middle">IND</text>
+
                           <div className="rvm-tooltip">
-                            <div className="rvm-tooltip-header">Gate Servo (D9)</div>
-                            SG90 metal-gear servo. Angles mid-tube barrier. CLOSED = 0° (blocks cans), OPEN = 90° (drops bottles).
-                          </div>
-                        </g>
-
-                        {/* COMPONENT 6: SG90 REWARD SERVO (D10) */}
-                        <g transform="translate(600, 130)" className="interactive-component">
-                          <rect width="50" height="50" fill="#2563eb" stroke="#1d4ed8" strokeWidth="2" rx="4" />
-                          <circle cx="25" cy="25" r="10" fill="#e2e8f0" stroke="#94a3b8" />
-                          
-                          {/* Rotating horn */}
-                          <line x1="25" y1="25" x2={25 + Math.cos((penAngle * Math.PI) / 180) * 20} y2={25 + Math.sin((penAngle * Math.PI) / 180) * 20} stroke="#fff" strokeWidth="5" strokeLinecap="round" />
-                          <text x="25" y="45" fill="#fff" fontSize="8" fontWeight="700" textAnchor="middle">REWARD</text>
-
-                          {/* Tooltip */}
-                          <div className="rvm-tooltip">
-                            <div className="rvm-tooltip-header">Reward Servo (D10)</div>
-                            Dual SG90 dispenser servos sweeping in parallel. Rotates white wheel from 90° (hold) to 0° (dispense pen).
-                          </div>
-                        </g>
-
-                        {/* COMPONENT 7: CAPACITIVE PROXIMITY SENSOR (D5) */}
-                        <g transform="translate(600, 270)" className="interactive-component">
-                          <rect width="50" height="50" fill="#475569" stroke="#1e293b" strokeWidth="2" rx="6" />
-                          {/* Sensor cap tip */}
-                          <rect x="15" y="-5" width="20" height="8" fill="#e11d48" rx="1" />
-                          <circle cx="25" cy="25" r="12" fill={sensorCapActive ? "#10b981" : "#1e293b"} stroke="#fff" strokeWidth="1" />
-                          <text x="25" y="28" fill="#fff" fontSize="7" fontWeight="700" textAnchor="middle">CAP</text>
-
-                          {/* Tooltip */}
-                          <div className="rvm-tooltip">
-                            <div className="rvm-tooltip-header">Capacitive Sensor</div>
-                            LJC18A3-B-Z/BY NPN proximity sensor. Powered on 7.58V. Detects stable material thickness (plastic bottles).
-                          </div>
-                        </g>
-
-                        {/* COMPONENT 8: INDUCTIVE PROXIMITY SENSOR (D4) */}
-                        <g transform="translate(600, 360)" className="interactive-component">
-                          <rect width="50" height="50" fill="#475569" stroke="#1e293b" strokeWidth="2" rx="6" />
-                          <rect x="15" y="-5" width="20" height="8" fill="#fbbf24" rx="1" />
-                          <circle cx="25" cy="25" r="12" fill={sensorIndActive ? "#ef4444" : "#1e293b"} stroke="#fff" strokeWidth="1" />
-                          <text x="25" y="28" fill="#fff" fontSize="7" fontWeight="700" textAnchor="middle">IND</text>
-
-                          {/* Tooltip */}
-                          <div className="rvm-tooltip">
-                            <div className="rvm-tooltip-header">Inductive Sensor</div>
-                            LJ12A3-4-Z/BX NPN proximity sensor. Powered on 7.58V. Detects high magnetic fields (metal cans).
-                          </div>
-                        </g>
-
-                        {/* COMPONENT 9: IR BARRIER ENTRY SENSOR (D11) */}
-                        <g transform="translate(320, 270)" className="interactive-component">
-                          <rect width="70" height="40" fill="#020617" stroke="#1e293b" strokeWidth="2" rx="4" />
-                          <circle cx="20" cy="20" r="6" fill={sensorIRActive ? "#f43f5e" : "#e11d48"} />
-                          <circle cx="50" cy="20" r="6" fill="#3b82f6" />
-                          <text x="35" y="34" fill="#94a3b8" fontSize="7" textAnchor="middle">IR INTAKE</text>
-
-                          {/* Tooltip */}
-                          <div className="rvm-tooltip">
-                            <div className="rvm-tooltip-header">IR Barrier Trigger</div>
-                            Infrared photo-interrupter. Spies intake opening. Wakes Arduino Mega when item breaks the IR light.
+                            <div className="rvm-tooltip-header">LJ12A3 Inductive Sensor</div>
+                            Proximity switch. Detects electromagnetic field disturbances to identify high magnetic metallic targets (metal cans).
                           </div>
                         </g>
                       </svg>
