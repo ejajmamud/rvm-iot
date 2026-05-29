@@ -4171,13 +4171,13 @@ export default function App() {
                   }}>
                     <img 
                       src={[
-                        "/progress/IMG_0713.jpeg",
-                        "/progress/IMG_0714.jpeg",
-                        "/progress/IMG_0720.jpeg",
-                        "/progress/IMG_0730.jpeg",
-                        "/progress/IMG_0740.jpeg",
-                        "/progress/IMG_0751.jpeg",
-                        "/progress/IMG_0780.jpeg",
+                        "/progress/IMG_0729.jpeg",
+                        "/progress/IMG_0719.jpeg",
+                        "/progress/IMG_0739.jpeg",
+                        "/progress/IMG_0789.jpeg",
+                        "/progress/IMG_0746.jpeg",
+                        "/progress/IMG_0786.jpeg",
+                        "/progress/IMG_0781.jpeg",
                         "/progress/IMG_0790.jpeg"
                       ][activePhotoIdx]} 
                       alt="Physical Prototype construction step" 
@@ -4251,14 +4251,14 @@ export default function App() {
                       letterSpacing: '0.04em'
                     }}>
                       {[
-                        "ATmega2560 Power Rail & Logic Seeding",
-                        "Hitachi HD44780 LCD I2C Setup",
-                        "TCRT5000 IR Reflector Calibration",
-                        "HC-SR04 Ultrasonic Sonar Assembly",
-                        "LJ12A3-4-Z Inductive Metal Detector",
-                        "Dual SG90 Gate & Reward Actuation",
-                        "Full Cabinet Chassis Structural Assembly",
-                        "ESP32 IoT Cloud Upload Verification"
+                        "Proximity Sensor Calibration",
+                        "Main Circuit Center & Control Hub",
+                        "Intake Insertion Chute Diagnostics",
+                        "Structural Cabinet Top-Down View",
+                        "Intake Slot & Gate Servo Integration",
+                        "Cabinet Front Panel Assembly",
+                        "Front Panel Internal Wiring Layout",
+                        "Closed View of Control Board & Wiring"
                       ][activePhotoIdx]}
                     </strong>
                     <p style={{
@@ -4267,14 +4267,14 @@ export default function App() {
                       lineHeight: 1.5
                     }}>
                       {[
-                        "Initial hardware wiring stage. Mounting linear regulators, standard grounding grids, and seeding 5V/12V step-down buck modules to power high-torque actuator servos and diagnostic sensors.",
-                        "Integrating the 16×2 Character Display. Calibrated I2C expander sub-bus lines to streamline parallel microcontroller pin arrangements and test real-time custom system greetings.",
-                        "Positioning the infrared beam breaks inside the bottle reception chute. Calibrating NPN threshold logic for precise physical item detection and waking the RVM system from low-power sleep.",
-                        "Mounting the ultrasonic proximity sonar at the cabinet dome. Calibrated echo/trigger time-of-flight algorithms to measure bin waste capacity limits in real-time.",
-                        "Calibrating the NPN inductive proximity sensor loop. This sensor segregates aluminum cans from PET plastic bottles by creating active-low feedback signals when metal is detected.",
-                        "Mounting and testing high-torque micro servo horns. The gate servo sweeps 90° for accepted items, while the reward servo dispenses physical streak reward pens into the drawer.",
-                        "Integrating all hardware components, control panels, wiring rails, and acrylic structures into the final physical Reverse Vending Machine cabinet frame.",
-                        "Final software & hardware cloud synchronization step. Verified standard TLS 1.3 socket uploads to Google Firestore and synced live telemetry updates with the administrative console."
+                        "Calibrating the LJ12A3 NPN inductive metal proximity sensor and TCRT5000 IR reflectance thresholds to guarantee precise recyclable item identification.",
+                        "Seeding and securing the primary Arduino Mega 2560 control center, logic cabling, and 5V/12V step-down power rails on the main panel grid.",
+                        "Initial operational tests of the item intake insertion slot, validating obstacle clearance distances and sensor alignments before final assembly.",
+                        "Detailed top-to-bottom internal layout view showing structural panels, chute drop angles, and component mounting spacing inside the cabinet body.",
+                        "Successfully mounting the SG90 continuous gate servo actuator and locking mechanism directly behind the finalized item insertion hole.",
+                        "High-tech front face of the Reverse Vending Machine showcasing the integrated blue character LCD screen, indicator LEDs, and slot openings.",
+                        "Detailed rear-view wiring of the front panel, routing clean I2C character screen buses, serial signal loops, and system control lines.",
+                        "Final sealed and clean cabinet circuit wiring setup, ensuring complete system safety, structural cable management, and high-fidelity operational logic."
                       ][activePhotoIdx]}
                     </p>
                   </div>
@@ -4302,14 +4302,14 @@ export default function App() {
                     paddingRight: '6px'
                   }}>
                     {[
-                      "1. Power Rails Configuration",
-                      "2. Character LCD Sub-bus Calibration",
-                      "3. TCRT5000 IR Sensor Setup",
-                      "4. Ultrasonic Capacity Monitoring",
-                      "5. LJ12A3 Metallic Segregation",
-                      "6. Servo Mechanical Actuation",
-                      "7. Cabinet Frame Integration",
-                      "8. Cloud Telemetry Live Link"
+                      "1. Proximity Sensor Calibration",
+                      "2. Main Circuit Center",
+                      "3. Insertion Chute Diagnostics",
+                      "4. RVM Internal Structural Layout",
+                      "5. Finalized Intake Slot & Gate Servo",
+                      "6. Front Panel User Interface",
+                      "7. Front Panel Rear Connections",
+                      "8. Sealed Control Cabinet & Logic"
                     ].map((milestone, idx) => {
                       const isSelected = activePhotoIdx === idx;
                       return (
@@ -4352,14 +4352,14 @@ export default function App() {
                               marginTop: 2
                             }}>
                               {[
-                                "ATmega2560 & buck regulators wiring",
-                                "I2C calibration & parallel bus mapping",
-                                "Reflective infrared classification testing",
-                                "HC-SR04 sonar bin capacity sweep",
-                                "LJ12A3-4-Z/BX metal sensor loops",
-                                "SG90 Gate & Reward servo sweeping",
-                                "Acrylic chassis physical assembly",
-                                "ESP32 Firestore cloud integration"
+                                "Calibrating sensor threshold loops",
+                                "Arduino Mega & power rails setup",
+                                "Initial insertion hole clearance tests",
+                                "Top-to-downward RVM architecture view",
+                                "Mounting the SG90 entry gate sweeps",
+                                "Integrating character LCD & user face",
+                                "I2C LCD bus and wiring routing",
+                                "Final circuit wiring & cable management"
                               ][idx]}
                             </span>
                           </div>
