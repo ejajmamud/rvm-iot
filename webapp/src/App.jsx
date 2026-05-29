@@ -3,7 +3,10 @@ import {
   LayoutDashboard, Cpu, Activity, Bell, BarChart2, 
   Users, Settings as SettingsIcon, Wrench, ShieldAlert, 
   Trash2, Plus, LogOut, Sun, Moon, Wifi, CheckCircle2, 
-  AlertTriangle, Play, Pause, Database, Download, FileText
+  AlertTriangle, Play, Pause, Database, Download, FileText,
+  Monitor, Zap, Signal, Package, Volume2, VolumeX,
+  BarChart3, Globe, AlertCircle, Inbox, XCircle, Trophy,
+  CircuitBoard, Gauge, Radio, Power, Eye, Cable
 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { 
@@ -129,6 +132,11 @@ export default function App() {
   const [espSerialBlinkRx, setEspSerialBlinkRx] = useState(false);
   const [espSerialBlinkTx, setEspSerialBlinkTx] = useState(false);
   const [isPenInDrawer, setIsPenInDrawer] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+  const showToast = (msg, type = 'success') => {
+    setToastMessage({ msg, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   // Web Audio API Synth to play retro passive buzzer square wave tones!
   const playBuzzerTone = (frequency, durationMs) => {
@@ -394,12 +402,12 @@ export default function App() {
         const app = getApps()[0];
         const db = getFirestore(app);
         await updateDoc(doc(db, "settings", "RVM001"), updatedSettings);
-        alert("Settings synchronized to machine online database successfully!");
+        showToast("Settings synchronized to machine database");
       } catch (e) {
         console.error("Firestore error saving settings: ", e);
       }
     } else {
-      alert("Settings updated locally! (Operating in offline mode)");
+      showToast("Settings updated locally (offline mode)", "info");
     }
   };
 
@@ -500,11 +508,11 @@ export default function App() {
 
   const simulateHardwareEvent = async (type) => {
     if (!isPowerOn) {
-      alert("Cannot simulate event: Machine is currently powered off. Please toggle the Red Rocker Switch ON first!");
+      showToast("Machine powered off — toggle the rocker switch first", "error");
       return;
     }
     if (machine.binFull) {
-      alert("Intake Locked: The simulated dustbin is at capacity (BIN FULL). Empty the bin using the simulator button to resume recycling operations.");
+      showToast("Intake locked — bin at capacity. Empty the bin first", "error");
       return;
     }
     if (depositStep !== 'idle') {
@@ -711,7 +719,7 @@ export default function App() {
 
   const simulateToggleBinFull = async () => {
     if (!isPowerOn) {
-      alert("Cannot toggle bin status: Machine is currently powered off.");
+      showToast("Machine powered off — cannot toggle bin status", "error");
       return;
     }
     const nextState = !machine.binFull;
@@ -790,7 +798,7 @@ export default function App() {
   };
 
   const handleExportPDFMock = () => {
-    alert("Simulated PDF Generator:\nA gorgeous PDF document containing system audit records, historical line-graphs, recycling metrics and technical specifications has been generated and ready for direct presentation to Dr. Hannah and final FYP2 review!");
+    showToast("PDF report generated — ready for FYP2 review");
   };
 
   // Firebase Config Submitter
@@ -807,7 +815,7 @@ export default function App() {
     
     localStorage.setItem('rvm_firebase_config', JSON.stringify(configData));
     setFbConfig(configData);
-    alert("Firebase database credentials injected! React will now connect securely to your Firestore live tables.");
+    showToast("Firebase credentials injected — connecting to Firestore");
   };
 
   const handleClearFirebaseConfig = () => {
@@ -817,7 +825,7 @@ export default function App() {
     setMachine(INITIAL_MACHINE_MOCK);
     setEvents(INITIAL_MOCK_EVENTS);
     setAlerts(INITIAL_MOCK_ALERTS);
-    alert("Database credentials cleared! Reverting back to standalone simulation state.");
+    showToast("Credentials cleared — using local simulator", "info");
   };
 
   // --- AUTH ROUTER WALL ---
@@ -844,7 +852,7 @@ export default function App() {
             padding: '16px',
             borderRadius: '50%',
             marginBottom: '20px',
-            color: 'var(--color-primary)'
+            color: 'var(--color-green)'
           }}>
             <LayoutDashboard size={40} className="pulse-indicator" />
           </div>
@@ -853,7 +861,7 @@ export default function App() {
             fontSize: '1.8rem',
             textAlign: 'center',
             marginBottom: '8px',
-            background: 'linear-gradient(135deg, #ffffff, var(--color-primary))',
+            background: 'linear-gradient(135deg, #ffffff, var(--color-green))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>Smart Recycling Portal</h1>
@@ -893,7 +901,7 @@ export default function App() {
               <div style={{
                 background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.2)',
-                color: 'var(--color-danger)',
+                color: 'var(--color-red)',
                 padding: '12px',
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.8rem',
@@ -924,7 +932,7 @@ export default function App() {
               letterSpacing: '0.08em',
               marginBottom: '4px'
             }}>
-              ⚡ Quick Demo Login
+              Quick Demo Login
             </span>
             {[
               { name: "MD Ejaj Mahmud", role: "Admin", email: "ejaj@student.unikl.edu.my" },
@@ -975,8 +983,8 @@ export default function App() {
                   fontSize: '0.65rem',
                   background: u.role === 'Admin' ? 'rgba(59, 130, 246, 0.1)' : 
                              u.role === 'Supervisor' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                  color: u.role === 'Admin' ? 'var(--color-secondary)' : 
-                         u.role === 'Supervisor' ? 'var(--color-primary)' : 'var(--text-muted)',
+                  color: u.role === 'Admin' ? 'var(--color-blue)' : 
+                         u.role === 'Supervisor' ? 'var(--color-green)' : 'var(--text-muted)',
                   padding: '2px 6px',
                   borderRadius: '4px',
                   fontWeight: 700,
@@ -991,7 +999,7 @@ export default function App() {
             fontSize: '0.75rem',
             color: 'var(--text-muted)',
             textAlign: 'center',
-            borderTop: '1px solid var(--border-glass)',
+            borderTop: '1px solid var(--border-primary)',
             paddingTop: '20px',
             width: '100%'
           }}>
@@ -1004,13 +1012,41 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
       
+      {/* Inline Toast Notification */}
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          zIndex: 9999,
+          background: toastMessage.type === 'error' ? 'var(--color-red-dim)' : 
+                     toastMessage.type === 'info' ? 'var(--color-blue-dim)' : 'var(--color-green-dim)',
+          border: `1px solid ${toastMessage.type === 'error' ? 'var(--color-red)' : 
+                                toastMessage.type === 'info' ? 'var(--color-blue)' : 'var(--color-green)'}`,
+          color: toastMessage.type === 'error' ? 'var(--color-red)' : 
+                 toastMessage.type === 'info' ? 'var(--color-blue)' : 'var(--color-green)',
+          padding: '10px 18px',
+          borderRadius: 'var(--radius-sm)',
+          fontSize: '0.8rem',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          boxShadow: 'var(--shadow-lg)',
+          animation: 'toast-in 0.2s ease-out'
+        }}>
+          {toastMessage.type === 'error' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
+          {toastMessage.msg}
+        </div>
+      )}
+
       {/* --- SIDEBAR PANEL --- */}
       <aside className="glass-panel" style={{
-        width: '300px',
+        width: '260px',
         borderRadius: 0,
-        borderRight: '1px solid var(--border-glass)',
+        borderRight: '1px solid var(--border-primary)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -1021,7 +1057,7 @@ export default function App() {
           {/* Brand Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 36 }}>
             <div style={{
-              background: 'linear-gradient(135deg, var(--color-primary), var(--color-success))',
+              background: 'linear-gradient(135deg, var(--color-green), var(--color-green))',
               color: 'white',
               padding: 8,
               borderRadius: 'var(--radius-sm)'
@@ -1044,13 +1080,13 @@ export default function App() {
                 gap: 4,
                 fontSize: '0.75rem',
                 fontWeight: 600,
-                color: machine.status === 'online' ? 'var(--color-primary)' : 'var(--color-warning)'
+                color: machine.status === 'online' ? 'var(--color-green)' : 'var(--color-amber)'
               }}>
                 <span style={{
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: machine.status === 'online' ? 'var(--color-primary)' : 'var(--color-warning)'
+                  background: machine.status === 'online' ? 'var(--color-green)' : 'var(--color-amber)'
                 }} className="pulse-indicator" />
                 {machine.status.toUpperCase()}
               </span>
@@ -1064,7 +1100,7 @@ export default function App() {
               <div style={{
                 width: machine.binFull ? '100%' : '24%',
                 height: '100%',
-                background: machine.binFull ? 'var(--color-danger)' : 'var(--color-primary)',
+                background: machine.binFull ? 'var(--color-red)' : 'var(--color-green)',
                 transition: 'var(--transition-smooth)'
               }} />
             </div>
@@ -1098,7 +1134,7 @@ export default function App() {
                     borderRadius: 'var(--radius-sm)',
                     background: isActive ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
                     border: 'none',
-                    color: isActive ? 'var(--color-primary)' : 'var(--text-main)',
+                    color: isActive ? 'var(--color-green)' : 'var(--text-primary)',
                     cursor: 'pointer',
                     fontWeight: isActive ? 600 : 500,
                     textAlign: 'left',
@@ -1112,7 +1148,7 @@ export default function App() {
                   </div>
                   {item.count > 0 && (
                     <span style={{
-                      background: 'var(--color-danger)',
+                      background: 'var(--color-red)',
                       color: 'white',
                       fontSize: '0.7rem',
                       fontWeight: 700,
@@ -1137,7 +1173,7 @@ export default function App() {
                 style={{
                   border: 'none',
                   background: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                  color: theme === 'dark' ? 'var(--color-primary)' : 'var(--text-muted)',
+                  color: theme === 'dark' ? 'var(--color-green)' : 'var(--text-muted)',
                   padding: 8,
                   borderRadius: 'var(--radius-sm)',
                   cursor: 'pointer'
@@ -1150,7 +1186,7 @@ export default function App() {
                 style={{
                   border: 'none',
                   background: theme === 'light' ? 'rgba(15,23,42,0.08)' : 'transparent',
-                  color: theme === 'light' ? 'var(--color-primary)' : 'var(--text-muted)',
+                  color: theme === 'light' ? 'var(--color-green)' : 'var(--text-muted)',
                   padding: 8,
                   borderRadius: 'var(--radius-sm)',
                   cursor: 'pointer'
@@ -1162,7 +1198,7 @@ export default function App() {
             
             <span style={{
               fontSize: '0.7rem',
-              color: isFirebaseConnected ? 'var(--color-primary)' : 'var(--text-muted)',
+              color: isFirebaseConnected ? 'var(--color-green)' : 'var(--text-muted)',
               display: 'flex',
               alignItems: 'center',
               gap: 4
@@ -1176,7 +1212,7 @@ export default function App() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderTop: '1px solid var(--border-glass)',
+            borderTop: '1px solid var(--border-primary)',
             paddingTop: '16px'
           }}>
             <div>
@@ -1190,7 +1226,7 @@ export default function App() {
               style={{
                 border: 'none',
                 background: 'rgba(239,68,68,0.1)',
-                color: 'var(--color-danger)',
+                color: 'var(--color-red)',
                 padding: 8,
                 borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer'
@@ -1243,8 +1279,8 @@ export default function App() {
               onClick={handleToggleSimulator} 
               className="btn-secondary"
               style={{
-                borderColor: isSimulating ? 'var(--color-primary)' : 'var(--border-glass)',
-                color: isSimulating ? 'var(--color-primary)' : 'var(--text-main)',
+                borderColor: isSimulating ? 'var(--color-green)' : 'var(--border-primary)',
+                color: isSimulating ? 'var(--color-green)' : 'var(--text-primary)',
               }}
             >
               {isSimulating ? <Pause size={16} /> : <Play size={16} />}
@@ -1268,10 +1304,10 @@ export default function App() {
               {/* KPI Cards Grid */}
               <div className="dashboard-grid">
                 {[
-                  { title: "PET Accepted", value: machine.acceptedCount, desc: "Total Plastic Recycled", color: "var(--color-primary)" },
-                  { title: "Metal Cans Rejected", value: machine.rejectedCount, desc: "Cans Blocked & Safe", color: "var(--color-danger)" },
-                  { title: "Pens Dispensed", value: machine.penDispensedCount, desc: "Streak Rewards Issued", color: "var(--color-secondary)" },
-                  { title: "Active Alarms", value: alerts.filter(a => a.status === 'open').length, desc: "Requiring Attention", color: "var(--color-warning)" }
+                  { title: "PET Accepted", value: machine.acceptedCount, desc: "Total Plastic Recycled", color: "var(--color-green)" },
+                  { title: "Metal Cans Rejected", value: machine.rejectedCount, desc: "Cans Blocked & Safe", color: "var(--color-red)" },
+                  { title: "Pens Dispensed", value: machine.penDispensedCount, desc: "Streak Rewards Issued", color: "var(--color-blue)" },
+                  { title: "Active Alarms", value: alerts.filter(a => a.status === 'open').length, desc: "Requiring Attention", color: "var(--color-amber)" }
                 ].map((kpi, idx) => (
                   <div key={idx} className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
@@ -1291,23 +1327,23 @@ export default function App() {
                   <h3 style={{ fontSize: '1.2rem', marginBottom: 20 }}>RVM Hardware Live Status</h3>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-glass)', paddingBottom: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-primary)', paddingBottom: 10 }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Machine Reference:</span>
                       <span style={{ fontWeight: 600 }}>{machine.machineId}</span>
                     </div>
                     
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-glass)', paddingBottom: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-primary)', paddingBottom: 10 }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Physical Location:</span>
                       <span style={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'right' }}>{machine.location}</span>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-glass)', paddingBottom: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-primary)', paddingBottom: 10 }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Network Connectivity:</span>
                       <span style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 6,
-                        color: 'var(--color-primary)',
+                        color: 'var(--color-green)',
                         fontWeight: 600
                       }}>
                         <Wifi size={16} /> Online (Bridge active)
@@ -1317,7 +1353,7 @@ export default function App() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Bin Full Condition:</span>
-                        <span style={{ fontWeight: 600, color: machine.binFull ? 'var(--color-danger)' : 'var(--color-primary)' }}>
+                        <span style={{ fontWeight: 600, color: machine.binFull ? 'var(--color-red)' : 'var(--color-green)' }}>
                           {machine.binFull ? 'CRITICAL - EMPTY IMMEDIATELY' : 'Normal Operations (24%)'}
                         </span>
                       </div>
@@ -1325,7 +1361,7 @@ export default function App() {
                         <div style={{
                           width: machine.binFull ? '100%' : '24%',
                           height: '100%',
-                          background: machine.binFull ? 'var(--color-danger)' : 'var(--color-primary)',
+                          background: machine.binFull ? 'var(--color-red)' : 'var(--color-green)',
                           transition: 'var(--transition-smooth)'
                         }} />
                       </div>
@@ -1354,7 +1390,7 @@ export default function App() {
                       <path
                         d="M 10 120 Q 80 80 150 140 T 290 50 T 430 80 L 490 60"
                         fill="none"
-                        stroke="var(--color-primary)"
+                        stroke="var(--color-green)"
                         strokeWidth="3"
                         strokeLinecap="round"
                       />
@@ -1362,7 +1398,7 @@ export default function App() {
                       <path
                         d="M 10 180 Q 80 160 150 170 T 290 140 T 430 160 L 490 150"
                         fill="none"
-                        stroke="var(--color-danger)"
+                        stroke="var(--color-red)"
                         strokeWidth="3"
                         strokeLinecap="round"
                       />
@@ -1378,11 +1414,11 @@ export default function App() {
                     {/* Chart Legend */}
                     <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 12 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}>
-                        <span style={{ width: 12, height: 4, background: 'var(--color-primary)', display: 'block', borderRadius: 2 }} />
+                        <span style={{ width: 12, height: 4, background: 'var(--color-green)', display: 'block', borderRadius: 2 }} />
                         PET Bottles Accepted
                       </span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}>
-                        <span style={{ width: 12, height: 4, background: 'var(--color-danger)', display: 'block', borderRadius: 2 }} />
+                        <span style={{ width: 12, height: 4, background: 'var(--color-red)', display: 'block', borderRadius: 2 }} />
                         Metal Cans Rejected
                       </span>
                     </div>
@@ -1412,8 +1448,8 @@ export default function App() {
                         <span style={{
                           background: ev.type === 'PET_ACCEPTED' ? 'rgba(16, 185, 129, 0.1)' : 
                                       ev.type === 'METAL_REJECTED' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.04)',
-                          color: ev.type === 'PET_ACCEPTED' ? 'var(--color-primary)' : 
-                                 ev.type === 'METAL_REJECTED' ? 'var(--color-danger)' : 'var(--text-muted)',
+                          color: ev.type === 'PET_ACCEPTED' ? 'var(--color-green)' : 
+                                 ev.type === 'METAL_REJECTED' ? 'var(--color-red)' : 'var(--text-muted)',
                           padding: '6px 12px',
                           borderRadius: 'var(--radius-sm)',
                           fontSize: '0.75rem',
@@ -1449,14 +1485,14 @@ export default function App() {
                   className={!showInternalChassis ? "btn-primary" : "btn-secondary"}
                   style={{ flex: 1, padding: '10px', fontSize: '0.85rem', justifyContent: 'center' }}
                 >
-                  📺 FRONT CABINET PANEL VIEW
+                  FRONT CABINET PANEL VIEW
                 </button>
                 <button 
                   onClick={() => setShowInternalChassis(true)} 
                   className={showInternalChassis ? "btn-primary" : "btn-secondary"}
                   style={{ flex: 1, padding: '10px', fontSize: '0.85rem', justifyContent: 'center' }}
                 >
-                  ⚡ INTERNAL WIRING CHASSIS VIEW
+                  INTERNAL WIRING CHASSIS VIEW
                 </button>
               </div>
 
@@ -1471,8 +1507,8 @@ export default function App() {
                     /* Revamped Flat Obsidian Titanium Front Panel View */
                     <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: '16px' }}>
                       <h3 style={{ fontSize: '1.1rem', marginBottom: '8px', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>📺 RVM Industrial Console Panel</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>100% Hardware Simulated</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Monitor size={16} /> RVM Industrial Console Panel</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--color-green)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>100% Hardware Simulated</span>
                       </h3>
                       
                       <div className="perspective-container" style={{ width: '100%' }}>
@@ -1484,7 +1520,7 @@ export default function App() {
                               <div className="rvm-tooltip">
                                 <div className="rvm-tooltip-header">
                                   <span>Hitachi HD44780 LCD</span>
-                                  <span style={{ fontSize: '0.6rem', color: 'var(--color-secondary)' }}>I2C address: 0x27</span>
+                                  <span style={{ fontSize: '0.6rem', color: 'var(--color-blue)' }}>I2C address: 0x27</span>
                                 </div>
                                 Alphanumeric Liquid Crystal Display. Powered by 5.0V. Integrates parallel matrix drivers over SCL/SDA lines. Displays state messages.
                               </div>
@@ -1516,7 +1552,7 @@ export default function App() {
                                     <div style={{
                                       position: 'absolute',
                                       top: '-6px', left: '-6px', right: '-6px', bottom: '-6px',
-                                      border: '1px dashed var(--color-danger)',
+                                      border: '1px dashed var(--color-red)',
                                       borderRadius: '50%',
                                       animation: 'pulse 1s infinite'
                                     }} />
@@ -1538,7 +1574,7 @@ export default function App() {
 
                             {/* SECTION 3: High-Tech Interactive Waste Intake Chamber */}
                             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>📥 WASTE CLASSIFICATION CHAMBER VIEW</span>
+                              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>WASTE CLASSIFICATION CHAMBER VIEW</span>
                               
                               <div style={{ position: 'relative', width: '100%', height: '180px' }}>
                                 <svg viewBox="0 0 380 180" style={{ width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.8)', border: '2.5px solid #334155', borderRadius: '8px', overflow: 'visible' }}>
@@ -1679,9 +1715,9 @@ export default function App() {
                                 <button 
                                   onClick={() => setIsMuted(!isMuted)} 
                                   className="btn-secondary" 
-                                  style={{ padding: '6px', fontSize: '0.65rem', justifyContent: 'center', borderColor: isMuted ? 'var(--color-danger)' : 'var(--border-glass)', background: 'rgba(0,0,0,0.3)', borderRadius: 4 }}
+                                  style={{ padding: '6px', fontSize: '0.65rem', justifyContent: 'center', borderColor: isMuted ? 'var(--color-red)' : 'var(--border-primary)', background: 'rgba(0,0,0,0.3)', borderRadius: 4 }}
                                 >
-                                  {isMuted ? "🔇 MUTED" : "🔊 AUDIO ON"}
+                                  {isMuted ? <><VolumeX size={12} /> MUTED</> : <><Volume2 size={12} /> AUDIO</>}
                                 </button>
                               </div>
 
@@ -1703,11 +1739,11 @@ export default function App() {
                                 </div>
 
                                 <div className="glass-panel" style={{ padding: '6px 8px', background: 'rgba(0,0,0,0.2)', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 700 }}>📶 ESP32 BRIDGE:</span>
+                                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 700 }}>ESP32 BRIDGE:</span>
                                   <span style={{
                                     fontSize: '0.62rem',
                                     fontWeight: 700,
-                                    color: !isPowerOn ? 'var(--text-muted)' : isWiFiActive ? 'var(--color-primary)' : 'var(--color-danger)',
+                                    color: !isPowerOn ? 'var(--text-muted)' : isWiFiActive ? 'var(--color-green)' : 'var(--color-red)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 3
@@ -1716,7 +1752,7 @@ export default function App() {
                                       width: 6,
                                       height: 6,
                                       borderRadius: '50%',
-                                      background: !isPowerOn ? '#475569' : isWiFiActive ? 'var(--color-primary)' : 'var(--color-danger)'
+                                      background: !isPowerOn ? '#475569' : isWiFiActive ? 'var(--color-green)' : 'var(--color-red)'
                                     }} className={isPowerOn && isWiFiActive ? "pulse-indicator" : ""} />
                                     {!isPowerOn ? "POWER OFF" : isWiFiActive ? `ONLINE (DB)` : `OFFLINE (${offlineQueueCount})`}
                                   </span>
@@ -1727,7 +1763,7 @@ export default function App() {
 
                             {/* SECTION 5: Transparent Microcontroller Glass Diagnostic Bay */}
                             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>⚡ TEMPERED GLASS CONTROLLER VIEWPORT</span>
+                              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>CONTROLLER VIEWPORT</span>
                               
                               <div className="diagnostic-viewport-panel" style={{ height: '95px' }}>
                                 <svg viewBox="0 0 340 70" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
@@ -1797,7 +1833,7 @@ export default function App() {
                               
                               {/* A. Waste bin with HC-SR04 ultrasonic */}
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--text-muted)' }}>🗑️ COLLECTION BIN</span>
+                                <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--text-muted)' }}>COLLECTION BIN</span>
                                 
                                 <div className="waste-viewport-bin">
                                   <svg viewBox="0 0 160 110" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
@@ -1817,8 +1853,8 @@ export default function App() {
                                     {/* Sonar emission wave arcs */}
                                     {isPowerOn && (
                                       <g style={{ opacity: machine.binFull ? 0.8 : 0.4 }}>
-                                        <line x1="66" y1="32" x2="66" y2="70" stroke="var(--color-primary)" strokeWidth="1" strokeDasharray="3,3" />
-                                        <line x1="94" y1="32" x2="94" y2="70" stroke="var(--color-primary)" strokeWidth="1" strokeDasharray="3,3" />
+                                        <line x1="66" y1="32" x2="66" y2="70" stroke="var(--color-green)" strokeWidth="1" strokeDasharray="3,3" />
+                                        <line x1="94" y1="32" x2="94" y2="70" stroke="var(--color-green)" strokeWidth="1" strokeDasharray="3,3" />
                                       </g>
                                     )}
 
@@ -1854,7 +1890,7 @@ export default function App() {
 
                                     {/* Measurement HUD */}
                                     <rect x="15" y="88" width="130" height="16" fill="rgba(0,0,0,0.75)" rx="3" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-                                    <text x="80" y="99" fill={machine.binFull ? "var(--color-danger)" : "var(--color-primary)"} fontSize="7" fontWeight="900" textAnchor="middle" fontFamily="monospace">
+                                    <text x="80" y="99" fill={machine.binFull ? "var(--color-red)" : "var(--color-green)"} fontSize="7" fontWeight="900" textAnchor="middle" fontFamily="monospace">
                                       {machine.binFull ? "8.0 cm (100% FULL)" : `${(26.4 - Math.min(15, machine.acceptedCount * 0.4)).toFixed(1)} cm (24%)`}
                                     </text>
                                   </svg>
@@ -1864,8 +1900,8 @@ export default function App() {
                               {/* B. Reward dispenser drawer (Carousel & slide drawer) */}
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--text-muted)' }}>🎁 REWARD STOCK</span>
-                                  <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--color-secondary)' }}>{simulatedPenRewardCount}/50</span>
+                                  <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--text-muted)' }}>REWARD STOCK</span>
+                                  <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--color-blue)' }}>{simulatedPenRewardCount}/50</span>
                                 </div>
 
                                 <div className="glass-panel" style={{
@@ -1919,7 +1955,7 @@ export default function App() {
                                           playBuzzerTone(1500, 100);
                                           setTimeout(() => playBuzzerTone(1800, 150), 120);
                                           logAudit(currentUser?.name || "User", "CLAIM_REWARD", "Dispensed pen retrieved from drawer");
-                                          alert("🎉 Reward Claimed: You retrieved 1 high-quality Streak Pen reward! Outstanding work!");
+                                          showToast("Reward claimed — pen retrieved from drawer");
                                         }}
                                         style={{
                                           width: '90%',
@@ -1935,10 +1971,10 @@ export default function App() {
                                           fontWeight: '900',
                                           boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)',
                                           letterSpacing: '0.02em',
-                                          animation: 'pulse 1s infinite'
+                                          animation: 'none'
                                         }}
                                       >
-                                        🎁 CLICK TO CLAIM PEN
+                                        CLAIM REWARD
                                       </div>
                                     ) : (
                                       <div style={{ fontSize: '0.62rem', color: '#334155', fontWeight: 800 }}>DRAWER EMPTY</div>
@@ -1962,12 +1998,12 @@ export default function App() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div className="glass-panel" style={{ padding: '16px', background: 'rgba(0,0,0,0.2)' }}>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>
-                            ⚡ LM2596 STEP-DOWN BUCK REGULATORS
+                            LM2596 STEP-DOWN BUCK REGULATORS
                           </span>
                           
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             {/* Buck 1 */}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, borderRight: '1px solid var(--border-glass)' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, borderRight: '1px solid var(--border-primary)' }}>
                               <span style={{ fontSize: '0.65rem', fontWeight: 600 }}>SENSORS RAIL BUCK</span>
                               <div className={`seven-segment-display ${!isPowerOn ? "dark-display" : ""}`}>
                                 {isPowerOn ? "7.58" : "0.00"} V
@@ -1989,7 +2025,7 @@ export default function App() {
                         {/* Telemetry diagnostics */}
                         <div className="glass-panel" style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 10 }}>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                            📊 SENSORS REAL-TIME TELEMETRY
+                            SENSORS REAL-TIME TELEMETRY
                           </span>
                           
                           {[
@@ -2032,30 +2068,30 @@ export default function App() {
                         style={{ justifyContent: 'center' }}
                         disabled={!isPowerOn}
                       >
-                        📥 Simulate PET Plastic Bottle Deposit
+                        Simulate PET Plastic Bottle Deposit
                       </button>
                       
                       <button 
                         onClick={() => simulateHardwareEvent("METAL_REJECTED")}
                         className="btn-secondary" 
-                        style={{ justifyContent: 'center', border: '1px solid var(--color-danger)', color: 'var(--color-danger)', background: 'rgba(239, 68, 68, 0.05)' }}
+                        style={{ justifyContent: 'center', border: '1px solid var(--color-red)', color: 'var(--color-red)', background: 'rgba(239, 68, 68, 0.05)' }}
                         disabled={!isPowerOn}
                       >
-                        ❌ Simulate Metal Can Deposit (Reject)
+                        Simulate Metal Can Deposit (Reject)
                       </button>
 
                       <button 
                         onClick={simulateToggleBinFull}
                         className="btn-secondary" 
-                        style={{ justifyContent: 'center', border: '1px solid var(--border-glass)' }}
+                        style={{ justifyContent: 'center', border: '1px solid var(--border-primary)' }}
                         disabled={!isPowerOn}
                       >
-                        🗑️ {machine.binFull ? "Empty simulated dustbin (GND Reset)" : "Fill simulated dustbin to capacity (BIN FULL)"}
+                        {machine.binFull ? "Empty simulated dustbin (GND Reset)" : "Fill simulated dustbin to capacity (BIN FULL)"}
                       </button>
 
                       {/* ESP32 WiFi / Offline Buffer Simulation Controllers */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12, borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: 12 }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>📶 ESP32 Bridge Network Status</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>ESP32 Bridge Network Status</span>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button
                             onClick={() => {
@@ -2074,10 +2110,10 @@ export default function App() {
                               }
                             }}
                             className="btn-secondary"
-                            style={{ flex: 1, padding: '8px', fontSize: '0.75rem', justifyContent: 'center', borderColor: isWiFiActive ? 'var(--color-primary)' : 'var(--color-danger)', color: isWiFiActive ? 'var(--color-primary)' : 'var(--color-danger)' }}
+                            style={{ flex: 1, padding: '8px', fontSize: '0.75rem', justifyContent: 'center', borderColor: isWiFiActive ? 'var(--color-green)' : 'var(--color-red)', color: isWiFiActive ? 'var(--color-green)' : 'var(--color-red)' }}
                             disabled={!isPowerOn}
                           >
-                            {isWiFiActive ? "🌐 WiFi Connected" : "⚠️ WiFi Disconnected"}
+                            {isWiFiActive ? <><Globe size={12} /> WiFi Connected</> : <><AlertCircle size={12} /> WiFi Disconnected</>}
                           </button>
                           {offlineQueueCount > 0 && (
                             <button
@@ -2086,7 +2122,7 @@ export default function App() {
                                 playBuzzerTone(400, 200);
                               }}
                               className="btn-secondary"
-                              style={{ padding: '8px', fontSize: '0.75rem', color: 'var(--color-danger)', borderColor: 'rgba(239,68,68,0.2)' }}
+                              style={{ padding: '8px', fontSize: '0.75rem', color: 'var(--color-red)', borderColor: 'rgba(239,68,68,0.2)' }}
                             >
                               Reset Queue ({offlineQueueCount})
                             </button>
@@ -2105,7 +2141,7 @@ export default function App() {
                     {/* SVG wiring panel canvas */}
                     <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 3 }}>
                       <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>⚡ EXACT HARDWARE WIRING & PHOTOREALISTIC SCHEMATIC</span>
+                        <span>HARDWARE WIRING SCHEMATIC</span>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>hover components for pins & calibrations</span>
                       </h4>
 
@@ -2424,7 +2460,7 @@ export default function App() {
                           <rect x="42" y="146" width="26" height="15" fill="url(#silver-metallic-grad)" stroke="#475569" rx="1.5" />
 
                           <text x="55" y="92" fill="#fff" fontSize="8" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ESP32 DEVKIT</text>
-                          <text x="55" y="99" fill="var(--color-primary)" fontSize="6" fontWeight="700" textAnchor="middle">
+                          <text x="55" y="99" fill="var(--color-green)" fontSize="6" fontWeight="700" textAnchor="middle">
                             {isWiFiActive ? "ONLINE" : `OFFLINE (${offlineQueueCount})`}
                           </text>
 
@@ -2716,8 +2752,8 @@ export default function App() {
                           <span style={{
                             background: e.type === 'PET_ACCEPTED' ? 'rgba(16, 185, 129, 0.1)' : 
                                         e.type === 'METAL_REJECTED' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)',
-                            color: e.type === 'PET_ACCEPTED' ? 'var(--color-primary)' : 
-                                   e.type === 'METAL_REJECTED' ? 'var(--color-danger)' : 'var(--text-muted)',
+                            color: e.type === 'PET_ACCEPTED' ? 'var(--color-green)' : 
+                                   e.type === 'METAL_REJECTED' ? 'var(--color-red)' : 'var(--text-muted)',
                             padding: '4px 8px',
                             borderRadius: '4px',
                             fontSize: '0.75rem',
@@ -2730,7 +2766,7 @@ export default function App() {
                         <td>{e.rejectedCount}</td>
                         <td>{e.penCount || 0}</td>
                         <td>
-                          <span style={{ color: e.binFull ? 'var(--color-danger)' : 'var(--color-primary)' }}>
+                          <span style={{ color: e.binFull ? 'var(--color-red)' : 'var(--color-green)' }}>
                             {e.binFull ? "FULL" : "OK"}
                           </span>
                         </td>
@@ -2753,28 +2789,28 @@ export default function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {alerts.filter(a => a.status === 'open').length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                      <CheckCircle2 size={40} style={{ color: 'var(--color-primary)', marginBottom: 12 }} />
+                      <CheckCircle2 size={40} style={{ color: 'var(--color-green)', marginBottom: 12 }} />
                       <p>All clear! There are currently no active warnings or structural alarms logged.</p>
                     </div>
                   ) : (
                     alerts.filter(a => a.status === 'open').map(alert => (
                       <div key={alert.id} className="glass-panel" style={{
                         padding: '20px',
-                        borderLeft: `5px solid ${alert.severity === 'critical' ? 'var(--color-danger)' : 'var(--color-warning)'}`,
+                        borderLeft: `5px solid ${alert.severity === 'critical' ? 'var(--color-red)' : 'var(--color-amber)'}`,
                         background: 'rgba(255,255,255,0.01)',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-                          <AlertTriangle size={24} style={{ color: alert.severity === 'critical' ? 'var(--color-danger)' : 'var(--color-warning)' }} />
+                          <AlertTriangle size={24} style={{ color: alert.severity === 'critical' ? 'var(--color-red)' : 'var(--color-amber)' }} />
                           <div>
                             <span style={{ fontSize: '1rem', fontWeight: 600 }}>
                               {alert.type === 'BIN_FULL' ? 'COLLECTION DUSTBIN AT CAPACITY' : 
                                alert.type === 'LOW_REWARD_STOCK' ? 'REWARD PENS STOCK LOW (<10%)' : 'SYSTEM MALFUNCTION ALARM'}
                             </span>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                              Severity: <strong style={{ color: alert.severity === 'critical' ? 'var(--color-danger)' : 'var(--color-warning)' }}>{alert.severity.toUpperCase()}</strong> | 
+                              Severity: <strong style={{ color: alert.severity === 'critical' ? 'var(--color-red)' : 'var(--color-amber)' }}>{alert.severity.toUpperCase()}</strong> | 
                               Logged: {alert.createdAt.toLocaleString()}
                             </div>
                           </div>
@@ -2822,13 +2858,13 @@ export default function App() {
                         <tr key={a.id}>
                           <td>{a.createdAt.toLocaleString()}</td>
                           <td><strong>{a.type}</strong></td>
-                          <td style={{ color: a.severity === 'critical' ? 'var(--color-danger)' : 'var(--color-warning)' }}>
+                          <td style={{ color: a.severity === 'critical' ? 'var(--color-red)' : 'var(--color-amber)' }}>
                             {a.severity.toUpperCase()}
                           </td>
                           <td>{a.resolvedAt ? a.resolvedAt.toLocaleString() : 'Acknowledged'}</td>
                           <td>
                             <span style={{
-                              color: 'var(--color-primary)',
+                              color: 'var(--color-green)',
                               fontSize: '0.8rem',
                               fontWeight: 600
                             }}>
@@ -2876,13 +2912,13 @@ export default function App() {
                       <path
                         d="M 10 150 L 80 120 L 150 160 L 220 90 L 290 140 L 360 70 L 430 40 L 490 20"
                         fill="none"
-                        stroke="var(--color-primary)"
+                        stroke="var(--color-green)"
                         strokeWidth="4"
                         strokeLinecap="round"
                       />
                       
-                      <circle cx="430" cy="40" r="5" fill="var(--color-primary)" />
-                      <circle cx="490" cy="20" r="5" fill="var(--color-primary)" />
+                      <circle cx="430" cy="40" r="5" fill="var(--color-green)" />
+                      <circle cx="490" cy="20" r="5" fill="var(--color-green)" />
 
                       {INITIAL_HISTORICAL_DATA.map((d, i) => (
                         <text key={i} x={10 + i * 80} y="210" fill="var(--text-muted)" fontSize="10" textAnchor="middle">
@@ -2903,7 +2939,7 @@ export default function App() {
                       width: 120,
                       height: 120,
                       borderRadius: '50%',
-                      background: 'conic-gradient(var(--color-primary) 0% 78%, var(--color-danger) 78% 100%)',
+                      background: 'conic-gradient(var(--color-green) 0% 78%, var(--color-red) 78% 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -2919,7 +2955,7 @@ export default function App() {
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}>
-                        <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-primary)' }}>78.9%</span>
+                        <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-green)' }}>78.9%</span>
                         <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>PET BOTTLES</span>
                       </div>
                     </div>
@@ -2962,8 +2998,8 @@ export default function App() {
                           <tr key={i}>
                             <td>{h.date}, 2026</td>
                             <td>RVM001</td>
-                            <td><strong style={{ color: 'var(--color-primary)' }}>{h.accepted} items</strong></td>
-                            <td><strong style={{ color: 'var(--color-danger)' }}>{h.rejected} items</strong></td>
+                            <td><strong style={{ color: 'var(--color-green)' }}>{h.accepted} items</strong></td>
+                            <td><strong style={{ color: 'var(--color-red)' }}>{h.rejected} items</strong></td>
                             <td>{h.pens} items</td>
                             <td>{indexVal}% Plastic</td>
                           </tr>
@@ -3005,8 +3041,8 @@ export default function App() {
                           <span style={{
                             background: u.role === 'admin' ? 'rgba(59, 130, 246, 0.1)' : 
                                         u.role === 'supervisor' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                            color: u.role === 'admin' ? 'var(--color-secondary)' : 
-                                   u.role === 'supervisor' ? 'var(--color-primary)' : 'var(--text-muted)',
+                            color: u.role === 'admin' ? 'var(--color-blue)' : 
+                                   u.role === 'supervisor' ? 'var(--color-green)' : 'var(--text-muted)',
                             padding: '4px 8px',
                             borderRadius: '4px',
                             fontSize: '0.75rem',
@@ -3082,7 +3118,7 @@ export default function App() {
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border-glass)', paddingTop: 20 }}>
+                <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border-primary)', paddingTop: 20 }}>
                   <button type="submit" className="btn-primary">
                     Sync Configurations
                   </button>
@@ -3090,8 +3126,8 @@ export default function App() {
               </form>
 
               {/* Dynamic Firebase configuration injector panel */}
-              <div className="glass-panel" style={{ padding: '20px', marginTop: 40, borderStyle: 'dashed', borderColor: 'var(--color-secondary)' }}>
-                <h4 style={{ fontSize: '1rem', color: 'var(--color-secondary)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="glass-panel" style={{ padding: '20px', marginTop: 40, borderStyle: 'dashed', borderColor: 'var(--color-blue)' }}>
+                <h4 style={{ fontSize: '1rem', color: 'var(--color-blue)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Database size={16} /> Live Firebase Credentials Injector
                 </h4>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 16 }}>
@@ -3101,9 +3137,9 @@ export default function App() {
                 {fbConfig ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ fontSize: '0.8rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: 12, borderRadius: 4 }}>
-                      ✅ <strong>Active Connection:</strong> Connected to project <code>{fbConfig.projectId}</code>
+                      <CheckCircle2 size={14} style={{ color: 'var(--color-green)' }} /> <strong>Active Connection:</strong> Connected to project <code>{fbConfig.projectId}</code>
                     </div>
-                    <button onClick={handleClearFirebaseConfig} className="btn-secondary" style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)', padding: '6px 12px', fontSize: '0.8rem', justifyContent: 'center' }}>
+                    <button onClick={handleClearFirebaseConfig} className="btn-secondary" style={{ color: 'var(--color-red)', borderColor: 'var(--color-red)', padding: '6px 12px', fontSize: '0.8rem', justifyContent: 'center' }}>
                       Disconnect & Use Simulator
                     </button>
                   </div>
@@ -3170,7 +3206,7 @@ export default function App() {
                   {maintenanceLogs.map(m => (
                     <div key={m.id} className="glass-panel" style={{ padding: '20px', background: 'rgba(255,255,255,0.01)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <strong style={{ color: 'var(--color-secondary)', fontSize: '0.9rem' }}>{m.technician}</strong>
+                        <strong style={{ color: 'var(--color-blue)', fontSize: '0.9rem' }}>{m.technician}</strong>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.date.toLocaleString()}</span>
                       </div>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
@@ -3207,11 +3243,11 @@ export default function App() {
                     {auditLogs.map((log) => (
                       <tr key={log.id}>
                         <td>{log.timestamp.toLocaleString()}</td>
-                        <td><strong style={{ color: 'var(--color-secondary)' }}>{log.actor}</strong></td>
+                        <td><strong style={{ color: 'var(--color-blue)' }}>{log.actor}</strong></td>
                         <td>
                           <span style={{
                             background: 'rgba(59, 130, 246, 0.08)',
-                            color: 'var(--color-secondary)',
+                            color: 'var(--color-blue)',
                             padding: '4px 8px',
                             borderRadius: '4px',
                             fontSize: '0.75rem',
