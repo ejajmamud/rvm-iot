@@ -43,7 +43,7 @@ const INITIAL_MOCK_ALERTS = [
 const INITIAL_MOCK_USERS = [
   { uid: "u1", name: "MD Ejaj Mahmud", email: "ejaj@student.unikl.edu.my", role: "admin", createdAt: new Date(Date.now() - 2592000000) },
   { uid: "u2", name: "Dr. Hannah Sofian", email: "hannah@unikl.edu.my", role: "supervisor", createdAt: new Date(Date.now() - 2592000000) },
-  { uid: "u3", name: "Sayed Aziz", email: "sayedaziz@unikl.edu.my", role: "technician", createdAt: new Date(Date.now() - 1728000000) }
+  { uid: "u3", name: "Sayed Aziz", email: "sayedaziz@unikl.edu.my", role: "supervisor 1", createdAt: new Date(Date.now() - 1728000000) }
 ];
 
 const INITIAL_HISTORICAL_DATA = [
@@ -959,7 +959,7 @@ export default function App() {
               {[
                 { name: "MD Ejaj", role: "Admin", email: "ejaj@student.unikl.edu.my" },
                 { name: "Dr. Hannah", role: "Supervisor", email: "hannah@unikl.edu.my" },
-                { name: "Sayed Aziz", role: "Technician", email: "sayedaziz@unikl.edu.my" },
+                { name: "Sayed Aziz", role: "Supervisor 1", email: "sayedaziz@unikl.edu.my" },
                 { name: "Visitor", role: "Viewer", email: "visitor@unikl.edu.my" }
               ].map((u, i) => (
                 <button
@@ -978,7 +978,7 @@ export default function App() {
                     } else {
                       // Fallback
                       const fallbackUser = {
-                        uid: "u_" + u.role.toLowerCase(),
+                        uid: "u_" + u.role.toLowerCase().replace(" ", "_"),
                         name: u.name,
                         email: u.email,
                         role: u.role.toLowerCase(),
@@ -1008,9 +1008,9 @@ export default function App() {
                   <span style={{
                     fontSize: '0.6rem',
                     background: u.role === 'Admin' ? 'rgba(59, 130, 246, 0.1)' : 
-                               u.role === 'Supervisor' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+                               (u.role === 'Supervisor' || u.role === 'Supervisor 1') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
                     color: u.role === 'Admin' ? 'var(--color-blue)' : 
-                           u.role === 'Supervisor' ? 'var(--color-green)' : 'var(--text-muted)',
+                           (u.role === 'Supervisor' || u.role === 'Supervisor 1') ? 'var(--color-green)' : 'var(--text-muted)',
                     padding: '1px 4px',
                     borderRadius: '3px',
                     fontWeight: 700,
