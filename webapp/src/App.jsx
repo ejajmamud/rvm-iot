@@ -133,7 +133,14 @@ export default function App() {
   }, []);
 
   // --- Mode Selection (Live Mode vs Standalone Simulated Mode) ---
-  const [isLiveMode, setIsLiveMode] = useState(true);
+  const [isLiveMode, setIsLiveMode] = useState(() => {
+    const saved = localStorage.getItem('rvm_live_mode');
+    return saved !== 'false';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('rvm_live_mode', isLiveMode ? 'true' : 'false');
+  }, [isLiveMode]);
 
   // --- Standalone Live Telemetry Memory Cache ---
   const [liveMachine, setLiveMachine] = useState(INITIAL_MACHINE_MOCK);
