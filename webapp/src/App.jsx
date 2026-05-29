@@ -839,66 +839,76 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <div style={{
-        minHeight: '100vh',
+        height: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background: 'radial-gradient(circle at top right, #091a24 0%, #06080d 100%)',
-        padding: '24px'
+        padding: '16px',
+        boxSizing: 'border-box'
       }}>
         <div className="glass-panel" style={{
           width: '100%',
-          maxWidth: '450px',
-          padding: '40px',
+          maxWidth: '400px',
+          padding: '20px 24px',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center'
+          alignItems: 'center',
+          boxSizing: 'border-box'
         }}>
           <div style={{
             background: 'rgba(16, 185, 129, 0.1)',
-            padding: '16px',
+            padding: '12px',
             borderRadius: '50%',
-            marginBottom: '20px',
-            color: 'var(--color-green)'
+            marginBottom: '12px',
+            color: 'var(--color-green)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
-            <LayoutDashboard size={40} className="pulse-indicator" />
+            <LayoutDashboard size={32} className="pulse-indicator" />
           </div>
           
           <h1 style={{
-            fontSize: '1.8rem',
+            fontSize: '1.4rem',
             textAlign: 'center',
-            marginBottom: '8px',
+            marginBottom: '4px',
             background: 'linear-gradient(135deg, #ffffff, var(--color-green))',
             WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            WebkitTextFillColor: 'transparent',
+            fontWeight: 700
           }}>Smart Recycling Portal</h1>
           <p style={{
             color: 'var(--text-muted)',
-            fontSize: '0.9rem',
+            fontSize: '0.8rem',
             textAlign: 'center',
-            marginBottom: '32px'
+            marginBottom: '16px'
           }}>Final Year Project 2 Admin Portal</p>
 
-          <form onSubmit={handleLogin} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>University Email</label>
+          <form onSubmit={handleLogin} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>University Email</label>
               <input 
                 type="email" 
                 className="form-input" 
                 placeholder="name@student.unikl.edu.my"
                 required
+                style={{ padding: '8px 12px', fontSize: '0.8rem' }}
                 value={emailInput}
                 onChange={e => setEmailInput(e.target.value)}
               />
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Console Access Password</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Console Access Password</label>
               <input 
                 type="password" 
                 className="form-input" 
                 placeholder="••••••••"
                 required
+                style={{ padding: '8px 12px', fontSize: '0.8rem' }}
                 value={passwordInput}
                 onChange={e => setPasswordInput(e.target.value)}
               />
@@ -909,16 +919,16 @@ export default function App() {
                 background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.2)',
                 color: 'var(--color-red)',
-                padding: '12px',
+                padding: '8px',
                 borderRadius: 'var(--radius-sm)',
-                fontSize: '0.8rem',
+                fontSize: '0.75rem',
                 textAlign: 'center'
               }}>
                 {authError}
               </div>
             )}
 
-            <button type="submit" className="btn-primary" style={{ justifyContent: 'center' }}>
+            <button type="submit" className="btn-primary" style={{ justifyContent: 'center', padding: '10px', fontSize: '0.8rem' }}>
               Authenticate Portal Access
             </button>
           </form>
@@ -926,91 +936,100 @@ export default function App() {
           {/* Quick Demo Login Buttons */}
           <div style={{
             width: '100%',
-            marginTop: '24px',
+            marginTop: '16px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '8px'
+            gap: '6px'
           }}>
             <span style={{
-              fontSize: '0.7rem',
+              fontSize: '0.65rem',
               color: 'var(--text-muted)',
               textAlign: 'center',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
-              marginBottom: '4px'
+              marginBottom: '2px'
             }}>
               Quick Demo Login
             </span>
-            {[
-              { name: "MD Ejaj Mahmud", role: "Admin", email: "ejaj@student.unikl.edu.my" },
-              { name: "Dr. Hannah Sofian", role: "Supervisor", email: "hannah@unikl.edu.my" },
-              { name: "Sayed Aziz", role: "Technician", email: "sayedaziz@unikl.edu.my" },
-              { name: "Visitor Account", role: "Viewer", email: "visitor@unikl.edu.my" }
-            ].map((u, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  setEmailInput(u.email);
-                  setPasswordInput("demo123");
-                  
-                  // Look up user in active DB
-                  const foundUser = users.find(user => user.email.toLowerCase() === u.email.toLowerCase());
-                  if (foundUser) {
-                    setIsLoggedIn(true);
-                    setCurrentUser(foundUser);
-                    localStorage.setItem('rvm_logged_in_user', JSON.stringify(foundUser));
-                    logAudit(foundUser.name, "QUICK_DEMO_LOGIN", `Authenticated as ${u.role}`);
-                  } else {
-                    // Fallback
-                    const fallbackUser = {
-                      uid: "u_" + u.role.toLowerCase(),
-                      name: u.name,
-                      email: u.email,
-                      role: u.role.toLowerCase(),
-                      createdAt: new Date()
-                    };
-                    setIsLoggedIn(true);
-                    setCurrentUser(fallbackUser);
-                    localStorage.setItem('rvm_logged_in_user', JSON.stringify(fallbackUser));
-                  }
-                }}
-                className="btn-secondary"
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  fontSize: '0.8rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderColor: 'rgba(16, 185, 129, 0.12)',
-                  background: 'rgba(16, 185, 129, 0.01)',
-                  borderRadius: 'var(--radius-sm)'
-                }}
-              >
-                <span>{u.name}</span>
-                <span style={{
-                  fontSize: '0.65rem',
-                  background: u.role === 'Admin' ? 'rgba(59, 130, 246, 0.1)' : 
-                             u.role === 'Supervisor' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                  color: u.role === 'Admin' ? 'var(--color-blue)' : 
-                         u.role === 'Supervisor' ? 'var(--color-green)' : 'var(--text-muted)',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontWeight: 700,
-                  textTransform: 'uppercase'
-                }}>{u.role}</span>
-              </button>
-            ))}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '6px'
+            }}>
+              {[
+                { name: "MD Ejaj", role: "Admin", email: "ejaj@student.unikl.edu.my" },
+                { name: "Dr. Hannah", role: "Supervisor", email: "hannah@unikl.edu.my" },
+                { name: "Sayed Aziz", role: "Technician", email: "sayedaziz@unikl.edu.my" },
+                { name: "Visitor", role: "Viewer", email: "visitor@unikl.edu.my" }
+              ].map((u, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setEmailInput(u.email);
+                    setPasswordInput("demo123");
+                    
+                    // Look up user in active DB
+                    const foundUser = users.find(user => user.email.toLowerCase() === u.email.toLowerCase());
+                    if (foundUser) {
+                      setIsLoggedIn(true);
+                      setCurrentUser(foundUser);
+                      localStorage.setItem('rvm_logged_in_user', JSON.stringify(foundUser));
+                      logAudit(foundUser.name, "QUICK_DEMO_LOGIN", `Authenticated as ${u.role}`);
+                    } else {
+                      // Fallback
+                      const fallbackUser = {
+                        uid: "u_" + u.role.toLowerCase(),
+                        name: u.name,
+                        email: u.email,
+                        role: u.role.toLowerCase(),
+                        createdAt: new Date()
+                      };
+                      setIsLoggedIn(true);
+                      setCurrentUser(fallbackUser);
+                      localStorage.setItem('rvm_logged_in_user', JSON.stringify(fallbackUser));
+                    }
+                  }}
+                  className="btn-secondary"
+                  style={{
+                    padding: '8px 10px',
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '2px',
+                    borderColor: 'rgba(16, 185, 129, 0.12)',
+                    background: 'rgba(16, 185, 129, 0.01)',
+                    borderRadius: 'var(--radius-sm)',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <span style={{ fontWeight: 600, fontSize: '0.72rem', color: '#fff' }}>{u.name}</span>
+                  <span style={{
+                    fontSize: '0.6rem',
+                    background: u.role === 'Admin' ? 'rgba(59, 130, 246, 0.1)' : 
+                               u.role === 'Supervisor' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+                    color: u.role === 'Admin' ? 'var(--color-blue)' : 
+                           u.role === 'Supervisor' ? 'var(--color-green)' : 'var(--text-muted)',
+                    padding: '1px 4px',
+                    borderRadius: '3px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase'
+                  }}>{u.role}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div style={{
-            marginTop: '32px',
-            fontSize: '0.75rem',
+            marginTop: '16px',
+            fontSize: '0.7rem',
             color: 'var(--text-muted)',
             textAlign: 'center',
             borderTop: '1px solid var(--border-primary)',
-            paddingTop: '20px',
-            width: '100%'
+            paddingTop: '12px',
+            width: '100%',
+            lineHeight: '1.4'
           }}>
             MD Ejaj Mahmud | Student ID: 52222222123<br />
             UniKL MIIT Final Year Project 2 © 2026
