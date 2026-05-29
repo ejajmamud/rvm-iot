@@ -801,7 +801,7 @@ export default function App() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'radial-gradient(circle at top right, #091a24 0%, #06080d 100%)',
+        background: 'radial-gradient(circle at top right, #08172c 0%, #03070f 100%)',
         padding: '16px',
         boxSizing: 'border-box'
       }}>
@@ -831,10 +831,9 @@ export default function App() {
             fontSize: '1.4rem',
             textAlign: 'center',
             marginBottom: '4px',
-            background: 'linear-gradient(135deg, #ffffff, var(--color-green))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 700
+            color: '#ffffff',
+            fontWeight: 700,
+            letterSpacing: '0.06em'
           }}>Smart Recycling Portal</h1>
           <p style={{
             color: 'var(--text-muted)',

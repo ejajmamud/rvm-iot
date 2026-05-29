@@ -8,13 +8,13 @@
   --font-sans: 'Marcellus', serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
 
-  /* ── Cosmic Dark Theme (SpaceX Control Room) ── */
-  --bg-base: #050508;
-  --bg-surface: linear-gradient(180deg, #101115 0%, #07080b 100%);
-  --bg-elevated: #111319;
-  --bg-hover: #191c25;
-  --border-primary: rgba(255, 255, 255, 0.06);
-  --border-subtle: rgba(255, 255, 255, 0.03);
+  /* ── Cosmic Dark Theme (Cosmic Navy Refined) ── */
+  --bg-base: #03070f;
+  --bg-surface: linear-gradient(180deg, #091324 0%, #040810 100%);
+  --bg-elevated: #0e1b30;
+  --bg-hover: #172a47;
+  --border-primary: rgba(59, 130, 246, 0.12);
+  --border-subtle: rgba(59, 130, 246, 0.06);
 
   /* ── Text Scale ── */
   --text-primary: #fafafa;
@@ -92,7 +92,7 @@ body {
   font-family: var(--font-sans);
   font-size: 0.875rem;
   line-height: 1.5;
-  background: radial-gradient(circle at 50% 0%, #0c0e18 0%, #050508 100%);
+  background: radial-gradient(circle at 50% 0%, #08172c 0%, #03070f 100%);
   background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
@@ -112,10 +112,10 @@ body::before {
   z-index: 9999;
 }
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4, h5 {
   font-family: var(--font-sans);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.06em;
   line-height: 1.2;
 }
 
