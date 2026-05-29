@@ -4394,7 +4394,7 @@ export default function App() {
                     Official FYP2 Documentation Centre
                   </h4>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    Download or review the verified progress reports and signed sensory component datasheets.
+                    Download or review the official manufacturer datasheets and verified FYP2 progress reports.
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
@@ -4663,7 +4663,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Right Column: Interactive Embedded Official Signed PDF Viewer */}
+                {/* Right Column: Interactive Embedded Official Manufacturer PDF Viewer */}
                 <div className="glass-panel" style={{
                   padding: '24px',
                   display: 'flex',
@@ -4675,14 +4675,24 @@ export default function App() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 8 }}>
                       <FileText size={18} style={{ color: 'var(--color-green)' }} />
-                      Official Signed Datasheet
+                      Official Manufacturer Datasheet
                     </h3>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      color: 'var(--text-muted)'
-                    }}>
-                      Appended Report Page: {[8, 43, 47, 49, 57, 59][activeComponentIdx]}
-                    </span>
+                    <a
+                      href={`/${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.pdf', 'hd44780_datasheet.pdf'][activeComponentIdx]}`}
+                      download
+                      className="btn-secondary"
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      <Download size={13} />
+                      Download PDF
+                    </a>
                   </div>
 
                   {/* Embedded PDF iframe */}
@@ -4698,11 +4708,11 @@ export default function App() {
                   }}>
                     <iframe 
                       key={activeComponentIdx}
-                      src={`/progress_report_2.pdf#page=${[8, 43, 47, 49, 57, 59][activeComponentIdx]}`} 
+                      src={`/${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.pdf', 'hd44780_datasheet.pdf'][activeComponentIdx]}`} 
                       width="100%" 
                       height="100%" 
                       style={{ border: 'none' }}
-                      title="Signed Official Datasheet Viewport"
+                      title="Official Manufacturer Datasheet Viewport"
                     />
                   </div>
 
@@ -4712,7 +4722,7 @@ export default function App() {
                     textAlign: 'center',
                     lineHeight: 1.4
                   }}>
-                    💡 Pro Tip: The PDF viewer automatically navigates directly to the official manufacturer datasheet page! Expand or download the document using the top navigation bar.
+                    💡 Pro Tip: This is the real, official manufacturer datasheet! You can search, zoom, or print the document directly using the interactive PDF viewer controls.
                   </div>
                 </div>
 
