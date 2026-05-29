@@ -101,6 +101,37 @@ export default function App() {
     { id: "au1", actor: "MD Ejaj Mahmud", action: "SYSTEM_INITIALIZED", target: "RVM001", timestamp: new Date(Date.now() - 2592000000) }
   ]);
 
+  // --- Fluctuating Live Telemetry Stats ---
+  const [cpuTemp, setCpuTemp] = useState(42.5);
+  const [rssi, setRssi] = useState(-64);
+  const [freeRam, setFreeRam] = useState(6184);
+
+  // --- Hardware Fault Simulation Engine ---
+  const [sensorIRFault, setSensorIRFault] = useState(false);
+  const [sensorUSFault, setSensorUSFault] = useState(false);
+  const [servoGateFault, setServoGateFault] = useState(false);
+  const [servoRewardFault, setServoRewardFault] = useState(false);
+
+  // --- Interactive Pinout Inspector State ---
+  const [selectedPinout, setSelectedPinout] = useState("IR");
+
+  // --- Live Diagnostics Oscilloscope Logs ---
+  const [oscilloscopeLogs, setOscilloscopeLogs] = useState([
+    "SYS_READY - Awaiting trigger ping...",
+    "TRIG_LINE [D22] - Pulled HIGH",
+    "ECHO_LINE [D23] - Received response packet"
+  ]);
+
+  // Fluctuating HUD timers
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCpuTemp(prev => Number((prev + (Math.random() * 0.4 - 0.2)).toFixed(1)));
+      setRssi(prev => prev + (Math.random() < 0.5 ? 1 : -1));
+      setFreeRam(prev => prev + Math.floor(Math.random() * 10 - 5));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   // --- Mode Selection (Live Mode vs Standalone Simulated Mode) ---
   const [isLiveMode, setIsLiveMode] = useState(true);
 
@@ -605,6 +636,28 @@ export default function App() {
       showToast("Auto-switched to Standalone Simulation Mode", "info");
     }
 
+    // CHECK FOR SIMULATED HARDWARE FAULTS FIRST!
+    if (sensorIRFault) {
+      showToast("FAIL: FC-51 IR beam sensor is blinded/malfunctioning. Run calibration.", "error");
+      playBuzzerTone(200, 800);
+      return;
+    }
+    if (sensorUSFault) {
+      showToast("FAIL: HC-SR04 Ultrasonic sensor error. Capacity checks failed.", "error");
+      playBuzzerTone(200, 800);
+      return;
+    }
+    if (servoGateFault) {
+      showToast("FAIL: SG90 Gate Servo Jammed. Intake sweep failed.", "error");
+      playBuzzerTone(200, 800);
+      return;
+    }
+    if (servoRewardFault && type === "PET_ACCEPTED") {
+      showToast("FAIL: SG90 Reward Servo Jammed. Pen dispensing blocked.", "error");
+      playBuzzerTone(200, 800);
+      return;
+    }
+
     const activeBinState = isLiveMode ? liveMachine.binFull : simulatedMachine.binFull;
     if (activeBinState) {
       showToast("Intake locked — bin at capacity. Empty the bin first", "error");
@@ -793,7 +846,6 @@ export default function App() {
       }, 6200);
     }
   };
-
   const simulateToggleBinFull = async () => {
     if (!isPowerOn) {
       showToast("Machine powered off — cannot toggle bin status", "error");
@@ -807,7 +859,7 @@ export default function App() {
     setSimulatedMachine(prev => {
       const nextState = !prev.binFull;
       const updated = { ...prev, binFull: nextState, status: nextState ? "maintenance" : "online" };
-      if (!isLiveMode) setMachine(updated);
+      setMachine(updated);
       
       if (nextState) {
         setLcdLine1("BIN FULL!");
@@ -820,7 +872,7 @@ export default function App() {
         setTimeout(() => playBuzzerTone(400, 150), 300);
 
         const alertItem = {
-          id: "al_" + Date.now(),
+          id: "al_bf_" + Date.now(),
           machineId: "RVM001_SIM",
           type: "BIN_FULL",
           severity: "critical",
@@ -841,6 +893,191 @@ export default function App() {
       }
       return updated;
     });
+  };
+
+  // --- Live Component Diagnostics & Automated Calibration ---
+  const runHardwareCalibration = () => {
+    if (!isPowerOn) {
+      showToast("Power off — toggle the rocker switch first", "error");
+      return;
+    }
+    
+    setLcdLine1("CALIBRATING...  ");
+    setLcdLine2("SWEEP SCANNING  ");
+    
+    // Clear all fault states
+    setSensorIRFault(false);
+    setSensorUSFault(false);
+    setServoGateFault(false);
+    setServoRewardFault(false);
+    
+    // Clear simulated alerts
+    setSimulatedAlerts([]);
+    if (!isLiveMode) setAlerts([]);
+    
+    // Buzz success sequence
+    playBuzzerTone(1000, 100);
+    setTimeout(() => playBuzzerTone(1200, 100), 120);
+    setTimeout(() => playBuzzerTone(1500, 200), 240);
+    
+    // Flashes LEDs
+    setGreenLedGlow(true);
+    setRedLedGlow(true);
+    
+    setTimeout(() => {
+      setGreenLedGlow(false);
+      setRedLedGlow(false);
+      setLcdLine1("INSERT BOTTLE   ");
+      setLcdLine2("PET or CAN      ");
+      showToast("Calibration Complete: 0 faults detected across all 4 modules", "success");
+      logAudit("Diagnostics Engine", "CALIBRATION_COMPLETED", "All sensors restored to green-line state", true);
+    }, 1500);
+  };
+
+  const runTestGateSweep = () => {
+    if (!isPowerOn) return showToast("Power off", "error");
+    if (servoGateFault) return showToast("Gate Servo is Jammed!", "error");
+    
+    showToast("Initiating digital gate sweep test (0° -> 90° -> 0°)");
+    playBuzzerTone(1200, 150);
+    setGateAngle(90);
+    setTimeout(() => {
+      setGateAngle(0);
+      playBuzzerTone(1000, 100);
+    }, 1500);
+  };
+
+  const runTestRewardSweep = () => {
+    if (!isPowerOn) return showToast("Power off", "error");
+    if (servoRewardFault) return showToast("Reward Servo is Jammed!", "error");
+    
+    showToast("Initiating pen dispenser sweep test (90° -> 0° -> 90°)");
+    playBuzzerTone(1400, 150);
+    setPenAngle(0);
+    setTimeout(() => {
+      setPenAngle(90);
+      playBuzzerTone(1200, 100);
+    }, 1500);
+  };
+
+  const runUltrasonicDiagnosticPing = () => {
+    if (!isPowerOn) return showToast("Power off", "error");
+    
+    showToast("Executing sonar distance echo measurement...");
+    const distanceCm = sensorUSFault ? 999 : Math.floor(Math.random() * 20 + 3);
+    const newLogs = [
+      `SYS_PING_START - Sonar pulse triggered`,
+      `TRIG [D22] - Sent 10µs trigger pulse`,
+      `ECHO [D23] - Measured ${distanceCm * 58}µs pulse width`,
+      `RESULT - Calculated Distance: ${distanceCm} cm`,
+      `STATUS - Bin capacity: ${Math.max(0, Math.floor((100 - (distanceCm / 30) * 100)))}% full`
+    ];
+    setOscilloscopeLogs(newLogs);
+    playBuzzerTone(1800, 80);
+  };
+
+  const toggleIRSensorFault = () => {
+    const next = !sensorIRFault;
+    setSensorIRFault(next);
+    if (next) {
+      const alertItem = {
+        id: "al_ir_" + Date.now(),
+        machineId: "RVM001_SIM",
+        type: "ERR_SENSOR_IR",
+        severity: "critical",
+        status: "open",
+        createdAt: new Date()
+      };
+      setSimulatedAlerts(p => {
+        const nextAlerts = [alertItem, ...p];
+        if (!isLiveMode) setAlerts(nextAlerts);
+        return nextAlerts;
+      });
+      setLcdLine1("ERR: TCRT5000 IR");
+      setLcdLine2("CALIBRATION REQD");
+      playBuzzerTone(200, 500);
+      showToast("Simulated IR Sensor Malfunction: Critical alert triggered", "error");
+    } else {
+      showToast("IR Sensor restored to operational state");
+    }
+  };
+
+  const toggleUSSensorFault = () => {
+    const next = !sensorUSFault;
+    setSensorUSFault(next);
+    if (next) {
+      const alertItem = {
+        id: "al_us_" + Date.now(),
+        machineId: "RVM001_SIM",
+        type: "ERR_SENSOR_US",
+        severity: "critical",
+        status: "open",
+        createdAt: new Date()
+      };
+      setSimulatedAlerts(p => {
+        const nextAlerts = [alertItem, ...p];
+        if (!isLiveMode) setAlerts(nextAlerts);
+        return nextAlerts;
+      });
+      setLcdLine1("ERR: HC-SR04 SON");
+      setLcdLine2("CHECK SONAR PIN ");
+      playBuzzerTone(200, 500);
+      showToast("Simulated Ultrasonic Sensor Malfunction: Critical alert triggered", "error");
+    } else {
+      showToast("Ultrasonic Sensor restored to operational state");
+    }
+  };
+
+  const toggleGateServoFault = () => {
+    const next = !servoGateFault;
+    setServoGateFault(next);
+    if (next) {
+      const alertItem = {
+        id: "al_gate_" + Date.now(),
+        machineId: "RVM001_SIM",
+        type: "ERR_GATE_JAMMED",
+        severity: "critical",
+        status: "open",
+        createdAt: new Date()
+      };
+      setSimulatedAlerts(p => {
+        const nextAlerts = [alertItem, ...p];
+        if (!isLiveMode) setAlerts(nextAlerts);
+        return nextAlerts;
+      });
+      setLcdLine1("ERR: GATE SERVO ");
+      setLcdLine2("OBSTRUCTION JAM ");
+      playBuzzerTone(200, 500);
+      showToast("Simulated Gate Servo Jam: Critical alert triggered", "error");
+    } else {
+      showToast("Gate Servo jam cleared");
+    }
+  };
+
+  const toggleRewardServoFault = () => {
+    const next = !servoRewardFault;
+    setServoRewardFault(next);
+    if (next) {
+      const alertItem = {
+        id: "al_reward_" + Date.now(),
+        machineId: "RVM001_SIM",
+        type: "ERR_REWARD_JAM",
+        severity: "critical",
+        status: "open",
+        createdAt: new Date()
+      };
+      setSimulatedAlerts(p => {
+        const nextAlerts = [alertItem, ...p];
+        if (!isLiveMode) setAlerts(nextAlerts);
+        return nextAlerts;
+      });
+      setLcdLine1("ERR: REWARD PWM ");
+      setLcdLine2("PIN DISPENSER   ");
+      playBuzzerTone(200, 500);
+      showToast("Simulated Reward Servo Jam: Critical alert triggered", "error");
+    } else {
+      showToast("Reward Servo jam cleared");
+    }
   };
 
   // --- Export to CSV Generator ---
@@ -1295,6 +1532,49 @@ export default function App() {
               <Wifi size={14} />
               {isFirebaseConnected ? "Database Live" : "Local Simulator"}
             </span>
+
+            {/* Real-time Hardware System Health HUD */}
+            <div style={{
+              marginTop: '12px',
+              borderTop: '1px solid var(--border-primary)',
+              paddingTop: '12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              width: '100%',
+              boxSizing: 'border-box'
+            }}>
+              <span style={{
+                fontSize: '0.62rem',
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                fontWeight: 700,
+                textAlign: 'left'
+              }}>
+                RVM001 Diagnostics
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Temp:</span>
+                  <span style={{ color: cpuTemp > 45 ? 'var(--color-amber)' : 'var(--text-primary)', fontWeight: 600 }}>{cpuTemp}°C</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Wi-Fi RSSI:</span>
+                  <span style={{ color: 'var(--color-green)', fontWeight: 600 }}>{rssi} dBm</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>SRAM:</span>
+                  <span style={{ color: 'var(--color-cyan)', fontWeight: 600 }}>{freeRam} B / 8K</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Buffer Queue:</span>
+                  <span style={{ color: offlineQueueCount > 0 ? 'var(--color-amber)' : 'var(--text-muted)', fontWeight: 600 }}>
+                    {offlineQueueCount} packets
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div style={{
@@ -2271,6 +2551,135 @@ export default function App() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Live Component Diagnostics & Automated Calibration */}
+                  <div className="glass-panel" style={{ padding: '24px', marginTop: '20px' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Activity size={18} color="var(--color-green)" />
+                      Live Diagnostics & Calibration
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: 16 }}>
+                      Issue component-level signal overrides and run hardware test sweeps.
+                    </p>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: 16 }}>
+                      <button onClick={runTestGateSweep} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '8px', justifyContent: 'center' }} disabled={!isPowerOn}>
+                        Test Gate Servo Sweep
+                      </button>
+                      <button onClick={runTestRewardSweep} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '8px', justifyContent: 'center' }} disabled={!isPowerOn}>
+                        Test Reward Servo Sweep
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: 16 }}>
+                      <button onClick={runUltrasonicDiagnosticPing} className="btn-secondary" style={{ flex: 1, fontSize: '0.75rem', padding: '8px', justifyContent: 'center' }} disabled={!isPowerOn}>
+                        Ultrasonic sonar ping test
+                      </button>
+                      <button onClick={runHardwareCalibration} className="btn-primary" style={{ flex: 1, fontSize: '0.75rem', padding: '8px', justifyContent: 'center', background: 'rgba(16, 185, 129, 0.2)' }} disabled={!isPowerOn}>
+                        Auto Calibrate & Resolve Faults
+                      </button>
+                    </div>
+
+                    {/* Sonar Log Panel */}
+                    <div style={{
+                      background: '#040b15',
+                      border: '1px solid var(--border-primary)',
+                      padding: '10px 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.7rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4
+                    }}>
+                      <span style={{ color: 'var(--color-green)', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.65rem', marginBottom: 2 }}>
+                        Diagnostic Ping Oscilloscope
+                      </span>
+                      {oscilloscopeLogs.map((log, idx) => (
+                        <div key={idx} style={{ display: 'flex', gap: 6 }}>
+                          <span style={{ color: 'var(--text-muted)' }}>[{idx + 1}]</span>
+                          <span style={{ color: log.includes('RESULT') ? '#fff' : 'var(--text-secondary)' }}>{log}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Hardware Fault Simulation Engine */}
+                  <div className="glass-panel" style={{ padding: '24px', marginTop: '20px' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <AlertTriangle size={18} color="var(--color-red)" />
+                      Hardware Fault Simulation
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: 16 }}>
+                      Inject simulated component malfunctions to test the system's fault tolerance, character LCD error readouts, and automatic safety locks.
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <button
+                        onClick={toggleIRSensorFault}
+                        className="btn-secondary"
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '8px',
+                          justifyContent: 'center',
+                          borderColor: sensorIRFault ? 'var(--color-red)' : 'var(--border-primary)',
+                          color: sensorIRFault ? 'var(--color-red)' : 'var(--text-primary)',
+                          background: sensorIRFault ? 'rgba(239, 68, 68, 0.08)' : 'transparent'
+                        }}
+                        disabled={!isPowerOn}
+                      >
+                        {sensorIRFault ? "● Blind IR Entry Sensor" : "○ Simulate IR Sensor Jam"}
+                      </button>
+                      
+                      <button
+                        onClick={toggleUSSensorFault}
+                        className="btn-secondary"
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '8px',
+                          justifyContent: 'center',
+                          borderColor: sensorUSFault ? 'var(--color-red)' : 'var(--border-primary)',
+                          color: sensorUSFault ? 'var(--color-red)' : 'var(--text-primary)',
+                          background: sensorUSFault ? 'rgba(239, 68, 68, 0.08)' : 'transparent'
+                        }}
+                        disabled={!isPowerOn}
+                      >
+                        {sensorUSFault ? "● sonar Echo Disconnected" : "○ Simulate sonar Fail"}
+                      </button>
+                      
+                      <button
+                        onClick={toggleGateServoFault}
+                        className="btn-secondary"
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '8px',
+                          justifyContent: 'center',
+                          borderColor: servoGateFault ? 'var(--color-red)' : 'var(--border-primary)',
+                          color: servoGateFault ? 'var(--color-red)' : 'var(--text-primary)',
+                          background: servoGateFault ? 'rgba(239, 68, 68, 0.08)' : 'transparent'
+                        }}
+                        disabled={!isPowerOn}
+                      >
+                        {servoGateFault ? "● Gate Servo Actuator Jammed" : "○ Simulate Gate Jam"}
+                      </button>
+                      
+                      <button
+                        onClick={toggleRewardServoFault}
+                        className="btn-secondary"
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '8px',
+                          justifyContent: 'center',
+                          borderColor: servoRewardFault ? 'var(--color-red)' : 'var(--border-primary)',
+                          color: servoRewardFault ? 'var(--color-red)' : 'var(--text-primary)',
+                          background: servoRewardFault ? 'rgba(239, 68, 68, 0.08)' : 'transparent'
+                        }}
+                        disabled={!isPowerOn}
+                      >
+                        {servoRewardFault ? "● Reward Dispenser Jammed" : "○ Simulate Reward Jam"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* COLUMN 2: INTERNAL WIRING SCHEMATIC */}
@@ -2889,6 +3298,154 @@ export default function App() {
                           </div>
                         </g>
                       </svg>
+                    </div>
+                  </div>
+
+                  {/* Column 2 - Interactive Pinout Inspector */}
+                  <div className="glass-panel" style={{ padding: '24px', marginTop: '0px' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <CircuitBoard size={18} color="var(--color-blue)" />
+                      Interactive Hardware Pinout Inspector
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: 16 }}>
+                      Select any physical module from the RVM hardware chassis above to inspect its Arduino Mega pin allocation, operating voltage, and live electrical telemetry.
+                    </p>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px', alignItems: 'start' }}>
+                      <select
+                        value={selectedPinout}
+                        onChange={e => setSelectedPinout(e.target.value)}
+                        className="form-input"
+                        style={{ width: '100%', fontSize: '0.75rem', background: '#040b15', border: '1px solid var(--border-primary)', padding: '10px' }}
+                      >
+                        <option value="IR">FC-51 Proximity IR Sensor (Object Entry Detector)</option>
+                        <option value="Capacitive">LJC18A3 Capacitive Sensor (Plastic Classifier)</option>
+                        <option value="Inductive">LJ12A3 Inductive Proximity Sensor (Metal Classifier)</option>
+                        <option value="GateServo">SG90 Core Gate Servo Actuator</option>
+                        <option value="RewardServo">SG90 Core Pen Dispenser Servo</option>
+                        <option value="Ultrasonic">HC-SR04 Bin Capacity Ultrasonic Sensor</option>
+                        <option value="GreenLED">Green Status LED Indicator</option>
+                        <option value="RedLED">Red Error Status LED Indicator</option>
+                        <option value="Buzzer">Core Piezo Buzzer Sounder</option>
+                        <option value="LCD">Character LCD Screen (I2C Interface)</option>
+                      </select>
+
+                      <div style={{
+                        background: '#040b15',
+                        border: '1px solid var(--border-primary)',
+                        padding: '12px 16px',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.72rem',
+                        fontFamily: 'var(--font-mono)',
+                        lineHeight: '1.6'
+                      }}>
+                        {selectedPinout === 'IR' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>FC-51 IR Sensor:</span><br />
+                            • Arduino Pin: <span style={{ color: '#fff' }}>D11 (Digital INPUT)</span><br />
+                            • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
+                            • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>ACTIVE LOW (GND Trigger)</span><br />
+                            • Telemetry: <span style={{ color: sensorIRActive ? 'var(--color-green)' : 'var(--text-muted)' }}>
+                              {sensorIRActive ? "● BEAM BROKEN (OBJECT DETECTED)" : "○ Standby"}
+                            </span>
+                          </div>
+                        )}
+                        {selectedPinout === 'Capacitive' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>LJC18A3 Capacitive Sensor:</span><br />
+                            • Arduino Pin: <span style={{ color: '#fff' }}>D5 (Digital INPUT)</span><br />
+                            • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
+                            • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>ACTIVE HIGH</span><br />
+                            • Telemetry: <span style={{ color: sensorCapActive ? 'var(--color-green)' : 'var(--text-muted)' }}>
+                              {sensorCapActive ? "● HIGH (PLASTIC DETECTED)" : "○ Standby"}
+                            </span>
+                          </div>
+                        )}
+                        {selectedPinout === 'Inductive' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>LJ12A3 Inductive Sensor:</span><br />
+                            • Arduino Pin: <span style={{ color: '#fff' }}>D4 (Digital INPUT)</span><br />
+                            • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
+                            • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>ACTIVE HIGH</span><br />
+                            • Telemetry: <span style={{ color: sensorIndActive ? 'var(--color-green)' : 'var(--text-muted)' }}>
+                              {sensorIndActive ? "● HIGH (METAL CAN DETECTED)" : "○ Standby"}
+                            </span>
+                          </div>
+                        )}
+                        {selectedPinout === 'GateServo' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>SG90 Gate Servo:</span><br />
+                            • Arduino Pin: <span style={{ color: '#fff' }}>D9 (PWM Output)</span><br />
+                            • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
+                            • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>PWM Sweep Control</span><br />
+                            • Telemetry: <span style={{ color: gateAngle > 0 ? 'var(--color-green)' : 'var(--text-muted)' }}>
+                              Angle: <span style={{ color: '#fff' }}>{gateAngle}°</span> ({gateAngle > 0 ? "Open" : "Closed"})
+                            </span>
+                          </div>
+                        )}
+                        {selectedPinout === 'RewardServo' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>SG90 Reward Servo:</span><br />
+                            • Arduino Pin: <span style={{ color: '#fff' }}>D10 (PWM Output)</span><br />
+                            • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
+                            • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>PWM Sweep Control</span><br />
+                            • Telemetry: <span style={{ color: penAngle !== 90 ? 'var(--color-green)' : 'var(--text-muted)' }}>
+                              Angle: <span style={{ color: '#fff' }}>{penAngle}°</span> ({penAngle !== 90 ? "Dispensing" : "Standby"})
+                            </span>
+                          </div>
+                        )}
+                        {selectedPinout === 'Ultrasonic' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>HC-SR04 Ultrasonic:</span><br />
+                            • Trig Pin: <span style={{ color: '#fff' }}>D22 (Output)</span><br />
+                            • Echo Pin: <span style={{ color: '#fff' }}>D23 (Input)</span><br />
+                            • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
+                            • Telemetry: <span style={{ color: machine.binFull ? 'var(--color-red)' : 'var(--color-green)' }}>
+                              {machine.binFull ? "● BIN FULL" : "○ Standby / Monitoring"}
+                            </span>
+                          </div>
+                        )}
+                        {selectedPinout === 'GreenLED' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>Green Status LED:</span><br />
+                            • Arduino Pin: <span style={{ color: '#fff' }}>D6 (Digital Output)</span><br />
+                            • Voltage: <span style={{ color: 'var(--color-green)' }}>2.2 V (resistor)</span><br />
+                            • Telemetry: <span style={{ color: greenLedGlow ? 'var(--color-green)' : 'var(--text-muted)' }}>
+                              {greenLedGlow ? "● HIGH (ON)" : "○ LOW (OFF)"}
+                            </span>
+                          </div>
+                        )}
+                        {selectedPinout === 'RedLED' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>Red Error LED:</span><br />
+                            • Arduino Pin: <span style={{ color: '#fff' }}>D7 (Digital Output)</span><br />
+                            • Voltage: <span style={{ color: 'var(--color-green)' }}>2.0 V (resistor)</span><br />
+                            • Telemetry: <span style={{ color: redLedGlow ? 'var(--color-red)' : 'var(--text-muted)' }}>
+                              {redLedGlow ? "● HIGH (ON)" : "○ LOW (OFF)"}
+                            </span>
+                          </div>
+                        )}
+                        {selectedPinout === 'Buzzer' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>Piezo Buzzer Sounder:</span><br />
+                            • Arduino Pin: <span style={{ color: '#fff' }}>D8 (PWM Output)</span><br />
+                            • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
+                            • Telemetry: <span style={{ color: 'var(--text-muted)' }}>Idle</span>
+                          </div>
+                        )}
+                        {selectedPinout === 'LCD' && (
+                          <div>
+                            <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>Character LCD (I2C):</span><br />
+                            • Pins: <span style={{ color: '#fff' }}>D20(SDA), D21(SCL)</span><br />
+                            • Address: <span style={{ color: '#fff' }}>0x27</span><br />
+                            • Screen:<br />
+                            <span style={{ color: 'var(--color-green)', background: '#000', padding: '2px 6px', display: 'inline-block', border: '1px solid #10b981', marginTop: 4, fontFamily: 'monospace' }}>
+                              [{lcdLine1.padEnd(16, " ")}]<br />
+                              [{lcdLine2.padEnd(16, " ")}]
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
