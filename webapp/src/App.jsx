@@ -142,6 +142,111 @@ export default function App() {
     localStorage.setItem('rvm_live_mode', isLiveMode ? 'true' : 'false');
   }, [isLiveMode]);
 
+  // --- Alerts & Toast Notification Sync (Notification Center) ---
+  const seenAlertIdsRef = useRef(new Set());
+  const isFirstAlertsLoadRef = useRef(true);
+
+  useEffect(() => {
+    if (!alerts || alerts.length === 0) {
+      isFirstAlertsLoadRef.current = false;
+      return;
+    }
+
+    // On the very first load, just fill the seen set with existing alerts
+    if (isFirstAlertsLoadRef.current) {
+      alerts.forEach(a => seenAlertIdsRef.current.add(a.id));
+      isFirstAlertsLoadRef.current = false;
+      return;
+    }
+
+    // Check for any new open alerts
+    alerts.forEach(a => {
+      if (a.status === 'open' && !seenAlertIdsRef.current.has(a.id)) {
+        seenAlertIdsRef.current.add(a.id);
+        
+        let msg = "Alert Triggered";
+        if (a.type === 'BIN_FULL') {
+          msg = "⚠️ CRITICAL: RVM Dustbin is 100% Full! Collection required.";
+        } else if (a.type === 'LOW_REWARD_STOCK') {
+          msg = "⚠️ WARNING: Reward pen stock is low (<10%)!";
+        } else if (a.type === 'ERR_SENSOR_IR') {
+          msg = "🚨 CRITICAL: FC-51 IR sensor malfunction detected!";
+        } else if (a.type === 'ERR_SENSOR_US') {
+          msg = "🚨 CRITICAL: Sonar ultrasonic sensor error detected!";
+        } else if (a.type === 'ERR_GATE_JAMMED') {
+          msg = "🚨 CRITICAL: SG90 Gate Servo jam/obstruction detected!";
+        } else if (a.type === 'ERR_REWARD_JAM') {
+          msg = "🚨 CRITICAL: SG90 Reward Servo jam/obstruction detected!";
+        } else {
+          msg = `🚨 ALERT: ${a.type} - System issue detected!`;
+        }
+        showToast(msg, a.severity === 'critical' ? 'error' : 'info');
+      }
+    });
+  }, [alerts]);
+
+  // --- Auto-Sync BIN_FULL Alert Status ---
+  useEffect(() => {
+    if (machine && machine.binFull) {
+      const hasOpenBinFullAlert = alerts.some(a => a.type === 'BIN_FULL' && a.status === 'open');
+      if (!hasOpenBinFullAlert) {
+        const alertId = "al_bf_" + Date.now();
+        const alertItem = {
+          machineId: machine.machineId || "RVM001",
+          type: "BIN_FULL",
+          severity: "critical",
+          status: "open",
+          createdAt: new Date()
+        };
+
+        if (isLiveMode && isFirebaseConnected) {
+          try {
+            const app = getApps()[0];
+            const db = getFirestore(app);
+            addDoc(collection(db, "alerts"), {
+              ...alertItem,
+              createdAt: Timestamp.now()
+            });
+            logAudit("System Monitor", "ALERT_TRIGGERED", "Collection dustbin at capacity alert logged to cloud", true);
+          } catch (e) {
+            console.error("Failed to write live BIN_FULL alert: ", e);
+          }
+        } else {
+          setSimulatedAlerts(p => {
+            const nextAlerts = [{ id: alertId, ...alertItem }, ...p];
+            setAlerts(nextAlerts);
+            return nextAlerts;
+          });
+        }
+      }
+    } else if (machine && !machine.binFull) {
+      const openBinFullAlerts = alerts.filter(a => a.type === 'BIN_FULL' && a.status === 'open');
+      if (openBinFullAlerts.length > 0) {
+        openBinFullAlerts.forEach(a => {
+          if (isLiveMode && isFirebaseConnected) {
+            try {
+              const app = getApps()[0];
+              const db = getFirestore(app);
+              updateDoc(doc(db, "alerts", a.id), {
+                status: "resolved",
+                resolvedAt: Timestamp.now()
+              });
+              logAudit("System Monitor", "ALERT_RESOLVED", "Dustbin emptied; alert resolved in cloud", true);
+            } catch (e) {
+              console.error("Failed to resolve live BIN_FULL alert: ", e);
+            }
+          } else {
+            setSimulatedAlerts(prev => {
+              const next = prev.map(item => item.id === a.id ? { ...item, status: "resolved", resolvedAt: new Date() } : item);
+              setAlerts(next);
+              return next;
+            });
+          }
+        });
+      }
+    }
+  }, [machine?.binFull, isLiveMode, isFirebaseConnected]);
+
   // --- Standalone Live Telemetry Memory Cache ---
   const [liveMachine, setLiveMachine] = useState(INITIAL_MACHINE_MOCK);
   const [liveEvents, setLiveEvents] = useState(INITIAL_MOCK_EVENTS);
@@ -566,6 +671,7 @@ export default function App() {
   // Acknowledge / Resolve Alerts
   const handleAcknowledgeAlert = async (alertId) => {
     setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: "acknowledged", acknowledgedBy: currentUser.name } : a));
+    setSimulatedAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: "acknowledged", acknowledgedBy: currentUser.name } : a));
     logAudit(currentUser.name, "ACKNOWLEDGE_ALERT", `Alert ID: ${alertId}`);
 
     if (isFirebaseConnected) {
@@ -584,6 +690,7 @@ export default function App() {
 
   const handleResolveAlert = async (alertId) => {
     setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: "resolved", resolvedAt: new Date() } : a));
+    setSimulatedAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: "resolved", resolvedAt: new Date() } : a));
     logAudit(currentUser.name, "RESOLVE_ALERT", `Alert ID: ${alertId}`);
 
     if (isFirebaseConnected) {
