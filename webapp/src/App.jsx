@@ -1532,47 +1532,49 @@ export default function App() {
               <Wifi size={14} />
               {isFirebaseConnected ? "Database Live" : "Local Simulator"}
             </span>
+          </div>
 
-            {/* Real-time Hardware System Health HUD */}
-            <div style={{
-              marginTop: '12px',
-              borderTop: '1px solid var(--border-primary)',
-              paddingTop: '12px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-              width: '100%',
-              boxSizing: 'border-box'
+          {/* Real-time Hardware System Health HUD */}
+          <div style={{
+            marginTop: '12px',
+            borderTop: '1px solid var(--border-primary)',
+            paddingTop: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            width: '100%',
+            boxSizing: 'border-box'
+          }}>
+            <span style={{
+              fontSize: '0.62rem',
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontWeight: 700,
+              textAlign: 'left',
+              display: 'block',
+              marginBottom: '2px'
             }}>
-              <span style={{
-                fontSize: '0.62rem',
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                fontWeight: 700,
-                textAlign: 'left'
-              }}>
-                RVM001 Diagnostics
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Temp:</span>
-                  <span style={{ color: cpuTemp > 45 ? 'var(--color-amber)' : 'var(--text-primary)', fontWeight: 600 }}>{cpuTemp}°C</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Wi-Fi RSSI:</span>
-                  <span style={{ color: 'var(--color-green)', fontWeight: 600 }}>{rssi} dBm</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>SRAM:</span>
-                  <span style={{ color: 'var(--color-cyan)', fontWeight: 600 }}>{freeRam} B / 8K</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Buffer Queue:</span>
-                  <span style={{ color: offlineQueueCount > 0 ? 'var(--color-amber)' : 'var(--text-muted)', fontWeight: 600 }}>
-                    {offlineQueueCount} packets
-                  </span>
-                </div>
+              RVM001 Diagnostics
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>MCU Temp:</span>
+                <span style={{ color: cpuTemp > 45 ? 'var(--color-amber)' : 'var(--text-primary)', fontWeight: 600 }}>{cpuTemp}°C</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Wi-Fi RSSI:</span>
+                <span style={{ color: 'var(--color-green)', fontWeight: 600 }}>{rssi} dBm</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>SRAM Avail:</span>
+                <span style={{ color: 'var(--color-cyan)', fontWeight: 600 }}>{freeRam} B</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Queue Buffer:</span>
+                <span style={{ color: offlineQueueCount > 0 ? 'var(--color-amber)' : 'var(--text-muted)', fontWeight: 600 }}>
+                  {offlineQueueCount} pkts
+                </span>
               </div>
             </div>
           </div>
