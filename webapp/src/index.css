@@ -434,7 +434,7 @@ h1, h2, h3, h4 {
 .cabinet-3d-model {
   position: relative;
   width: 100%;
-  max-width: 460px;
+  max-width: 1200px;
   background: #090a0d;
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
