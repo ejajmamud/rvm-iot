@@ -1106,21 +1106,25 @@ export default function App() {
           bottom: 24,
           right: 24,
           zIndex: 9999,
-          background: toastMessage.type === 'error' ? 'var(--color-red-dim)' : 
-                     toastMessage.type === 'info' ? 'var(--color-blue-dim)' : 'var(--color-green-dim)',
-          border: `1px solid ${toastMessage.type === 'error' ? 'var(--color-red)' : 
-                                toastMessage.type === 'info' ? 'var(--color-blue)' : 'var(--color-green)'}`,
+          background: toastMessage.type === 'error' ? 'rgba(239, 68, 68, 0.15)' : 
+                     toastMessage.type === 'info' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+          backgroundColor: '#07101e', // solid navy dark base to block background elements completely
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: `1px solid ${toastMessage.type === 'error' ? 'rgba(239, 68, 68, 0.4)' : 
+                                toastMessage.type === 'info' ? 'rgba(59, 130, 246, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
           color: toastMessage.type === 'error' ? 'var(--color-red)' : 
                  toastMessage.type === 'info' ? 'var(--color-blue)' : 'var(--color-green)',
-          padding: '10px 18px',
+          padding: '12px 20px',
           borderRadius: 'var(--radius-sm)',
           fontSize: '0.8rem',
-          fontWeight: 600,
+          fontWeight: 700,
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
-          boxShadow: 'var(--shadow-lg)',
-          animation: 'toast-in 0.2s ease-out'
+          gap: 10,
+          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.08)',
+          animation: 'toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          letterSpacing: '0.04em'
         }}>
           {toastMessage.type === 'error' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
           {toastMessage.msg}
