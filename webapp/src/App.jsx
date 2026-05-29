@@ -115,6 +115,10 @@ export default function App() {
   // --- Interactive Pinout Inspector State ---
   const [selectedPinout, setSelectedPinout] = useState("IR");
 
+  // --- Real Prototype Gallery & Datasheet Explorer State ---
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+  const [activeComponentIdx, setActiveComponentIdx] = useState(0);
+
   // --- Live Diagnostics Oscilloscope Logs ---
   const [oscilloscopeLogs, setOscilloscopeLogs] = useState([
     "SYS_READY - Awaiting trigger ping...",
@@ -1546,7 +1550,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Navigation Links */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
@@ -1554,6 +1557,7 @@ export default function App() {
               { id: 'events', label: 'Live Events Feed', icon: Activity },
               { id: 'alerts', label: 'Alert Notification Center', icon: Bell, count: alerts.filter(a => a.status === 'open').length },
               { id: 'analytics', label: 'Analytics Console', icon: BarChart2 },
+              { id: 'prototype', label: 'Physical RVM Gallery', icon: CircuitBoard },
               { id: 'users', label: 'Users & Roles', icon: Users },
               { id: 'settings', label: 'Machine Settings', icon: SettingsIcon },
               { id: 'maintenance', label: 'Maintenance Logs', icon: Wrench },
@@ -1740,6 +1744,7 @@ export default function App() {
               {activeTab === 'events' && "Real-time Telemetry Events"}
               {activeTab === 'alerts' && "Alerts Notification Hub"}
               {activeTab === 'analytics' && "Data Analytics & Reporting"}
+              {activeTab === 'prototype' && "Physical Hardware Showcase"}
               {activeTab === 'users' && "User Directory & Access Controls"}
               {activeTab === 'settings' && "RVM Threshold Adjustments"}
               {activeTab === 'maintenance' && "Technician Operations Log"}
@@ -1751,6 +1756,7 @@ export default function App() {
               {activeTab === 'events' && "Continuous stream of chronological transactional telemetry."}
               {activeTab === 'alerts' && "Monitor active system malfunctions, full levels, and diagnostics."}
               {activeTab === 'analytics' && "Long-term historical rollups and system efficiency stats."}
+              {activeTab === 'prototype' && "Progress gallery, assembly timeline, and hardware datasheet explorer."}
               {activeTab === 'users' && "Adjust roles, view account activities, and govern administrative clearances."}
               {activeTab === 'settings' && "Recalibrate the physical triggers and diagnostic check frequencies."}
               {activeTab === 'maintenance' && "Review service records and submit field maintenance updates."}
@@ -4111,6 +4117,423 @@ export default function App() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* 10. PHYSICAL HARDWARE GALLERY & DATASHEET CONSOLE */}
+          {activeTab === 'prototype' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+              
+              {/* Photo Showcase & Assembly Timeline Split View */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)',
+                gap: 28
+              }}>
+                
+                {/* Interactive High-Fidelity Main Viewer */}
+                <div className="glass-panel" style={{
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  height: '100%',
+                  boxSizing: 'border-box'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <h3 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <CircuitBoard size={20} style={{ color: 'var(--color-green)' }} />
+                      Physical Prototype Viewer
+                    </h3>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      color: 'var(--color-green)',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontWeight: 700
+                    }}>
+                      Stage {activePhotoIdx + 1} of 8
+                    </span>
+                  </div>
+
+                  {/* Main High-Res Image Card */}
+                  <div style={{
+                    width: '100%',
+                    aspectRatio: '16 / 10',
+                    background: '#040810',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-primary)',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.6)'
+                  }}>
+                    <img 
+                      src={[
+                        "/progress/IMG_0713.jpeg",
+                        "/progress/IMG_0714.jpeg",
+                        "/progress/IMG_0720.jpeg",
+                        "/progress/IMG_0730.jpeg",
+                        "/progress/IMG_0740.jpeg",
+                        "/progress/IMG_0751.jpeg",
+                        "/progress/IMG_0780.jpeg",
+                        "/progress/IMG_0790.jpeg"
+                      ][activePhotoIdx]} 
+                      alt="Physical Prototype construction step" 
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        animation: 'toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                      }}
+                    />
+                    
+                    {/* Navigation Overlays */}
+                    <button 
+                      onClick={() => setActivePhotoIdx(p => Math.max(0, p - 1))}
+                      disabled={activePhotoIdx === 0}
+                      style={{
+                        position: 'absolute',
+                        left: 16,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'rgba(3,7,15,0.75)',
+                        border: '1px solid var(--border-primary)',
+                        color: activePhotoIdx === 0 ? 'var(--text-dim)' : 'var(--text-primary)',
+                        padding: '12px 14px',
+                        borderRadius: '50%',
+                        cursor: activePhotoIdx === 0 ? 'not-allowed' : 'pointer',
+                        zIndex: 5,
+                        fontSize: '1rem',
+                        fontWeight: 'bold',
+                        transition: 'var(--transition-fast)'
+                      }}
+                    >
+                      &larr;
+                    </button>
+                    <button 
+                      onClick={() => setActivePhotoIdx(p => Math.min(7, p + 1))}
+                      disabled={activePhotoIdx === 7}
+                      style={{
+                        position: 'absolute',
+                        right: 16,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'rgba(3,7,15,0.75)',
+                        border: '1px solid var(--border-primary)',
+                        color: activePhotoIdx === 7 ? 'var(--text-dim)' : 'var(--text-primary)',
+                        padding: '12px 14px',
+                        borderRadius: '50%',
+                        cursor: activePhotoIdx === 7 ? 'not-allowed' : 'pointer',
+                        zIndex: 5,
+                        fontSize: '1rem',
+                        fontWeight: 'bold',
+                        transition: 'var(--transition-fast)'
+                      }}
+                    >
+                      &rarr;
+                    </button>
+                  </div>
+
+                  {/* Caption Block */}
+                  <div style={{
+                    background: 'rgba(255,255,255,0.01)',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '16px 20px',
+                    borderRadius: 'var(--radius-sm)'
+                  }}>
+                    <strong style={{
+                      display: 'block',
+                      fontSize: '1.05rem',
+                      color: '#fff',
+                      marginBottom: 6,
+                      letterSpacing: '0.04em'
+                    }}>
+                      {[
+                        "ATmega2560 Power Rail & Logic Seeding",
+                        "Hitachi HD44780 LCD I2C Setup",
+                        "TCRT5000 IR Reflector Calibration",
+                        "HC-SR04 Ultrasonic Sonar Assembly",
+                        "LJ12A3-4-Z Inductive Metal Detector",
+                        "Dual SG90 Gate & Reward Actuation",
+                        "Full Cabinet Chassis Structural Assembly",
+                        "ESP32 IoT Cloud Upload Verification"
+                      ][activePhotoIdx]}
+                    </strong>
+                    <p style={{
+                      fontSize: '0.85rem',
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.5
+                    }}>
+                      {[
+                        "Initial hardware wiring stage. Mounting linear regulators, standard grounding grids, and seeding 5V/12V step-down buck modules to power high-torque actuator servos and diagnostic sensors.",
+                        "Integrating the 16×2 Character Display. Calibrated I2C expander sub-bus lines to streamline parallel microcontroller pin arrangements and test real-time custom system greetings.",
+                        "Positioning the infrared beam breaks inside the bottle reception chute. Calibrating NPN threshold logic for precise physical item detection and waking the RVM system from low-power sleep.",
+                        "Mounting the ultrasonic proximity sonar at the cabinet dome. Calibrated echo/trigger time-of-flight algorithms to measure bin waste capacity limits in real-time.",
+                        "Calibrating the NPN inductive proximity sensor loop. This sensor segregates aluminum cans from PET plastic bottles by creating active-low feedback signals when metal is detected.",
+                        "Mounting and testing high-torque micro servo horns. The gate servo sweeps 90° for accepted items, while the reward servo dispenses physical streak reward pens into the drawer.",
+                        "Integrating all hardware components, control panels, wiring rails, and acrylic structures into the final physical Reverse Vending Machine cabinet frame.",
+                        "Final software & hardware cloud synchronization step. Verified standard TLS 1.3 socket uploads to Google Firestore and synced live telemetry updates with the administrative console."
+                      ][activePhotoIdx]}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Construction Timeline & Step Grid */}
+                <div className="glass-panel" style={{
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16
+                }}>
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Activity size={20} style={{ color: 'var(--color-blue)' }} />
+                    Construction Milestones
+                  </h3>
+                  
+                  {/* Milestones scroll list */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                    overflowY: 'auto',
+                    maxHeight: '440px',
+                    paddingRight: '6px'
+                  }}>
+                    {[
+                      "1. Power Rails Configuration",
+                      "2. Character LCD Sub-bus Calibration",
+                      "3. TCRT5000 IR Sensor Setup",
+                      "4. Ultrasonic Capacity Monitoring",
+                      "5. LJ12A3 Metallic Segregation",
+                      "6. Servo Mechanical Actuation",
+                      "7. Cabinet Frame Integration",
+                      "8. Cloud Telemetry Live Link"
+                    ].map((milestone, idx) => {
+                      const isSelected = activePhotoIdx === idx;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setActivePhotoIdx(idx)}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            background: isSelected ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255,255,255,0.01)',
+                            border: `1px solid ${isSelected ? 'var(--color-blue)' : 'var(--border-primary)'}`,
+                            padding: '14px 18px',
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer',
+                            transition: 'var(--transition-fast)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12
+                          }}
+                        >
+                          <div style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            background: isSelected ? 'var(--color-blue)' : 'var(--text-dim)',
+                            animation: isSelected ? 'pulse 1.5s infinite' : 'none'
+                          }} />
+                          <div style={{ flex: 1 }}>
+                            <span style={{
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              color: isSelected ? '#fff' : 'var(--text-primary)'
+                            }}>
+                              {milestone}
+                            </span>
+                            <span style={{
+                              display: 'block',
+                              fontSize: '0.72rem',
+                              color: 'var(--text-muted)',
+                              marginTop: 2
+                            }}>
+                              {[
+                                "ATmega2560 & buck regulators wiring",
+                                "I2C calibration & parallel bus mapping",
+                                "Reflective infrared classification testing",
+                                "HC-SR04 sonar bin capacity sweep",
+                                "LJ12A3-4-Z/BX metal sensor loops",
+                                "SG90 Gate & Reward servo sweeping",
+                                "Acrylic chassis physical assembly",
+                                "ESP32 Firestore cloud integration"
+                              ][idx]}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Component Datasheet Explorer Section */}
+              <div className="glass-panel" style={{ padding: '28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                  <Cpu size={24} style={{ color: 'var(--color-cyan)' }} />
+                  <div>
+                    <h3 style={{ fontSize: '1.3rem', lineHeight: 1.1 }}>Component Datasheet Explorer</h3>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>FYP2 Industrial Sensor & Board Specifications</span>
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '250px 1fr',
+                  gap: 28,
+                  marginTop: 8
+                }}>
+                  
+                  {/* Selector tabs left column */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6
+                  }}>
+                    {[
+                      "Arduino Mega 2560 R3",
+                      "HC-SR04 Ultrasonic",
+                      "SG90 Micro Servo",
+                      "TCRT5000 IR Sensor",
+                      "LJ12A3 Metal Sensor",
+                      "HD44780 LCD Display"
+                    ].map((comp, idx) => {
+                      const isSelected = activeComponentIdx === idx;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveComponentIdx(idx)}
+                          style={{
+                            textAlign: 'left',
+                            padding: '12px 16px',
+                            background: isSelected ? 'rgba(6, 182, 212, 0.1)' : 'transparent',
+                            color: isSelected ? 'var(--color-cyan)' : 'var(--text-primary)',
+                            border: 'none',
+                            borderRadius: 'var(--radius-sm)',
+                            fontWeight: isSelected ? 700 : 500,
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            transition: 'var(--transition-fast)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10
+                          }}
+                        >
+                          <span style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            background: isSelected ? 'var(--color-cyan)' : 'transparent'
+                          }} />
+                          {comp}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Component Details Card right column */}
+                  <div className="glass-panel glow-cyan" style={{
+                    padding: '24px 28px',
+                    borderColor: 'rgba(6, 182, 212, 0.25)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16
+                  }}>
+                    {[
+                      {
+                        name: "Arduino Mega 2560 Rev3",
+                        type: "Core Microcontroller Board",
+                        specs: "ATmega2560 | 16 MHz | 54 Digital I/O | 16 Analog Inputs | 8 KB SRAM",
+                        desc: "The primary industrial controller board that coordinates all real-time sensory inputs, logic gates, LCD displays, buzzer tones, and actuator servo sweeps.",
+                        voltage: "5V (Logic) | 7-12V (Input)"
+                      },
+                      {
+                        name: "HC-SR04 Sonar Sensor",
+                        type: "Ultrasonic Proximity Sensor",
+                        specs: "Sensing Range: 2 cm–400 cm | Frequency: 40 kHz | Resolution: 3 mm",
+                        desc: "Used for measuring bin capacity levels. Fires ultrasonic bursts and calculates the return echo time-of-flight to determine structural waste levels.",
+                        voltage: "5V DC"
+                      },
+                      {
+                        name: "SG90 Micro Servo Motor",
+                        type: "High-Torque Actuator Servo",
+                        specs: "Torque: 1.6 kg/cm | Operating Speed: 0.12s / 60° | Weight: 9g",
+                        desc: "Two units are integrated: one sweeps the entry gate to direct accepted bottles, and the other triggers the mechanical pen dispenser.",
+                        voltage: "4.8V - 6V"
+                      },
+                      {
+                        name: "TCRT5000 IR Sensor",
+                        type: "Reflective Photoelectric Sensor",
+                        specs: "Operating Distance: 0.2 mm–15 mm | Wavelength: 950 nm",
+                        desc: "Fitted inside the entry chute to detect the physical presence of a bottle or can, immediately waking up the microcontroller logic.",
+                        voltage: "3.3V - 5V"
+                      },
+                      {
+                        name: "LJ12A3-4-Z/BX Sensor",
+                        type: "Inductive Proximity Sensor",
+                        specs: "Sensing Distance: 4 mm | Output: NPN NO | Sensing Object: Metal",
+                        desc: "Integrated inside the scanner slot to segregate recyclable items, creating an active-low pulse when a metal can is scanned.",
+                        voltage: "6V - 36V"
+                      },
+                      {
+                        name: "HD44780 LCD 16x2 Display",
+                        type: "Liquid Crystal Character Screen",
+                        specs: "16 Characters × 2 Lines | I2C Sub-bus Expander Board",
+                        desc: "Mounted on the front panel to provide prompt character instructions to users (e.g., 'INSERT BOTTLE', 'CLASSIFYING...', 'THANK YOU!').",
+                        voltage: "5V DC"
+                      }
+                    ].map((comp, idx) => {
+                      if (activeComponentIdx !== idx) return null;
+                      return (
+                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-primary)', paddingBottom: 12 }}>
+                            <div>
+                              <h4 style={{ fontSize: '1.25rem', color: '#fff', fontWeight: 700 }}>{comp.name}</h4>
+                              <span style={{ fontSize: '0.8rem', color: 'var(--color-cyan)', fontWeight: 700 }}>{comp.type}</span>
+                            </div>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              background: 'rgba(6, 182, 212, 0.1)',
+                              color: 'var(--color-cyan)',
+                              padding: '4px 10px',
+                              borderRadius: '4px',
+                              fontWeight: 700
+                            }}>
+                              Specs Verified
+                            </span>
+                          </div>
+
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: 16,
+                            background: 'rgba(255,255,255,0.01)',
+                            padding: 16,
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--border-subtle)'
+                          }}>
+                            <div>
+                              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Sensing Specs</span>
+                              <strong style={{ fontSize: '0.85rem', color: '#fff' }}>{comp.specs}</strong>
+                            </div>
+                            <div>
+                              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Operating Voltage</span>
+                              <strong style={{ fontSize: '0.85rem', color: '#fff' }}>{comp.voltage}</strong>
+                            </div>
+                          </div>
+
+                          <div>
+                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Functional Role Description</span>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{comp.desc}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           )}
