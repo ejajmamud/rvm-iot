@@ -5,7 +5,7 @@
 
 :root {
   /* ── Typography ── */
-  --font-sans: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'Marcellus', serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
 
   /* ── Cosmic Dark Theme (SpaceX Control Room) ── */
