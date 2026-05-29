@@ -101,6 +101,70 @@ export default function App() {
     { id: "au1", actor: "MD Ejaj Mahmud", action: "SYSTEM_INITIALIZED", target: "RVM001", timestamp: new Date(Date.now() - 2592000000) }
   ]);
 
+  // --- Mode Selection (Live Mode vs Standalone Simulated Mode) ---
+  const [isLiveMode, setIsLiveMode] = useState(true);
+
+  // --- Standalone Live Telemetry Memory Cache ---
+  const [liveMachine, setLiveMachine] = useState(INITIAL_MACHINE_MOCK);
+  const [liveEvents, setLiveEvents] = useState(INITIAL_MOCK_EVENTS);
+  const [liveAlerts, setLiveAlerts] = useState(INITIAL_MOCK_ALERTS);
+  const [liveAuditLogs, setLiveAuditLogs] = useState([
+    { id: "au1", actor: "MD Ejaj Mahmud", action: "SYSTEM_INITIALIZED", target: "RVM001", timestamp: new Date(Date.now() - 2592000000) }
+  ]);
+
+  // --- Standalone Simulated Telemetry Memory Cache ---
+  const [simulatedMachine, setSimulatedMachine] = useState({
+    ...INITIAL_MACHINE_MOCK,
+    acceptedCount: 15,
+    rejectedCount: 3,
+    penDispensedCount: 15,
+    status: "online"
+  });
+  const [simulatedEvents, setSimulatedEvents] = useState([
+    { id: "ev_sim_1", type: "PET_ACCEPTED", machineId: "RVM001_SIM", acceptedCount: 15, rejectedCount: 3, penCount: 15, binFull: false, timestamp: new Date() }
+  ]);
+  const [simulatedAlerts, setSimulatedAlerts] = useState([]);
+  const [simulatedAuditLogs, setSimulatedAuditLogs] = useState([
+    { id: "au_sim_1", actor: "Simulator", action: "SIMULATION_INITIALIZED", target: "RVM001_SIM", timestamp: new Date() }
+  ]);
+
+  // --- Sync Active States when Mode Changes ---
+  useEffect(() => {
+    if (isLiveMode) {
+      setMachine(liveMachine);
+      setEvents(liveEvents);
+      setAlerts(liveAlerts);
+      setAuditLogs(liveAuditLogs);
+      
+      if (liveMachine.binFull) {
+        setLcdLine1("BIN FULL!");
+        setLcdLine2("PLEASE TRY LATER");
+        setRedLedGlow(true);
+        setGreenLedGlow(false);
+      } else {
+        setLcdLine1("INSERT BOTTLE");
+        setLcdLine2("PET or CAN      ");
+        setRedLedGlow(false);
+      }
+    } else {
+      setMachine(simulatedMachine);
+      setEvents(simulatedEvents);
+      setAlerts(simulatedAlerts);
+      setAuditLogs(simulatedAuditLogs);
+      
+      if (simulatedMachine.binFull) {
+        setLcdLine1("BIN FULL!");
+        setLcdLine2("PLEASE TRY LATER");
+        setRedLedGlow(true);
+        setGreenLedGlow(false);
+      } else {
+        setLcdLine1("INSERT BOTTLE");
+        setLcdLine2("PET or CAN      ");
+        setRedLedGlow(false);
+      }
+    }
+  }, [isLiveMode, liveMachine, liveEvents, liveAlerts, liveAuditLogs, simulatedMachine, simulatedEvents, simulatedAlerts, simulatedAuditLogs]);
+
   // --- Simulation states for local demo ---
   const [isSimulating, setIsSimulating] = useState(false);
   const simInterval = useRef(null);
@@ -236,18 +300,21 @@ export default function App() {
           if (data.lastSeenAt) {
             data.lastSeenAt = data.lastSeenAt.toDate();
           }
-          setMachine(data);
-          
-          // Map database state to simulated LCD screen
-          if (data.binFull) {
-            setLcdLine1("BIN FULL!");
-            setLcdLine2("PLEASE TRY LATER");
-            setRedLedGlow(true);
-            setGreenLedGlow(false);
-          } else {
-            setLcdLine1("INSERT BOTTLE");
-            setLcdLine2("PET or CAN      ");
-            setRedLedGlow(false);
+          setLiveMachine(data);
+          if (isLiveMode) {
+            setMachine(data);
+            
+            // Map database state to simulated LCD screen
+            if (data.binFull) {
+              setLcdLine1("BIN FULL!");
+              setLcdLine2("PLEASE TRY LATER");
+              setRedLedGlow(true);
+              setGreenLedGlow(false);
+            } else {
+              setLcdLine1("INSERT BOTTLE");
+              setLcdLine2("PET or CAN      ");
+              setRedLedGlow(false);
+            }
           }
         }
       });
@@ -263,30 +330,33 @@ export default function App() {
           evList.push(item);
         });
         if (evList.length > 0) {
-          setEvents(evList);
-          
-          // Map latest event to LCD feedback simulation
-          const latest = evList[0];
-          if (latest.type === "PET_ACCEPTED") {
-            setLcdLine1("PET ACCEPTED");
-            setLcdLine2("THANK YOU!");
-            setGreenLedGlow(true);
-            setRedLedGlow(false);
-            setTimeout(() => {
-              setGreenLedGlow(false);
-              setLcdLine1("INSERT BOTTLE");
-              setLcdLine2("PET or CAN      ");
-            }, 3000);
-          } else if (latest.type === "METAL_REJECTED") {
-            setLcdLine1("METAL DETECTED");
-            setLcdLine2("PLEASE REMOVE!");
-            setRedLedGlow(true);
-            setGreenLedGlow(false);
-            setTimeout(() => {
+          setLiveEvents(evList);
+          if (isLiveMode) {
+            setEvents(evList);
+            
+            // Map latest event to LCD feedback simulation
+            const latest = evList[0];
+            if (latest.type === "PET_ACCEPTED") {
+              setLcdLine1("PET ACCEPTED");
+              setLcdLine2("THANK YOU!");
+              setGreenLedGlow(true);
               setRedLedGlow(false);
-              setLcdLine1("INSERT BOTTLE");
-              setLcdLine2("PET or CAN      ");
-            }, 3000);
+              setTimeout(() => {
+                setGreenLedGlow(false);
+                setLcdLine1("INSERT BOTTLE");
+                setLcdLine2("PET or CAN      ");
+              }, 3000);
+            } else if (latest.type === "METAL_REJECTED") {
+              setLcdLine1("METAL DETECTED");
+              setLcdLine2("PLEASE REMOVE!");
+              setRedLedGlow(true);
+              setGreenLedGlow(false);
+              setTimeout(() => {
+                setRedLedGlow(false);
+                setLcdLine1("INSERT BOTTLE");
+                setLcdLine2("PET or CAN      ");
+              }, 3000);
+            }
           }
         }
       });
@@ -301,7 +371,10 @@ export default function App() {
           if (item.resolvedAt) item.resolvedAt = item.resolvedAt.toDate();
           alList.push(item);
         });
-        setAlerts(alList);
+        setLiveAlerts(alList);
+        if (isLiveMode) {
+          setAlerts(alList);
+        }
       });
 
       // 4. Listen to settings
@@ -374,23 +447,30 @@ export default function App() {
       timestamp: new Date()
     };
     
-    // Local fallback
-    setAuditLogs(prev => [newLog, ...prev]);
+    if (isLiveMode && !isSimulated) {
+      setAuditLogs(prev => [newLog, ...prev]);
+      setLiveAuditLogs(prev => [newLog, ...prev]);
 
-    // Firestore push
-    if (isFirebaseConnected && fbConfig && !isSimulated) {
-      try {
-        const app = getApps()[0];
-        const db = getFirestore(app);
-        await addDoc(collection(db, "auditLogs"), {
-          actorUid: currentUser?.uid || "unauthenticated",
-          action: action,
-          target: target,
-          timestamp: Timestamp.now(),
-          metadata: { actorName }
-        });
-      } catch (err) {
-        console.error(err);
+      // Firestore push
+      if (isFirebaseConnected && fbConfig) {
+        try {
+          const app = getApps()[0];
+          const db = getFirestore(app);
+          await addDoc(collection(db, "auditLogs"), {
+            actorUid: currentUser?.uid || "unauthenticated",
+            action: action,
+            target: target,
+            timestamp: Timestamp.now(),
+            metadata: { actorName }
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    } else {
+      setSimulatedAuditLogs(prev => [newLog, ...prev]);
+      if (!isLiveMode) {
+        setAuditLogs(prev => [newLog, ...prev]);
       }
     }
   };
@@ -518,7 +598,15 @@ export default function App() {
       showToast("Machine powered off — toggle the rocker switch first", "error");
       return;
     }
-    if (machine.binFull) {
+    
+    // Auto-switch to Simulation Mode on simulation action to prevent clashing
+    if (isLiveMode) {
+      setIsLiveMode(false);
+      showToast("Auto-switched to Standalone Simulation Mode", "info");
+    }
+
+    const activeBinState = isLiveMode ? liveMachine.binFull : simulatedMachine.binFull;
+    if (activeBinState) {
       showToast("Intake locked — bin at capacity. Empty the bin first", "error");
       return;
     }
@@ -609,34 +697,39 @@ export default function App() {
     // --- STAGE 5: Gate Actuation decision sweep ---
     setTimeout(() => {
       setDepositStep('gate');
-      
-      // Updates local machine states in database
-      setMachine(prev => {
-        const updated = {
+       // Updates local machine states
+      const updateMachineFn = prev => {
+        return {
           ...prev,
           acceptedCount: isAccepted ? prev.acceptedCount + 1 : prev.acceptedCount,
           rejectedCount: !isAccepted ? prev.rejectedCount + 1 : prev.rejectedCount,
           penDispensedCount: isAccepted ? prev.penDispensedCount + 1 : prev.penDispensedCount,
           lastSeenAt: new Date()
         };
-        
-        // Standalone local simulation: do not write to Firestore
-        return updated;
+      };
+      
+      setSimulatedMachine(prev => {
+        const next = updateMachineFn(prev);
+        if (!isLiveMode) setMachine(next);
+        return next;
       });
 
       // Create Chronological Event Log
-      const newEvent = {
-        id: "ev_" + Date.now(),
-        type: type,
-        machineId: "RVM001",
-        acceptedCount: machine.acceptedCount + (isAccepted ? 1 : 0),
-        rejectedCount: machine.rejectedCount + (!isAccepted ? 1 : 0),
-        penCount: machine.penDispensedCount + (isAccepted ? 1 : 0),
-        binFull: machine.binFull,
-        timestamp: new Date()
-      };
-      
-      setEvents(prev => [newEvent, ...prev]);
+      setSimulatedEvents(prev => {
+        const newEvent = {
+          id: "ev_" + Date.now(),
+          type: type,
+          machineId: "RVM001_SIM",
+          acceptedCount: (prev[0]?.acceptedCount || 0) + (isAccepted ? 1 : 0),
+          rejectedCount: (prev[0]?.rejectedCount || 0) + (!isAccepted ? 1 : 0),
+          penCount: (prev[0]?.penCount || 0) + (isAccepted ? 1 : 0),
+          binFull: prev[0]?.binFull || false,
+          timestamp: new Date()
+        };
+        const nextList = [newEvent, ...prev];
+        if (!isLiveMode) setEvents(nextList);
+        return nextList;
+      });
 
       if (isAccepted) {
         setLcdLine1("PET ACCEPTED    ");
@@ -706,39 +799,48 @@ export default function App() {
       showToast("Machine powered off — cannot toggle bin status", "error");
       return;
     }
-    const nextState = !machine.binFull;
+    if (isLiveMode) {
+      setIsLiveMode(false);
+      showToast("Auto-switched to Standalone Simulation Mode", "info");
+    }
     
-    setMachine(prev => {
+    setSimulatedMachine(prev => {
+      const nextState = !prev.binFull;
       const updated = { ...prev, binFull: nextState, status: nextState ? "maintenance" : "online" };
+      if (!isLiveMode) setMachine(updated);
+      
+      if (nextState) {
+        setLcdLine1("BIN FULL!");
+        setLcdLine2("PLEASE TRY LATER");
+        setRedLedGlow(true);
+        setGreenLedGlow(false);
+        
+        // Warning beeping sound
+        playBuzzerTone(400, 150);
+        setTimeout(() => playBuzzerTone(400, 150), 300);
+
+        const alertItem = {
+          id: "al_" + Date.now(),
+          machineId: "RVM001_SIM",
+          type: "BIN_FULL",
+          severity: "critical",
+          status: "open",
+          createdAt: new Date()
+        };
+        setSimulatedAlerts(p => {
+          const nextAlerts = [alertItem, ...p];
+          if (!isLiveMode) setAlerts(nextAlerts);
+          return nextAlerts;
+        });
+      } else {
+        setLcdLine1("INSERT BOTTLE");
+        setLcdLine2("PET or CAN      ");
+        setRedLedGlow(false);
+        
+        logAudit(currentUser?.name || "Simulator", "BIN_CLEARED", "RVM001_SIM Bin emptied", true);
+      }
       return updated;
     });
-
-    if (nextState) {
-      setLcdLine1("BIN FULL!");
-      setLcdLine2("PLEASE TRY LATER");
-      setRedLedGlow(true);
-      setGreenLedGlow(false);
-      
-      // Warning beeping sound
-      playBuzzerTone(400, 150);
-      setTimeout(() => playBuzzerTone(400, 150), 300);
-
-      const alertItem = {
-        id: "al_" + Date.now(),
-        machineId: "RVM001",
-        type: "BIN_FULL",
-        severity: "critical",
-        status: "open",
-        createdAt: new Date()
-      };
-      setAlerts(prev => [alertItem, ...prev]);
-    } else {
-      setLcdLine1("INSERT BOTTLE");
-      setLcdLine2("PET or CAN      ");
-      setRedLedGlow(false);
-      
-      logAudit(currentUser?.name || "Simulator", "BIN_CLEARED", "RVM001 Bin emptied", true);
-    }
   };
 
   // --- Export to CSV Generator ---
@@ -1256,8 +1358,79 @@ export default function App() {
             </p>
           </div>
 
-          {/* Quick simulator toggles */}
-          <div style={{ display: 'flex', gap: 12 }}>
+          {/* Mode Selector Toggle */}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{
+              display: 'flex',
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid var(--border-primary)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '2px',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <button
+                onClick={() => {
+                  setIsLiveMode(true);
+                  showToast("Switched to Live Data Mode", "info");
+                }}
+                style={{
+                  border: 'none',
+                  background: isLiveMode ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                  color: isLiveMode ? 'var(--color-green)' : 'var(--text-muted)',
+                  padding: '6px 12px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  borderRadius: 'calc(var(--radius-sm) - 2px)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'var(--transition-fast)'
+                }}
+              >
+                <span style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: 'var(--color-green)',
+                  display: 'inline-block',
+                  animation: isLiveMode ? 'pulse 1.5s infinite' : 'none'
+                }} />
+                Live Mode
+              </button>
+              <button
+                onClick={() => {
+                  setIsLiveMode(false);
+                  showToast("Switched to Standalone Simulation Mode", "info");
+                }}
+                style={{
+                  border: 'none',
+                  background: !isLiveMode ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                  color: !isLiveMode ? 'var(--color-blue)' : 'var(--text-muted)',
+                  padding: '6px 12px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  borderRadius: 'calc(var(--radius-sm) - 2px)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'var(--transition-fast)'
+                }}
+              >
+                <span style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: 'var(--color-blue)',
+                  display: 'inline-block',
+                  animation: !isLiveMode ? 'pulse 1.5s infinite' : 'none'
+                }} />
+                Simulation Mode
+              </button>
+            </div>
+
             <button 
               onClick={handleToggleSimulator} 
               className="btn-secondary"
@@ -1268,12 +1441,6 @@ export default function App() {
             >
               {isSimulating ? <Pause size={16} /> : <Play size={16} />}
               {isSimulating ? "Simulating Events" : "Run Live Simulation"}
-            </button>
-
-            {/* Quick CSV Export */}
-            <button onClick={handleExportCSV} className="btn-secondary">
-              <Download size={16} />
-              Export CSV
             </button>
           </div>
         </header>
