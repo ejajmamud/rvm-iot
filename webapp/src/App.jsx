@@ -1515,7 +1515,7 @@ export default function App() {
                           <div className="cabinet-front-panel" style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', width: '100%', gap: '24px', flexWrap: 'wrap' }}>
                             
                             {/* SUB-COLUMN A: CONTROL & POWER */}
-                            <div style={{ flex: '1 1 320px', display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'space-between' }}>
+                            <div style={{ flex: '1 1 320px', display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'space-between', order: 3 }}>
                               <div>
                                 <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.05em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Control Panel HUD</span>
                                 {/* SECTION 1: Blue 16x2 character LCD Screen */}
@@ -1636,7 +1636,7 @@ export default function App() {
                             </div>
 
                             {/* SUB-COLUMN B: INTAKE CHAMBER */}
-                            <div style={{ flex: '1.2 1 340px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div style={{ flex: '1.2 1 340px', display: 'flex', flexDirection: 'column', gap: '16px', order: 2 }}>
                               {/* SECTION 3: High-Tech Interactive Waste Intake Chamber */}
                               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
                                 <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Waste Intake Classification Chamber</span>
@@ -1763,7 +1763,7 @@ export default function App() {
                             </div>
 
                             {/* SUB-COLUMN C: DIAGNOSTICS & VIEWPORTS */}
-                            <div style={{ flex: '1.2 1 340px', display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'space-between' }}>
+                            <div style={{ flex: '1.2 1 340px', display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'space-between', order: 1 }}>
                               {/* SECTION 5: Transparent Microcontroller Glass Diagnostic Bay */}
                               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
                                 <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Microcontroller Viewport</span>
