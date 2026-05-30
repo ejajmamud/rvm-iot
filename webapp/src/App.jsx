@@ -4469,7 +4469,7 @@ export default function App() {
                 
                 {/* CALIBRATIONS */}
                 <div className="glass-panel" style={{ padding: '28px', height: 'fit-content' }}>
-                  <h3 style={{ fontSize: '1.2rem', marginBottom: 20, fontFamily: 'var(--font-serif)', color: '#fff' }}>Calibrations & Heartbeats</h3>
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: 20, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>Calibrations & Heartbeats</h3>
                   
                   <form onSubmit={(e) => {
                     e.preventDefault();
@@ -4561,7 +4561,7 @@ export default function App() {
                     onClick={() => setExpandedSection(expandedSection === 'users' ? null : 'users')}
                     style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0 }}
                   >
-                    <h4 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontFamily: 'var(--font-serif)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-serif)', display: 'flex', alignItems: 'center', gap: 8 }}>
                       👤 User Access & Role Clearances
                     </h4>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{expandedSection === 'users' ? 'Collapse ▲' : 'Expand Directory ▼'}</span>
@@ -4630,7 +4630,7 @@ export default function App() {
                     onClick={() => setExpandedSection(expandedSection === 'maint' ? null : 'maint')}
                     style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0 }}
                   >
-                    <h4 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontFamily: 'var(--font-serif)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-serif)', display: 'flex', alignItems: 'center', gap: 8 }}>
                       🔧 Field Technician Maintenance Logs
                     </h4>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{expandedSection === 'maint' ? 'Collapse ▲' : 'Expand Logs ▼'}</span>
@@ -4640,7 +4640,7 @@ export default function App() {
                       <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                         {/* Form to submit maintenance */}
                         <div className="glass-panel" style={{ padding: '20px', height: 'fit-content', background: 'rgba(255,255,255,0.01)' }}>
-                          <h5 style={{ fontSize: '0.9rem', marginBottom: 16, color: '#fff' }}>Submit Maintenance Entry</h5>
+                          <h5 style={{ fontSize: '0.9rem', marginBottom: 16, color: 'var(--text-primary)' }}>Submit Maintenance Entry</h5>
                           
                           <form onSubmit={(e) => {
                             e.preventDefault();
@@ -4672,7 +4672,7 @@ export default function App() {
 
                         {/* Maintenance Log history */}
                         <div className="glass-panel" style={{ padding: '20px', height: '320px', overflowY: 'auto', background: 'rgba(255,255,255,0.01)' }}>
-                          <h5 style={{ fontSize: '0.9rem', marginBottom: 16, color: '#fff' }}>Historical Field Services</h5>
+                          <h5 style={{ fontSize: '0.9rem', marginBottom: 16, color: 'var(--text-primary)' }}>Historical Field Services</h5>
                           
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                             {maintenanceLogs.map(m => (
@@ -4699,7 +4699,7 @@ export default function App() {
                     onClick={() => setExpandedSection(expandedSection === 'audit' ? null : 'audit')}
                     style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0 }}
                   >
-                    <h4 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontFamily: 'var(--font-serif)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-serif)', display: 'flex', alignItems: 'center', gap: 8 }}>
                       🛡️ Security Access Audit Trails
                     </h4>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{expandedSection === 'audit' ? 'Collapse ▲' : 'Expand Audit ▼'}</span>
@@ -4755,7 +4755,7 @@ export default function App() {
             <div className="glass-panel" style={{ padding: '28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
                 <div>
-                  <h3 style={{ fontSize: '1.4rem', marginBottom: 4, fontFamily: 'var(--font-serif)', color: '#fff' }}>Smart RVM Hardware Wiring Pinout</h3>
+                  <h3 style={{ fontSize: '1.4rem', marginBottom: 4, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>Smart RVM Hardware Wiring Pinout</h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Verified industrial prototype physical connection schematic mapping Mega2560 pins to RVM sensors and actuators.</p>
                 </div>
                 <span style={{ fontSize: '0.75rem', background: 'rgba(16,185,129,0.1)', color: 'var(--color-green)', border: '1px solid rgba(16,185,129,0.2)', padding: '4px 10px', borderRadius: 4, fontWeight: 700, textTransform: 'uppercase' }}>
@@ -4791,7 +4791,7 @@ export default function App() {
                     ].map((row, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)', background: idx % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent' }}>
                         <td style={{ padding: '12px' }}><code style={{ color: 'var(--color-cyan)', fontSize: '0.85rem', fontWeight: 800 }}>{row.pin}</code></td>
-                        <td style={{ padding: '12px' }}><strong style={{ fontSize: '0.85rem', color: '#fff' }}>{row.name}</strong></td>
+                        <td style={{ padding: '12px' }}><strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{row.name}</strong></td>
                         <td style={{ padding: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{row.volt}</td>
                         <td style={{ padding: '12px' }}>
                           <span style={{
@@ -4824,7 +4824,7 @@ export default function App() {
               
               {/* Left Selector Sidebar */}
               <div className="glass-panel" style={{ padding: '20px', height: 'fit-content' }}>
-                <h4 style={{ fontSize: '0.95rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Diagram Selection</h4>
+                <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Diagram Selection</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
                     "System Architecture",
@@ -4874,7 +4874,7 @@ export default function App() {
                 {/* Visual Panel Card */}
                 <div className="glass-panel" style={{ padding: '28px', background: '#020612', border: '1px solid var(--border-primary)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                    <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: '#fff' }}>
+                    <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>
                       {[
                         "1. RVM System Architecture & Telemetry Pipeline",
                         "2. Central ATmega2560 Hardware Connection Bus",
@@ -5440,7 +5440,7 @@ export default function App() {
 
                 {/* Explanation Card */}
                 <div className="glass-panel" style={{ padding: '24px 28px' }}>
-                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Technical Analysis & Examiner Reference</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Technical Analysis & Examiner Reference</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                     <div>
                       <h5 style={{ color: 'var(--color-blue)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 6 }}>Diagram Objective</h5>
@@ -5508,7 +5508,7 @@ export default function App() {
                 background: 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%)'
               }}>
                 <div>
-                  <h3 style={{ fontSize: '1.4rem', marginBottom: 4, fontFamily: 'var(--font-serif)', color: '#fff' }}>Academic Supervisor Evaluation Portal</h3>
+                  <h3 style={{ fontSize: '1.4rem', marginBottom: 4, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>Academic Supervisor Evaluation Portal</h3>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Dedicated panel for Dr. Hannah Sofian to review project scope, academic checklists, live demo guides, and future recommendations.</p>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
@@ -5526,7 +5526,7 @@ export default function App() {
                 
                 {/* Specs Checklist */}
                 <div className="glass-panel" style={{ padding: '24px 28px' }}>
-                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>RVM Prototype Technical Spec</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>RVM Prototype Technical Spec</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {[
                       { label: "Microcontroller", val: "Atmega2560 (Arduino Mega)", checked: true },
@@ -5545,7 +5545,7 @@ export default function App() {
                           <span style={{ color: 'var(--color-green)', fontWeight: 'bold' }}>✓</span>
                           {spec.label}
                         </span>
-                        <strong style={{ color: '#fff' }}>{spec.val}</strong>
+                        <strong style={{ color: 'var(--text-primary)' }}>{spec.val}</strong>
                       </div>
                     ))}
                   </div>
@@ -5553,7 +5553,7 @@ export default function App() {
 
                 {/* Objectives checklist */}
                 <div className="glass-panel" style={{ padding: '24px 28px' }}>
-                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>FYP Project Academic Objectives</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>FYP Project Academic Objectives</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {[
                       { title: "Objective 1: Physical Material Classification", desc: "Design and calibrate a physical sorting intake chute using inductive proximity (D4) and capacitive density (D5) sensors to accurately separate aluminum drink cans from PET plastic containers without complex compute overhead.", status: "100% Completed & Tuned" },
@@ -5578,7 +5578,7 @@ export default function App() {
 
               {/* Section 2: Scenario Demos Guide */}
               <div className="glass-panel" style={{ padding: '24px 28px' }}>
-                <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Examiner Demonstration Evaluation Guide</h4>
+                <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Examiner Demonstration Evaluation Guide</h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.4 }}>
                   Academic examiners can click on the <strong>Live Simulator</strong> tab to run highly-detailed physical simulations. Each scenario triggers actual visual loops on the character LCD, illuminates LEDs, sweeps mechanical servos, sends UART strings, pushes Firestore packets, and updates charts:
                 </p>
@@ -5590,7 +5590,7 @@ export default function App() {
                   ].map((demo, dIdx) => (
                     <div key={dIdx} style={{ padding: 16, borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', justifyBetween: 'space-between' }}>
                       <div>
-                        <strong style={{ fontSize: '0.9rem', color: '#fff', display: 'block', marginBottom: 8, fontFamily: 'var(--font-serif)' }}>{demo.title}</strong>
+                        <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block', marginBottom: 8, fontFamily: 'var(--font-serif)' }}>{demo.title}</strong>
                         <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: 14 }}>{demo.note}</p>
                       </div>
                       <button
@@ -5614,7 +5614,7 @@ export default function App() {
                 
                 {/* Prototype Limitations */}
                 <div className="glass-panel" style={{ padding: '24px 28px' }}>
-                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Prototype Physical Limitations</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Prototype Physical Limitations</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {[
                       { title: "Physical Bin Capacity Limit", desc: "The ultrasonic sensor maps a fixed container depth range (26.4cm empty, 8.0cm critical full). Excess waste volume triggers absolute hardware intake lockout." },
@@ -5631,7 +5631,7 @@ export default function App() {
 
                 {/* Future AI/ML Upgrade Recommendations */}
                 <div className="glass-panel" style={{ padding: '24px 28px' }}>
-                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Future System Upgrades & AI/ML Recommendations</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Future System Upgrades & AI/ML Recommendations</h4>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.4 }}>
                     To maintain low power and minimal computing cost on the prototype, high-overhead vision processing was avoided. However, the system is designed to support the following advanced upgrade paths:
                   </p>
@@ -5779,7 +5779,7 @@ export default function App() {
                     <strong style={{
                       display: 'block',
                       fontSize: '1.05rem',
-                      color: '#fff',
+                      color: 'var(--text-primary)',
                       marginBottom: 6,
                       letterSpacing: '0.04em'
                     }}>
@@ -5920,7 +5920,7 @@ export default function App() {
                 background: 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%)'
               }}>
                 <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
                     Official FYP2 Documentation Centre
                   </h4>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -6172,7 +6172,7 @@ export default function App() {
                           {/* Title Block */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-primary)', paddingBottom: 12 }}>
                             <div>
-                              <h4 style={{ fontSize: '1.3rem', color: '#fff', fontWeight: 700, letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>{comp.name}</h4>
+                              <h4 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: 700, letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>{comp.name}</h4>
                               <span style={{ fontSize: '0.8rem', color: 'var(--color-cyan)', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{comp.type}</span>
                             </div>
                             <span style={{
@@ -6201,7 +6201,7 @@ export default function App() {
                                   {comp.specs.map((spec, sIdx) => (
                                     <tr key={sIdx}>
                                       <td style={{ color: 'var(--text-secondary)', padding: '8px 12px', fontWeight: 600, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.label}</td>
-                                      <td style={{ color: '#fff', padding: '8px 12px', textAlign: 'right', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.value}</td>
+                                      <td style={{ color: 'var(--text-primary)', padding: '8px 12px', textAlign: 'right', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.value}</td>
                                     </tr>
                                   ))}
                                 </tbody>
