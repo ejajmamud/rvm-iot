@@ -1454,11 +1454,7 @@ export default function App() {
             UniKL MIIT · FYP2 Admin Dashboard · 2026
           </p>
 
-          {/* Enterprise badge */}
-          <div className="login-badge" style={{ marginBottom: 24 }}>
-            <Globe size={14} color="var(--color-blue)" />
-            <span>ENTERPRISE DEMO — GUEST ACCESS ENABLED</span>
-          </div>
+
 
           {/* Admin Login Credentials Form */}
           <form onSubmit={handleLogin} style={{ width: '100%', marginBottom: 20 }}>
