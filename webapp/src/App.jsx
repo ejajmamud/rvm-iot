@@ -761,6 +761,7 @@ export default function App() {
       setIsSimulating(false);
     } else {
       setIsSimulating(true);
+      setActiveTab('simulator');
       simInterval.current = setInterval(() => {
         // Randomly simulate a bottle accepted (65% chance) or can rejected (35% chance)
         const isBottle = Math.random() < 0.65;
