@@ -1432,8 +1432,9 @@ export default function App() {
       // Clone the SVG so we don't mutate the live DOM
       const clonedSvg = svgEl.cloneNode(true);
       
-      // 1. Set explicit width and height attributes matching the viewBox dimensions
-      // This is CRITICAL to prevent the browser from defaulting to 300x150 or rendering blank/blurry canvas outputs
+      // 1. Ensure correct XML namespace and dimensions
+      // This is CRITICAL when serializing SVGs for standalone browser rendering
+      clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       const viewBox = svgEl.getAttribute('viewBox') || '0 0 800 400';
       const [, , width, height] = viewBox.split(' ').map(Number);
       clonedSvg.setAttribute('width', width);
@@ -1470,7 +1471,8 @@ export default function App() {
       };
       replaceCssVars(clonedSvg);
 
-      // 3. Inject Marcellus Google Font and apply it universally to all text elements in the isolated SVG context
+      // 3. Inject a completely self-contained visual style sheet (NO external network fonts)
+      // This is crucial to satisfy browser sandboxing rules and prevent Canvas taint errors.
       let defs = clonedSvg.querySelector('defs');
       if (!defs) {
         defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
@@ -1478,9 +1480,10 @@ export default function App() {
       }
       const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
       styleEl.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Marcellus&display=swap');
         text {
           font-family: 'Marcellus', 'Georgia', 'Times New Roman', serif !important;
+          font-smooth: always;
+          -webkit-font-smoothing: antialiased;
         }
       `;
       defs.appendChild(styleEl);
@@ -1533,13 +1536,35 @@ export default function App() {
         downloadLink.click();
         document.body.removeChild(downloadLink);
         
-        URL.revokeObjectURL(blobURL);
+        // Cleanup resources safely
+        setTimeout(() => {
+          URL.revokeObjectURL(blobURL);
+        }, 100);
+        
         showToast("Ultra-HQ diagram downloaded successfully!", "success");
       };
       
       image.onerror = (err) => {
-        console.error("UHQ rendering error: ", err);
-        showToast("Failed to render diagram image", "error");
+        console.error("UHQ canvas rendering blocked: ", err);
+        showToast("Canvas render blocked. Downloading vector SVG fallback...", "warning");
+        
+        // Standalone vector SVG fallback download (extremely reliable, infinite scaling)
+        const downloadLink = document.createElement('a');
+        const diagramNames = [
+          "RVM_System_Architecture",
+          "RVM_Hardware_Block_Diagram",
+          "RVM_IoT_Data_Flow",
+          "RVM_Arduino_State_Machine",
+          "RVM_Sensor_Classification_Logic",
+          "RVM_Firebase_DB_Schema",
+          "RVM_Role_Based_Security_Model",
+          "RVM_Power_Distribution_Diagram"
+        ];
+        downloadLink.href = blobURL;
+        downloadLink.download = `${diagramNames[activeDiagramIdx] || 'RVM_Diagram'}.svg`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
       };
       
       image.src = blobURL;
