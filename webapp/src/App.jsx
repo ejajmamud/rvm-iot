@@ -1432,10 +1432,60 @@ export default function App() {
       // Clone the SVG so we don't mutate the live DOM
       const clonedSvg = svgEl.cloneNode(true);
       
-      // Set explicit styling attributes to ensure proper rendering in raw Image
-      clonedSvg.setAttribute('style', 'font-family: "Marcellus", serif;');
+      // 1. Set explicit width and height attributes matching the viewBox dimensions
+      // This is CRITICAL to prevent the browser from defaulting to 300x150 or rendering blank/blurry canvas outputs
+      const viewBox = svgEl.getAttribute('viewBox') || '0 0 800 400';
+      const [, , width, height] = viewBox.split(' ').map(Number);
+      clonedSvg.setAttribute('width', width);
+      clonedSvg.setAttribute('height', height);
       
-      // Convert cloned SVG to XML string
+      // 2. Resolve all theme CSS variables into absolute HEX colors for isolated rendering
+      const cssVarMap = {
+        '--color-blue': '#3b82f6',
+        '--color-green': '#10b981',
+        '--color-cyan': '#06b6d4',
+        '--color-amber': '#f59e0b',
+        '--color-red': '#ef4444',
+        '--text-primary': '#ffffff',
+        '--text-muted': '#94a3b8',
+        '--text-dim': '#64748b',
+        '--border-primary': '#334155',
+        '--border-subtle': '#1e293b'
+      };
+
+      const replaceCssVars = (node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          ['fill', 'stroke', 'style'].forEach(attrName => {
+            let attrVal = node.getAttribute(attrName);
+            if (attrVal) {
+              Object.entries(cssVarMap).forEach(([cssVar, hexVal]) => {
+                const regex = new RegExp(`var\\(${cssVar}\\)`, 'g');
+                attrVal = attrVal.replace(regex, hexVal);
+              });
+              node.setAttribute(attrName, attrVal);
+            }
+          });
+        }
+        node.childNodes.forEach(replaceCssVars);
+      };
+      replaceCssVars(clonedSvg);
+
+      // 3. Inject Marcellus Google Font and apply it universally to all text elements in the isolated SVG context
+      let defs = clonedSvg.querySelector('defs');
+      if (!defs) {
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        clonedSvg.insertBefore(defs, clonedSvg.firstChild);
+      }
+      const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      styleEl.textContent = `
+        @import url('https://fonts.googleapis.com/css2?family=Marcellus&display=swap');
+        text {
+          font-family: 'Marcellus', 'Georgia', 'Times New Roman', serif !important;
+        }
+      `;
+      defs.appendChild(styleEl);
+
+      // 4. Convert cloned SVG to XML string
       const svgString = new XMLSerializer().serializeToString(clonedSvg);
       const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
       const URL = window.URL || window.webkitURL || window;
@@ -1446,9 +1496,6 @@ export default function App() {
         // Create high-resolution UHQ Canvas (3x scaling)
         const canvas = document.createElement('canvas');
         const scale = 3; 
-        
-        const viewBox = svgEl.getAttribute('viewBox') || '0 0 800 400';
-        const [, , width, height] = viewBox.split(' ').map(Number);
         
         canvas.width = width * scale;
         canvas.height = height * scale;
