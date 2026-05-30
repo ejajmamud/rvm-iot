@@ -56,6 +56,20 @@ const INITIAL_HISTORICAL_DATA = [
   { date: "May 29", accepted: 45, rejected: 15, pens: 24 }
 ];
 
+const getCachedMachineData = () => {
+  try {
+    const saved = localStorage.getItem('rvm_cached_machine_data');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.lastSeenAt) parsed.lastSeenAt = new Date(parsed.lastSeenAt);
+      return parsed;
+    }
+  } catch (e) {
+    console.error("Error parsing cached machine data:", e);
+  }
+  return INITIAL_MACHINE_MOCK;
+};
+
 export default function App() {
   const [theme, setTheme] = useState('dark');
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -122,7 +136,7 @@ export default function App() {
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
   // --- Real-time Firestore State ---
-  const [machine, setMachine] = useState(INITIAL_MACHINE_MOCK);
+  const [machine, setMachine] = useState(getCachedMachineData);
   const [events, setEvents] = useState(INITIAL_MOCK_EVENTS);
   const [alerts, setAlerts] = useState(INITIAL_MOCK_ALERTS);
   const [users, setUsers] = useState(INITIAL_MOCK_USERS);
@@ -287,7 +301,7 @@ export default function App() {
   }, [machine?.binFull, isLiveMode, isFirebaseConnected]);
 
   // --- Standalone Live Telemetry Memory Cache ---
-  const [liveMachine, setLiveMachine] = useState(INITIAL_MACHINE_MOCK);
+  const [liveMachine, setLiveMachine] = useState(getCachedMachineData);
   const [liveEvents, setLiveEvents] = useState(INITIAL_MOCK_EVENTS);
   const [liveAlerts, setLiveAlerts] = useState(INITIAL_MOCK_ALERTS);
   const [liveAuditLogs, setLiveAuditLogs] = useState([
@@ -483,6 +497,9 @@ export default function App() {
             data.lastSeenAt = data.lastSeenAt.toDate();
           }
           setLiveMachine(data);
+          // Cache the latest live machine numbers to eliminate jumps on refreshing
+          localStorage.setItem('rvm_cached_machine_data', JSON.stringify(data));
+          
           if (isLiveMode) {
             setMachine(data);
             
