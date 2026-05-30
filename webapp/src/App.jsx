@@ -93,6 +93,21 @@ export default function App() {
     return false;
   };
 
+  // --- Advanced Telemetry & FYP Features ---
+  const [rewardStock, setRewardStock] = useState(7);
+  const [lastHeartbeatSec, setLastHeartbeatSec] = useState(4);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const [activeDiagramIdx, setActiveDiagramIdx] = useState(0);
+
+  // Heartbeat increments every second unless reset
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLastHeartbeatSec(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // --- Firebase Connection Configuration State ---
   const [fbConfig, setFbConfig] = useState(() => {
     const saved = localStorage.getItem('rvm_firebase_config');
@@ -137,6 +152,7 @@ export default function App() {
 
   // --- Interactive Pinout Inspector State ---
   const [selectedPinout, setSelectedPinout] = useState("IR");
+  const [expandedSection, setExpandedSection] = useState(null);
 
   // --- Real Prototype Gallery & Datasheet Explorer State ---
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
@@ -646,6 +662,38 @@ export default function App() {
   };
 
   // Save Settings
+  const handleToggleMaintenance = () => {
+    if (demoGuard('Toggling Maintenance Mode')) return;
+    setIsMaintenanceMode(prev => {
+      const nextVal = !prev;
+      const actionName = nextVal ? "ACTIVATED Maintenance Override Lock" : "DEACTIVATED Maintenance Override Lock";
+      
+      setAuditLogs(prevLogs => [
+        {
+          id: `audit-${Date.now()}`,
+          actor: currentUser?.name || 'Admin',
+          action: actionName,
+          target: 'RVM001 Chassis Intake',
+          timestamp: new Date()
+        },
+        ...prevLogs
+      ]);
+
+      setMaintenanceLogs(prevMaint => [
+        {
+          id: `maint-${Date.now()}`,
+          technician: currentUser?.name || 'Admin Ejaj',
+          action: nextVal ? "Initiated manual system lock. Intakes locked. Chute diagnostics active." : "Restored system to standard operational state. Intakes unlocked.",
+          date: new Date()
+        },
+        ...prevMaint
+      ]);
+
+      showToast(nextVal ? "System placed into MAINTENANCE mode. Intakes locked." : "System restored to fully OPERATIONAL state.", "success");
+      return nextVal;
+    });
+  };
+
   const handleSaveSettings = async (newThreshold, newInterval) => {
     if (demoGuard('Saving settings')) return;
     const updatedSettings = {
@@ -770,8 +818,78 @@ export default function App() {
     }
   };
 
+  const handleDemoReplay = (type) => {
+    if (demoGuard('Replaying demo scenarios')) return;
+    if (isMaintenanceMode) {
+      showToast("🚨 System in Maintenance Mode! Inputs are physically locked.", "error");
+      return;
+    }
+    if (isReplaying) {
+      showToast("A demo replay sequence is already in progress!", "warning");
+      return;
+    }
+    setIsReplaying(true);
+    setActiveTab('simulator');
+    
+    // Make sure power is on
+    if (!isPowerOn) {
+      setIsPowerOn(true);
+      setIsBooting(true);
+      setLcdLine1("SMART RECYCLER");
+      setLcdLine2("SYSTEM STARTING");
+      setTimeout(() => {
+        setIsBooting(false);
+        setLcdLine1("INSERT BOTTLE");
+        setLcdLine2("PET or CAN      ");
+      }, 1000);
+    }
+    
+    setTimeout(() => {
+      if (type === 'PET') {
+        showToast("🎬 Replaying PET Bottle Acceptance Scenario...", "info");
+        simulateHardwareEvent("PET_ACCEPTED");
+        setTimeout(() => setIsReplaying(false), 7200);
+      } else if (type === 'CAN') {
+        showToast("🎬 Replaying Aluminum Can Rejection Scenario...", "info");
+        simulateHardwareEvent("METAL_REJECTED");
+        setTimeout(() => setIsReplaying(false), 4000);
+      } else if (type === 'FULL') {
+        showToast("🎬 Replaying Bin Capacity Full scenario...", "error");
+        // Simulate bin capacity full
+        setSimulatedMachine(prev => {
+          const updated = { ...prev, binFull: true, status: "maintenance" };
+          setMachine(updated);
+          return updated;
+        });
+        setLcdLine1("BIN FULL!       ");
+        setLcdLine2("PLEASE TRY LATER");
+        setRedLedGlow(true);
+        setGreenLedGlow(false);
+        playBuzzerTone(440, 1000);
+        
+        // Auto-restore after 6 seconds to let user continue roaming
+        setTimeout(() => {
+          setSimulatedMachine(prev => {
+            const restored = { ...prev, binFull: false, status: "online" };
+            setMachine(restored);
+            return restored;
+          });
+          setLcdLine1("INSERT BOTTLE   ");
+          setLcdLine2("PET or CAN      ");
+          setRedLedGlow(false);
+          setIsReplaying(false);
+          showToast("Bin capacity alarm restored to normal", "info");
+        }, 6000);
+      }
+    }, 1200);
+  };
+
   const simulateHardwareEvent = async (type) => {
     if (demoGuard('Simulating hardware events')) return;
+    if (isMaintenanceMode) {
+      showToast("🚨 System in Maintenance Mode! Inputs are physically locked.", "error");
+      return;
+    }
     if (!isPowerOn) {
       showToast("Machine powered off — toggle the rocker switch first", "error");
       return;
@@ -977,6 +1095,7 @@ export default function App() {
         setPenAngle(0);
         playBuzzerTone(1200, 180);
         setSimulatedPenRewardCount(prev => Math.max(0, prev - 1));
+        setRewardStock(prev => Math.max(0, prev - 1));
         setIsPenInDrawer(true); // Drop a pen into the interactive retrieval slot!
         
         setTimeout(() => {
@@ -1587,31 +1706,31 @@ export default function App() {
 
   // Nav items for mobile bottom bar and sidebar
   const NAV_ITEMS = [
-    { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
-    { id: 'simulator', label: 'Machine Simulator', icon: Cpu },
-    { id: 'events', label: 'Live Events Feed', icon: Activity },
-    { id: 'alerts', label: 'Alert Notification Center', icon: Bell, count: alerts.filter(a => a.status === 'open').length },
+    { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+    { id: 'simulator', label: 'Live Simulator', icon: Cpu },
+    { id: 'events', label: 'Real-Time Telemetry', icon: Activity },
     { id: 'analytics', label: 'Analytics Console', icon: BarChart2 },
-    { id: 'prototype', label: 'Physical RVM Gallery', icon: CircuitBoard },
-    { id: 'datasheets', label: 'Datasheet Explorer', icon: FileText },
-    { id: 'users', label: 'Users & Roles', icon: Users },
-    { id: 'settings', label: 'Machine Settings', icon: SettingsIcon },
-    { id: 'maintenance', label: 'Maintenance Logs', icon: Wrench },
-    { id: 'audit', label: 'System Audit Trails', icon: ShieldAlert }
+    { id: 'alerts', label: 'Alerts & Alarms', icon: Bell, count: alerts.filter(a => a.status === 'open').length },
+    { id: 'pinout', label: 'Hardware Pinout', icon: Cable },
+    { id: 'diagrams', label: 'Diagrams', icon: CircuitBoard },
+    { id: 'datasheets', label: 'Component Datasheets', icon: FileText },
+    { id: 'prototype', label: 'Construction Gallery', icon: Package },
+    { id: 'settings', label: 'Admin Settings', icon: SettingsIcon },
+    { id: 'supervisor', label: 'Supervisor Review', icon: Trophy }
   ];
 
   const PAGE_TITLES = {
     dashboard: 'System Overview',
-    simulator: 'Hardware Console',
-    events: 'Telemetry Events',
-    alerts: 'Alerts Hub',
-    analytics: 'Analytics',
-    prototype: 'RVM Gallery',
-    datasheets: 'Datasheets',
-    users: 'Users & Roles',
-    settings: 'Settings',
-    maintenance: 'Maintenance',
-    audit: 'Audit Trails'
+    simulator: 'Hardware Simulator Console',
+    events: 'Real-Time UART Telemetry Feed',
+    analytics: 'Analytics & Predictions Console',
+    alerts: 'System Alerts & Warnings',
+    pinout: 'Hardware Wiring & Pinout Mappings',
+    diagrams: 'Engineering Documentation & Diagrams',
+    datasheets: 'Official Component Datasheets',
+    prototype: 'Physical RVM Construction Timeline',
+    settings: 'Admin System Configurations',
+    supervisor: 'Academic Supervisor Review Center'
   };
 
   return (
@@ -1964,10 +2083,10 @@ export default function App() {
               {activeTab === 'analytics' && "Data Analytics & Reporting"}
               {activeTab === 'prototype' && "Physical Hardware Showcase"}
               {activeTab === 'datasheets' && "Component Datasheet Explorer"}
-              {activeTab === 'users' && "User Directory & Access Controls"}
-              {activeTab === 'settings' && "RVM Threshold Adjustments"}
-              {activeTab === 'maintenance' && "Technician Operations Log"}
-              {activeTab === 'audit' && "Security Audit Trails"}
+              {activeTab === 'pinout' && "Hardware Wiring & Pinout"}
+              {activeTab === 'diagrams' && "Engineering Diagrams Deck"}
+              {activeTab === 'settings' && "Enterprise Admin Settings"}
+              {activeTab === 'supervisor' && "Supervisor Evaluation Center"}
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
               {activeTab === 'dashboard' && "Real-time analytical and structural telemetry from RVM001."}
@@ -1977,10 +2096,10 @@ export default function App() {
               {activeTab === 'analytics' && "Long-term historical rollups and system efficiency stats."}
               {activeTab === 'prototype' && "Progress gallery and interactive construction milestones timeline."}
               {activeTab === 'datasheets' && "Explore verified industrial sensor specifications and official signed reports."}
-              {activeTab === 'users' && "Adjust roles, view account activities, and govern administrative clearances."}
-              {activeTab === 'settings' && "Recalibrate the physical triggers and diagnostic check frequencies."}
-              {activeTab === 'maintenance' && "Review service records and submit field maintenance updates."}
-              {activeTab === 'audit' && "Immutable security log tracing all database and portal operations."}
+              {activeTab === 'pinout' && "Interactive spreadsheet of signal configurations, voltages, and wiring states."}
+              {activeTab === 'diagrams' && "Interactive high-fidelity vector diagrams and hardware flow charts."}
+              {activeTab === 'settings' && "Tweak calibrations, toggle maintenance, and audit machine activities."}
+              {activeTab === 'supervisor' && "Dr. Hannah's checklist, limitations, and future AI/ML upgrade recommendations."}
             </p>
           </div>
 
@@ -2100,49 +2219,115 @@ export default function App() {
                 
                 {/* RVM Status Card */}
                 <div className="glass-panel" style={{ padding: '28px' }}>
-                  <h3 style={{ fontSize: '1.2rem', marginBottom: 20 }}>RVM Hardware Live Status</h3>
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Cpu size={18} style={{ color: 'var(--color-cyan)' }} />
+                    RVM Hardware Diagnostic Telemetry
+                  </h3>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-primary)', paddingBottom: 10 }}>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Machine Reference:</span>
-                      <span style={{ fontWeight: 600 }}>{machine.machineId}</span>
-                    </div>
+                  {/* Dynamic Telemetry Calculations */}
+                  {(() => {
+                    const activeAlertCount = alerts.filter(a => a.status === 'open').length;
+                    const sensorFaultCount = (sensorIRFault ? 1 : 0) + (sensorUSFault ? 1 : 0) + (servoGateFault ? 1 : 0) + (servoRewardFault ? 1 : 0);
+                    const healthScore = Math.max(0, 100 - (activeAlertCount * 12) - (sensorFaultCount * 15) - (!isPowerOn ? 80 : 0) - (isMaintenanceMode ? 40 : 0));
                     
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-primary)', paddingBottom: 10 }}>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Physical Location:</span>
-                      <span style={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'right' }}>{machine.location}</span>
-                    </div>
+                    const binDepthCm = (26.4 - Math.min(15, machine.acceptedCount * 0.4));
+                    const binLevelPct = machine.binFull ? 100 : Math.min(100, Math.round(((26.4 - binDepthCm) / (26.4 - 8)) * 100));
+                    
+                    const forecastHours = machine.binFull ? 0 : Math.max(0.5, ((100 - binLevelPct) / 10) * 0.5);
+                    const forecastHrsPart = Math.floor(forecastHours);
+                    const forecastMinsPart = Math.round((forecastHours - forecastHrsPart) * 60);
+                    const forecastStr = machine.binFull ? "0 minutes (Capacity Exceeded)" : 
+                                        isMaintenanceMode ? "N/A (Intake Offline)" :
+                                        !isPowerOn ? "N/A (Powered Off)" :
+                                        `${forecastHrsPart}h ${forecastMinsPart}m (Based on current usage rate)`;
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-primary)', paddingBottom: 10 }}>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Network Connectivity:</span>
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        color: 'var(--color-green)',
-                        fontWeight: 600
-                      }}>
-                        <Wifi size={16} /> Online (Bridge active)
-                      </span>
-                    </div>
+                    const isHeartbeatActive = lastHeartbeatSec < 30 && isPowerOn && !isMaintenanceMode;
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Bin Full Condition:</span>
-                        <span style={{ fontWeight: 600, color: machine.binFull ? 'var(--color-red)' : 'var(--color-green)' }}>
-                          {machine.binFull ? 'CRITICAL - EMPTY IMMEDIATELY' : 'Normal Operations (24%)'}
-                        </span>
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        
+                        {/* 1. Machine Health Score Gauge */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                          <div style={{ position: 'relative', width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="50" height="50" viewBox="0 0 36 36">
+                              <path fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                              <path fill="none" stroke={healthScore > 80 ? 'var(--color-green)' : healthScore > 40 ? 'var(--color-amber)' : 'var(--color-red)'} strokeWidth="3" strokeDasharray={`${healthScore}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" strokeLinecap="round" style={{ transition: 'stroke-dasharray 0.5s ease' }} />
+                            </svg>
+                            <span style={{ position: 'absolute', fontSize: '0.78rem', fontWeight: 800, color: '#fff', fontFamily: 'var(--font-sans)' }}>{healthScore}%</span>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Machine Health Score</div>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: healthScore > 80 ? 'var(--color-green)' : healthScore > 40 ? 'var(--color-amber)' : 'var(--color-red)' }}>
+                              {!isPowerOn ? 'Offline (Power Cut)' : isMaintenanceMode ? 'Maintenance Mode Locked' : healthScore > 80 ? 'Excellent Operational' : healthScore > 50 ? 'Moderate Alert' : 'Critical Hazard'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. Live Heartbeat Monitor */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-primary)', paddingBottom: 10 }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Live UART Heartbeat:</span>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            color: isHeartbeatActive ? 'var(--color-green)' : 'var(--color-amber)',
+                            fontWeight: 700,
+                            fontSize: '0.82rem'
+                          }}>
+                            <span style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: '50%',
+                              background: isHeartbeatActive ? 'var(--color-green)' : 'var(--color-amber)',
+                              display: 'inline-block',
+                              animation: isHeartbeatActive ? 'pulse 1.5s infinite' : 'none'
+                            }} />
+                            {!isPowerOn ? 'Offline' : isMaintenanceMode ? 'Locked' : isHeartbeatActive ? `${lastHeartbeatSec}s ago (Stable)` : `${lastHeartbeatSec}s ago (Heartbeat Warning)`}
+                          </span>
+                        </div>
+
+                        {/* 3. Bin Capacity Forecast */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, borderBottom: '1px solid var(--border-primary)', paddingBottom: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>Bin Level ({binLevelPct}%):</span>
+                            <span style={{ fontWeight: 700, color: machine.binFull ? 'var(--color-red)' : 'var(--color-green)' }}>
+                              {machine.binFull ? 'CRITICAL - FULL' : `${binLevelPct}% Capacity`}
+                            </span>
+                          </div>
+                          <div style={{ width: '100%', height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{
+                              width: `${binLevelPct}%`,
+                              height: '100%',
+                              background: machine.binFull ? 'var(--color-red)' : 'var(--color-green)',
+                              transition: 'var(--transition-smooth)'
+                            }} />
+                          </div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                            ⏳ Est. Full in: <strong>{forecastStr}</strong>
+                          </span>
+                        </div>
+
+                        {/* 4. Reward Stock Monitor */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-primary)', paddingBottom: 10 }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Reward Pen Stock:</span>
+                          <span style={{
+                            fontWeight: 700,
+                            color: rewardStock > 3 ? 'var(--color-cyan)' : 'var(--color-amber)',
+                            fontSize: '0.82rem'
+                          }}>
+                            🎁 {rewardStock} / 10 remaining {rewardStock <= 3 && '(Low Stock Alert!)'}
+                          </span>
+                        </div>
+
+                        {/* 5. General Machine Meta */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>ID / Firmware:</span>
+                          <span style={{ color: 'var(--text-secondary)' }}>{machine.machineId} · {machine.firmwareVersion}</span>
+                        </div>
+
                       </div>
-                      <div style={{ width: '100%', height: 10, background: 'rgba(255,255,255,0.08)', borderRadius: 5, overflow: 'hidden' }}>
-                        <div style={{
-                          width: machine.binFull ? '100%' : '24%',
-                          height: '100%',
-                          background: machine.binFull ? 'var(--color-red)' : 'var(--color-green)',
-                          transition: 'var(--transition-smooth)'
-                        }} />
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Simulated Chart (Custom Premium SVG Chart) */}
@@ -2201,50 +2386,102 @@ export default function App() {
                   </div>
                 </div>
               </div>
-
-              {/* Bottom Section: Recent Events Timeline */}
+                  {/* Bottom Section: Chronological Event Timeline & Export Controls */}
               <div className="glass-panel" style={{ padding: '28px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <h3 style={{ fontSize: '1.2rem' }}>Live System Ingestion Stream</h3>
-                  <button onClick={() => setActiveTab('events')} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
-                    View All Ingested Lines
-                  </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', marginBottom: 4 }}>Telemetry Timeline & Event Stream</h3>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Chronological ingestion of sensory telemetry and state transition updates.</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button onClick={handleExportCSV} className="btn-secondary" style={{ padding: '8px 14px', fontSize: '0.75rem', gap: 6 }}>
+                      <Download size={13} /> Export CSV Log
+                    </button>
+                    <button onClick={handleExportPDFMock} className="btn-primary" style={{ padding: '8px 14px', fontSize: '0.75rem', gap: 6 }}>
+                      <FileText size={13} /> Export PDF Report
+                    </button>
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {events.slice(0, 3).map((ev) => (
-                    <div key={ev.id} className="glass-panel" style={{
-                      padding: '16px',
-                      background: 'rgba(255,255,255,0.01)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <span style={{
-                          background: ev.type === 'PET_ACCEPTED' ? 'rgba(16, 185, 129, 0.1)' : 
-                                      ev.type === 'METAL_REJECTED' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.04)',
-                          color: ev.type === 'PET_ACCEPTED' ? 'var(--color-green)' : 
-                                 ev.type === 'METAL_REJECTED' ? 'var(--color-red)' : 'var(--text-muted)',
-                          padding: '6px 12px',
-                          borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.75rem',
-                          fontWeight: 700
+                {/* Vertical Chronological Timeline Tree */}
+                <div style={{ position: 'relative', paddingLeft: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  {/* Vertical linking line */}
+                  <div style={{
+                    position: 'absolute',
+                    left: 6,
+                    top: 8,
+                    bottom: 8,
+                    width: 2,
+                    background: 'linear-gradient(180deg, var(--color-green) 0%, rgba(59,130,246,0.3) 100%)',
+                    opacity: 0.4
+                  }} />
+
+                  {events.slice(0, 4).map((ev, eIdx) => {
+                    const isAccepted = ev.type === 'PET_ACCEPTED';
+                    const isRejected = ev.type === 'METAL_REJECTED';
+                    const isHeartbeat = ev.type === 'HEARTBEAT';
+
+                    let dotColor = 'var(--text-muted)';
+                    let glowColor = 'rgba(255,255,255,0.05)';
+                    if (isAccepted) { dotColor = 'var(--color-green)'; glowColor = 'var(--color-green-glow)'; }
+                    else if (isRejected) { dotColor = 'var(--color-red)'; glowColor = 'var(--color-red-glow)'; }
+                    else if (isHeartbeat) { dotColor = 'var(--color-blue)'; glowColor = 'var(--color-blue-glow)'; }
+
+                    return (
+                      <div key={ev.id} style={{ display: 'flex', position: 'relative', alignItems: 'flex-start', gap: 16 }}>
+                        
+                        {/* Timeline pulsing dot */}
+                        <div style={{
+                          position: 'absolute',
+                          left: -23,
+                          top: 4,
+                          width: 10,
+                          height: 10,
+                          borderRadius: '50%',
+                          background: dotColor,
+                          border: '2px solid var(--bg-base)',
+                          boxShadow: `0 0 8px ${dotColor}`,
+                          zIndex: 2
+                        }} />
+
+                        {/* Ingestion Content Box */}
+                        <div className="glass-panel" style={{
+                          flex: 1,
+                          padding: '12px 18px',
+                          background: 'rgba(255,255,255,0.01)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: 12,
+                          flexWrap: 'wrap',
+                          borderLeft: `3px solid ${dotColor}`
                         }}>
-                          {ev.type}
-                        </span>
-                        <div>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>RVM001 Log Entry</span>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            Machine State Counters: Accepted: {ev.acceptedCount} | Rejected: {ev.rejectedCount}
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                              <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: dotColor, fontWeight: 800 }}>
+                                {ev.type.replace('_', ' ')}
+                              </span>
+                              <span style={{ fontSize: '0.68rem', color: 'var(--text-dim)' }}>·</span>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>RVM001 Telemetry</span>
+                            </div>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              {isAccepted && `Capacitive scan detected non-metallic object. Intake gate cleared at 90°. Reward dispensed.`}
+                              {isRejected && `Inductive proximity triggered (metal can). Intake sweep blocked. Chute alarm locked.`}
+                              {isHeartbeat && `System ping recorded. Hardware registers stable. Temperature 42.5°C.`}
+                              {!isAccepted && !isRejected && !isHeartbeat && `Telemetry state transition event successfully processed.`}
+                            </p>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginTop: 4 }}>
+                              Counters: Accepted: {ev.acceptedCount} | Rejected: {ev.rejectedCount} | Dispensed: {ev.penCount}
+                            </div>
                           </div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
+                            {ev.timestamp ? ev.timestamp.toLocaleTimeString() : 'N/A'}
+                          </span>
                         </div>
+
                       </div>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        {ev.timestamp ? ev.timestamp.toLocaleTimeString() : 'N/A'}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -2303,8 +2540,8 @@ export default function App() {
                                     </div>
                                     Alphanumeric Liquid Crystal Display. Powered by 5.0V. Integrates parallel matrix drivers over SCL/SDA lines. Displays state messages.
                                   </div>
-                                  <div className="blue-lcd-line">{lcdLine1.padEnd(16)}</div>
-                                  <div className="blue-lcd-line">{lcdLine2.padEnd(16)}</div>
+                                  <div className="blue-lcd-line">{(isMaintenanceMode ? "SYSTEM LOCKOUT" : lcdLine1).padEnd(16)}</div>
+                                  <div className="blue-lcd-line">{(isMaintenanceMode ? "MAINTENANCE MODE" : lcdLine2).padEnd(16)}</div>
                                 </div>
 
                                 {/* SECTION 2: Tactile Status Row (Accept LED, Buzzer, Reject LED) */}
@@ -3020,6 +3257,105 @@ export default function App() {
                       >
                         {servoRewardFault ? "● Reward Dispenser Jammed" : "○ Simulate Reward Jam"}
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Interactive Demo Replay console */}
+                  <div className="glass-panel" style={{ padding: '24px', marginTop: '20px', borderColor: isReplaying ? 'var(--color-cyan)' : 'var(--border-primary)', borderStyle: isReplaying ? 'dashed' : 'solid' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Trophy size={18} color="var(--color-cyan)" />
+                      Interactive Demo Replay Console
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: 16 }}>
+                      Select a pre-programmed hardware ingestion sequence to watch the automatic LCD, sensor, LED, and actuator transitions play out live on the chassis above.
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <button
+                        onClick={() => handleDemoReplay('PET')}
+                        className="btn-primary"
+                        style={{
+                          fontSize: '0.8rem',
+                          padding: '10px',
+                          justifyContent: 'center',
+                          background: 'linear-gradient(135deg, rgba(6,182,212,0.2) 0%, rgba(6,182,212,0.05) 100%)',
+                          borderColor: 'var(--color-cyan)',
+                          color: 'var(--color-cyan)'
+                        }}
+                        disabled={isReplaying}
+                      >
+                        🎥 Replay PET Bottle Ingestion Sequence
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDemoReplay('CAN')}
+                        className="btn-secondary"
+                        style={{
+                          fontSize: '0.8rem',
+                          padding: '10px',
+                          justifyContent: 'center',
+                          borderColor: 'var(--color-red)',
+                          color: 'var(--color-red)'
+                        }}
+                        disabled={isReplaying}
+                      >
+                        🎥 Replay Metal Can Rejection Sequence
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDemoReplay('FULL')}
+                        className="btn-secondary"
+                        style={{
+                          fontSize: '0.8rem',
+                          padding: '10px',
+                          justifyContent: 'center',
+                          borderColor: 'var(--color-amber)',
+                          color: 'var(--color-amber)'
+                        }}
+                        disabled={isReplaying}
+                      >
+                        🎥 Replay Bin Capacity Full Alarm Sequence
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Fault Diagnosis panel */}
+                  <div className="glass-panel" style={{ padding: '24px', marginTop: '20px' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <ShieldAlert size={18} color="var(--color-amber)" />
+                      Chassis Fault Diagnosis Center
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: 16 }}>
+                      Current structural health status of peripheral sensors, communication channels, and telemetry synchronization loops.
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      {[
+                        { label: "IR Sensor Loop", status: sensorIRFault ? "FAULT" : "OPERATIONAL", color: sensorIRFault ? "var(--color-red)" : "var(--color-green)", details: "FC-51 presence D11" },
+                        { label: "Capacitive Loop", status: sensorUSFault ? "FAULT" : "OPERATIONAL", color: sensorUSFault ? "var(--color-red)" : "var(--color-green)", details: "LJC18A3 classifier D5" },
+                        { label: "Inductive Loop", status: sensorUSFault ? "FAULT" : "OPERATIONAL", color: sensorUSFault ? "var(--color-red)" : "var(--color-green)", details: "LJ12A3 Classifier D4" },
+                        { label: "Sonar Loop", status: sensorUSFault ? "MALFUNCTION" : "OPERATIONAL", color: sensorUSFault ? "var(--color-red)" : "var(--color-green)", details: "HC-SR04 depth scanner" },
+                        { label: "Intake Gate Servo", status: servoGateFault ? "JAM / ERROR" : "OPERATIONAL", color: servoGateFault ? "var(--color-red)" : "var(--color-green)", details: "SG90 Gate D9 actuator" },
+                        { label: "Reward Servo", status: servoRewardFault ? "JAM / ERROR" : "OPERATIONAL", color: servoRewardFault ? "var(--color-red)" : "var(--color-green)", details: "SG90 Pen D10 dispenser" },
+                        { label: "WiFi Connection", status: isWiFiActive && isPowerOn ? "STABLE" : "DISCONNECTED", color: isWiFiActive && isPowerOn ? "var(--color-green)" : "var(--color-red)", details: "ESP-WROOM-32 Wi-Fi" },
+                        { label: "Firebase TLS Ingest", status: isLiveMode && isFirebaseConnected ? "ACTIVE SYNC" : "OFFLINE MOCK", color: isLiveMode && isFirebaseConnected ? "var(--color-green)" : "var(--color-blue)", details: "Firestore telemetry" }
+                      ].map((diag, idx) => (
+                        <div key={idx} style={{
+                          background: 'rgba(255,255,255,0.01)',
+                          border: '1px solid var(--border-subtle)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '10px 14px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 4
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff' }}>{diag.label}</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: diag.color }}>{diag.status}</span>
+                          </div>
+                          <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>{diag.details}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -4089,62 +4425,390 @@ export default function App() {
           )}
 
           {/* 6. USERS & ROLES PAGE */}
-          {activeTab === 'users' && (
+
+          {/* 7. MACHINE SETTINGS & ADMINISTRATIVE HUD (UNIFIED) */}
+          {activeTab === 'settings' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+              
+              {/* MAINTENANCE MODE TOGGLE ROCKER CARD */}
+              <div className="glass-panel" style={{ padding: '24px 28px', background: isMaintenanceMode ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.01)', border: isMaintenanceMode ? '1px solid var(--color-amber)' : '1px solid var(--border-primary)', transition: 'var(--transition-smooth)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
+                  <div>
+                    <h4 style={{ fontSize: '1.15rem', color: isMaintenanceMode ? 'var(--color-amber)' : '#fff', marginBottom: 4, fontFamily: 'var(--font-serif)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {isMaintenanceMode ? "⚠️ RVM Maintenance Override Lockout Active" : "🛡️ RVM Operational Protection Override"}
+                    </h4>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      {isMaintenanceMode ? "Hardware intake chute is physically locked at 0°. LCD character screen displays SYSTEM LOCKOUT. All simulation triggers blocked." : "System is fully operational. Intake chute is active. Standard simulator controls and telemetry stream enabled."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleToggleMaintenance}
+                    style={{
+                      background: isMaintenanceMode ? 'var(--color-amber)' : 'rgba(255,255,255,0.04)',
+                      border: '1px solid ' + (isMaintenanceMode ? 'var(--color-amber)' : 'var(--border-subtle)'),
+                      color: isMaintenanceMode ? '#000' : '#fff',
+                      padding: '10px 20px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      boxShadow: isMaintenanceMode ? '0 0 12px rgba(245,158,11,0.3)' : 'none',
+                      transition: 'var(--transition-smooth)'
+                    }}
+                  >
+                    {isMaintenanceMode ? "🔓 Deactivate Maintenance Override" : "🔒 Toggle Maintenance Lockout"}
+                  </button>
+                </div>
+              </div>
+
+              {/* TWO COLUMN CALIBRATIONS AND INJECTOR */}
+              <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '30px' }}>
+                
+                {/* CALIBRATIONS */}
+                <div className="glass-panel" style={{ padding: '28px', height: 'fit-content' }}>
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: 20, fontFamily: 'var(--font-serif)', color: '#fff' }}>Calibrations & Heartbeats</h3>
+                  
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveSettings(e.target.threshold.value, e.target.interval.value);
+                  }} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Bin Full Ultrasonic Threshold (CM)</label>
+                      <input 
+                        type="number" 
+                        name="threshold"
+                        className="form-input" 
+                        defaultValue={settings.binFullThresholdCm}
+                        min={3}
+                        max={50}
+                        required
+                      />
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        Trigger full lockout when bin content distance is equal to or less than this value (Tuned to machine bin height).
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Heartbeat Diagnostics Interval (ms)</label>
+                      <input 
+                        type="number" 
+                        name="interval"
+                        className="form-input" 
+                        defaultValue={settings.heartbeatInterval}
+                        min={5000}
+                        max={120000}
+                        required
+                      />
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        Frequency interval at which Arduino Mega pushes SYSTEM_HEARTBEAT packets to maintain web online monitoring.
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border-primary)', paddingTop: 16 }}>
+                      <button type="submit" className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
+                        Sync Configurations
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* FIREBASE CREDENTIALS INJECTOR */}
+                <div className="glass-panel" style={{ padding: '28px', height: 'fit-content', borderStyle: 'dashed', borderColor: 'var(--color-blue)' }}>
+                  <h4 style={{ fontSize: '1.1rem', color: 'var(--color-blue)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-serif)' }}>
+                    <Database size={16} /> Live Firebase Credentials Injector
+                  </h4>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+                    Connect this React Dashboard to your own live Firebase database! Fill in your Web App config credentials below, and the app will instantly bind live Firestore document listeners.
+                  </p>
+
+                  {fbConfig ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ fontSize: '0.8rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: 12, borderRadius: 4, color: 'var(--color-green)' }}>
+                        <strong>✓ Active Connection:</strong> Connected to project <code>{fbConfig.projectId}</code>
+                      </div>
+                      <button onClick={handleClearFirebaseConfig} className="btn-secondary" style={{ color: 'var(--color-red)', borderColor: 'var(--color-red)', padding: '8px 12px', fontSize: '0.8rem', justifyContent: 'center', width: '100%' }}>
+                        Disconnect & Use Simulator
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSaveFirebaseConfig} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <input type="text" name="apiKey" placeholder="apiKey" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
+                        <input type="text" name="authDomain" placeholder="authDomain" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
+                        <input type="text" name="projectId" placeholder="projectId" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
+                        <input type="text" name="storageBucket" placeholder="storageBucket" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
+                        <input type="text" name="messagingSenderId" placeholder="messagingSenderId" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
+                        <input type="text" name="appId" placeholder="appId" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
+                      </div>
+                      <button type="submit" className="btn-primary" style={{ padding: '8px 12px', fontSize: '0.8rem', justifyContent: 'center', width: '100%' }}>
+                        Inject Connection
+                      </button>
+                    </form>
+                  )}
+                </div>
+
+              </div>
+
+              {/* EXPANDABLE ACCORDIONS FOR COMBINED PAGES */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                
+                {/* 1. User Directory Accordion */}
+                <div className="glass-panel" style={{ padding: '20px 24px', border: expandedSection === 'users' ? '1px solid var(--color-blue)' : '1px solid var(--border-primary)' }}>
+                  <button 
+                    onClick={() => setExpandedSection(expandedSection === 'users' ? null : 'users')}
+                    style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0 }}
+                  >
+                    <h4 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontFamily: 'var(--font-serif)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      👤 User Access & Role Clearances
+                    </h4>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{expandedSection === 'users' ? 'Collapse ▲' : 'Expand Directory ▼'}</span>
+                  </button>
+                  {expandedSection === 'users' && (
+                    <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+                      <div className="table-container">
+                        <table className="custom-table" style={{ width: '100%' }}>
+                          <thead>
+                            <tr>
+                              <th>Account Name</th>
+                              <th>Email Address</th>
+                              <th>Assigned Role</th>
+                              <th>Authorized Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {users.map(u => (
+                              <tr key={u.uid}>
+                                <td><strong>{u.name}</strong></td>
+                                <td>{u.email}</td>
+                                <td>
+                                  <span style={{
+                                    background: u.role === 'admin' ? 'rgba(59, 130, 246, 0.1)' : 
+                                                u.role === 'supervisor' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+                                    color: u.role === 'admin' ? 'var(--color-blue)' : 
+                                           u.role === 'supervisor' ? 'var(--color-green)' : 'var(--text-muted)',
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase'
+                                  }}>
+                                    {u.role}
+                                  </span>
+                                </td>
+                                <td>
+                                  {currentUser.role === 'admin' && currentUser.uid !== u.uid ? (
+                                    <select 
+                                      value={u.role} 
+                                      onChange={e => handleUpdateRole(u.uid, e.target.value)}
+                                      className="form-input"
+                                      style={{ padding: '4px 8px', fontSize: '0.8rem' }}
+                                    >
+                                      <option value="admin">Admin</option>
+                                      <option value="supervisor">Supervisor</option>
+                                      <option value="technician">Technician</option>
+                                      <option value="viewer">Viewer</option>
+                                    </select>
+                                  ) : (
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Immutable Clearance</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Field Maintenance Logs Accordion */}
+                <div className="glass-panel" style={{ padding: '20px 24px', border: expandedSection === 'maint' ? '1px solid var(--color-green)' : '1px solid var(--border-primary)' }}>
+                  <button 
+                    onClick={() => setExpandedSection(expandedSection === 'maint' ? null : 'maint')}
+                    style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0 }}
+                  >
+                    <h4 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontFamily: 'var(--font-serif)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      🔧 Field Technician Maintenance Logs
+                    </h4>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{expandedSection === 'maint' ? 'Collapse ▲' : 'Expand Logs ▼'}</span>
+                  </button>
+                  {expandedSection === 'maint' && (
+                    <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+                      <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                        {/* Form to submit maintenance */}
+                        <div className="glass-panel" style={{ padding: '20px', height: 'fit-content', background: 'rgba(255,255,255,0.01)' }}>
+                          <h5 style={{ fontSize: '0.9rem', marginBottom: 16, color: '#fff' }}>Submit Maintenance Entry</h5>
+                          
+                          <form onSubmit={(e) => {
+                            e.preventDefault();
+                            handleAddMaintenance(e.target.actionText.value);
+                            e.target.reset();
+                          }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Assigned Technician</label>
+                              <input type="text" className="form-input" value={currentUser.name} readOnly style={{ background: 'rgba(255,255,255,0.03)' }} />
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Maintenance Tasks Completed</label>
+                              <textarea 
+                                name="actionText" 
+                                className="form-input" 
+                                placeholder="e.g. Cleared stuck plastic bottle from intake, refilled pen reward inventory."
+                                rows={4}
+                                required
+                                style={{ resize: 'none' }}
+                              />
+                            </div>
+
+                            <button type="submit" className="btn-primary" style={{ justifyContent: 'center', padding: '8px' }}>
+                              File Maintenance Record
+                            </button>
+                          </form>
+                        </div>
+
+                        {/* Maintenance Log history */}
+                        <div className="glass-panel" style={{ padding: '20px', height: '320px', overflowY: 'auto', background: 'rgba(255,255,255,0.01)' }}>
+                          <h5 style={{ fontSize: '0.9rem', marginBottom: 16, color: '#fff' }}>Historical Field Services</h5>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            {maintenanceLogs.map(m => (
+                              <div key={m.id} className="glass-panel" style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-subtle)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                  <strong style={{ color: 'var(--color-blue)', fontSize: '0.8rem' }}>{m.technician}</strong>
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.date ? m.date.toLocaleString() : 'N/A'}</span>
+                                </div>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                                  {m.action}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Security Audit Trails Accordion */}
+                <div className="glass-panel" style={{ padding: '20px 24px', border: expandedSection === 'audit' ? '1px solid var(--color-purple)' : '1px solid var(--border-primary)' }}>
+                  <button 
+                    onClick={() => setExpandedSection(expandedSection === 'audit' ? null : 'audit')}
+                    style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0 }}
+                  >
+                    <h4 style={{ fontSize: '1.05rem', color: '#fff', margin: 0, fontFamily: 'var(--font-serif)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      🛡️ Security Access Audit Trails
+                    </h4>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{expandedSection === 'audit' ? 'Collapse ▲' : 'Expand Audit ▼'}</span>
+                  </button>
+                  {expandedSection === 'audit' && (
+                    <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+                      <div className="table-container">
+                        <table className="custom-table" style={{ fontSize: '0.82rem', width: '100%' }}>
+                          <thead>
+                            <tr>
+                              <th>Timestamp</th>
+                              <th>Actor Operator</th>
+                              <th>Trigger Action</th>
+                              <th>Operation Target</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {auditLogs.map((log) => (
+                              <tr key={log.id}>
+                                <td>{log.timestamp ? log.timestamp.toLocaleString() : 'N/A'}</td>
+                                <td><strong style={{ color: 'var(--color-blue)' }}>{log.actor}</strong></td>
+                                <td>
+                                  <span style={{
+                                    background: 'rgba(59, 130, 246, 0.08)',
+                                    color: 'var(--color-blue)',
+                                    padding: '3px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700
+                                  }}>
+                                    {log.action}
+                                  </span>
+                                </td>
+                                <td>{log.target}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+
+          {/* ========================================================================= */}
+          {/* 12. HARDWARE WIRING & PINOUT */}
+          {activeTab === 'pinout' && (
             <div className="glass-panel" style={{ padding: '28px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h3 style={{ fontSize: '1.2rem' }}>Portal User Accounts</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  Only logged-in **Admin** can edit clearances.
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+                <div>
+                  <h3 style={{ fontSize: '1.4rem', marginBottom: 4, fontFamily: 'var(--font-serif)', color: '#fff' }}>Smart RVM Hardware Wiring Pinout</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Verified industrial prototype physical connection schematic mapping Mega2560 pins to RVM sensors and actuators.</p>
+                </div>
+                <span style={{ fontSize: '0.75rem', background: 'rgba(16,185,129,0.1)', color: 'var(--color-green)', border: '1px solid rgba(16,185,129,0.2)', padding: '4px 10px', borderRadius: 4, fontWeight: 700, textTransform: 'uppercase' }}>
+                  Controller: ATmega2560
                 </span>
               </div>
 
               <div className="table-container">
-                <table className="custom-table">
+                <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr>
-                      <th>Account Name</th>
-                      <th>Email Address</th>
-                      <th>Assigned Role</th>
-                      <th>Authorized Actions</th>
+                    <tr style={{ borderBottom: '2px solid var(--border-primary)' }}>
+                      <th style={{ fontFamily: 'var(--font-serif)', textAlign: 'left', padding: '12px' }}>Pin Number</th>
+                      <th style={{ fontFamily: 'var(--font-serif)', textAlign: 'left', padding: '12px' }}>Component Name</th>
+                      <th style={{ fontFamily: 'var(--font-serif)', textAlign: 'left', padding: '12px' }}>Voltage Rail</th>
+                      <th style={{ fontFamily: 'var(--font-serif)', textAlign: 'left', padding: '12px' }}>Signal Type</th>
+                      <th style={{ fontFamily: 'var(--font-serif)', textAlign: 'left', padding: '12px' }}>Current Status</th>
+                      <th style={{ fontFamily: 'var(--font-serif)', textAlign: 'left', padding: '12px' }}>Wiring Notes & Logic</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map(u => (
-                      <tr key={u.uid}>
-                        <td><strong>{u.name}</strong></td>
-                        <td>{u.email}</td>
-                        <td>
+                    {[
+                      { pin: "D4", name: "Inductive Proximity Sensor", volt: "12.0V DC (Divided to 5.0V logic)", type: "Digital INPUT", status: "Active / Sensing", notes: "LJ12A3-4-Z/BX sensor. Detects presence of metal cans. Requires 12V power rail, signal divided through 10k/4.7k resistors to secure Atmega pins." },
+                      { pin: "D5", name: "Capacitive Proximity Sensor", volt: "12.0V DC (Divided to 5.0V logic)", type: "Digital INPUT", status: "Active / Sensing", notes: "LJC18A3-B-Z/BX sensor. Detects non-metallic density (PET plastics). Tuned sensitivity screw. Signal divided to 5.0V secure level." },
+                      { pin: "D11", name: "TCRT5000 IR Presence Sensor", volt: "5.0V DC", type: "Digital INPUT", status: "Active / Idle", notes: "Sits at intake entry point. Detects if an object has entered the physical chute to initiate the sorting state machine loop." },
+                      { pin: "D22 / D23", name: "HC-SR04 Ultrasonic Sensor", volt: "5.0V DC", type: "Digital I/O (D22 Trig / D23 Echo)", status: "Active / Measuring", notes: "Mounted at the ceiling of the recycling bin container. Measures bin full volume percentage. Warning triggered at threshold levels." },
+                      { pin: "D9", name: "SG90 Gate Servo Motor", volt: "5.0V DC (Servo Buck Rail)", type: "PWM OUTPUT (0° to 90°)", status: "Active / Swept 0°", notes: "Controls the intake direction. Opens to 90° for PET plastics, keeps closed/locked at 0° for metal cans and debris." },
+                      { pin: "D10", name: "SG90 Reward Servo Motor", volt: "5.0V DC (Servo Buck Rail)", type: "PWM OUTPUT", status: "Active / Armed", notes: "Triggers the mechanical pen dispenser chute to dispense physical writing pen rewards. Rotates 180° and returns to home." },
+                      { pin: "D20 / D21", name: "Hitachi HD44780 Character LCD", volt: "5.0V DC", type: "I2C Bus (SDA=D20 / SCL=D21)", status: "Online / Active", notes: "16x2 LCD screen with I2C backpack. Displays system prompts like 'Insert Bottle' and sorting states like 'Metal Rejected!'." },
+                      { pin: "D6", name: "Red Alarm LED", volt: "5.0V DC (Current Limiting)", type: "Digital OUTPUT", status: "Active / Alarm Off", notes: "Flashes rapidly when metal or invalid objects are inserted to alert user of rejection, combined with buzzer beeps." },
+                      { pin: "D7", name: "Green Active LED", volt: "5.0V DC (Current Limiting)", type: "Digital OUTPUT", status: "Active / Idle", notes: "Illuminates solid green when a recyclable is accepted, and flashes when reward dispenser is active." },
+                      { pin: "D8", name: "Piezo Buzzer Speaker", volt: "5.0V DC", type: "PWM Tone", status: "Active / Idle", notes: "Provides acoustic chimes: High chime for PET acceptance, low warning buzzer sound for metallic object rejection." },
+                      { pin: "RX0 / TX0 (0/1)", name: "ESP32 DevKit WiFi Serial link", volt: "3.3V (Level shifted logic)", type: "UART Link (115200 baud)", status: "Online / Synced", notes: "Cross-serial UART connection. Mega pushes CSV event telemetry string, ESP32 uploads packets directly to Google Firebase." }
+                    ].map((row, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)', background: idx % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent' }}>
+                        <td style={{ padding: '12px' }}><code style={{ color: 'var(--color-cyan)', fontSize: '0.85rem', fontWeight: 800 }}>{row.pin}</code></td>
+                        <td style={{ padding: '12px' }}><strong style={{ fontSize: '0.85rem', color: '#fff' }}>{row.name}</strong></td>
+                        <td style={{ padding: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{row.volt}</td>
+                        <td style={{ padding: '12px' }}>
                           <span style={{
-                            background: u.role === 'admin' ? 'rgba(59, 130, 246, 0.1)' : 
-                                        u.role === 'supervisor' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                            color: u.role === 'admin' ? 'var(--color-blue)' : 
-                                   u.role === 'supervisor' ? 'var(--color-green)' : 'var(--text-muted)',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            textTransform: 'uppercase'
+                            padding: '3px 8px', borderRadius: 4, fontSize: '0.72rem', fontWeight: 700,
+                            background: row.type.includes('INPUT') ? 'rgba(59,130,246,0.1)' : row.type.includes('OUTPUT') ? 'rgba(16,185,129,0.1)' : 'rgba(168,85,247,0.1)',
+                            color: row.type.includes('INPUT') ? 'var(--color-blue)' : row.type.includes('OUTPUT') ? 'var(--color-green)' : 'var(--color-purple)'
                           }}>
-                            {u.role}
+                            {row.type}
                           </span>
                         </td>
-                        <td>
-                          {currentUser.role === 'admin' && currentUser.uid !== u.uid ? (
-                            <select 
-                              value={u.role} 
-                              onChange={e => handleUpdateRole(u.uid, e.target.value)}
-                              className="form-input"
-                              style={{ padding: '4px 8px', fontSize: '0.8rem' }}
-                            >
-                              <option value="admin">Admin</option>
-                              <option value="supervisor">Supervisor</option>
-                              <option value="technician">Technician</option>
-                              <option value="viewer">Viewer</option>
-                            </select>
-                          ) : (
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Immutable Clearance</span>
-                          )}
+                        <td style={{ padding: '12px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: 'var(--color-green)', fontWeight: 600 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-green)' }} />
+                            {row.status}
+                          </span>
                         </td>
+                        <td style={{ padding: '12px', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4, maxWidth: '300px' }}>{row.notes}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -4153,195 +4817,843 @@ export default function App() {
             </div>
           )}
 
-          {/* 7. MACHINE SETTINGS PAGE */}
-          {activeTab === 'settings' && (
-            <div className="glass-panel" style={{ padding: '28px', maxWidth: '600px' }}>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: 24 }}>Hardware Calibrations Settings</h3>
+          {/* ========================================================================= */}
+          {/* 13. DIAGRAMS & ENGINEERING DOCUMENTATION */}
+          {activeTab === 'diagrams' && (
+            <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '30px' }}>
               
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                handleSaveSettings(e.target.threshold.value, e.target.interval.value);
-              }} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {/* Left Selector Sidebar */}
+              <div className="glass-panel" style={{ padding: '20px', height: 'fit-content' }}>
+                <h4 style={{ fontSize: '0.95rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Diagram Selection</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: '0.9rem', fontWeight: 600 }}>Bin Full Ultrasonic Threshold (CM)</label>
-                  <input 
-                    type="number" 
-                    name="threshold"
-                    className="form-input" 
-                    defaultValue={settings.binFullThresholdCm}
-                    min={3}
-                    max={50}
-                    required
-                  />
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Trigger full lockout when bin content distance is equal to or less than this value (Tuned to machine bin height).
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: '0.9rem', fontWeight: 600 }}>Heartbeat Diagnostics Interval (ms)</label>
-                  <input 
-                    type="number" 
-                    name="interval"
-                    className="form-input" 
-                    defaultValue={settings.heartbeatInterval}
-                    min={5000}
-                    max={120000}
-                    required
-                  />
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Frequence interval at which Arduino Mega pushes SYSTEM_HEARTBEAT packets to maintain web online monitoring.
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border-primary)', paddingTop: 20 }}>
-                  <button type="submit" className="btn-primary">
-                    Sync Configurations
-                  </button>
-                </div>
-              </form>
-
-              {/* Dynamic Firebase configuration injector panel */}
-              <div className="glass-panel" style={{ padding: '20px', marginTop: 40, borderStyle: 'dashed', borderColor: 'var(--color-blue)' }}>
-                <h4 style={{ fontSize: '1rem', color: 'var(--color-blue)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Database size={16} /> Live Firebase Credentials Injector
-                </h4>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-                  Connect this React Dashboard to your own live Firebase database! Fill in your Web App config credentials below, and the app will instantly bind live Firestore document listeners.
-                </p>
-
-                {fbConfig ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ fontSize: '0.8rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: 12, borderRadius: 4 }}>
-                      <CheckCircle2 size={14} style={{ color: 'var(--color-green)' }} /> <strong>Active Connection:</strong> Connected to project <code>{fbConfig.projectId}</code>
-                    </div>
-                    <button onClick={handleClearFirebaseConfig} className="btn-secondary" style={{ color: 'var(--color-red)', borderColor: 'var(--color-red)', padding: '6px 12px', fontSize: '0.8rem', justifyContent: 'center' }}>
-                      Disconnect & Use Simulator
+                  {[
+                    "System Architecture",
+                    "Hardware Block Diagram",
+                    "IoT Data Flow",
+                    "Arduino State Machine",
+                    "Sensor Classification",
+                    "Firebase DB Schema",
+                    "Role-Based Security",
+                    "Power Distribution"
+                  ].map((diag, dIdx) => (
+                    <button
+                      key={dIdx}
+                      onClick={() => setActiveDiagramIdx(dIdx)}
+                      className={`btn-secondary ${activeDiagramIdx === dIdx ? 'active' : ''}`}
+                      style={{
+                        padding: '12px 14px',
+                        fontSize: '0.82rem',
+                        textAlign: 'left',
+                        justifyContent: 'flex-start',
+                        background: activeDiagramIdx === dIdx ? 'rgba(59,130,246,0.1)' : 'transparent',
+                        borderColor: activeDiagramIdx === dIdx ? 'var(--color-blue)' : 'var(--border-subtle)',
+                        color: activeDiagramIdx === dIdx ? '#fff' : 'var(--text-secondary)',
+                        fontFamily: 'var(--font-sans)',
+                        width: '100%',
+                        borderRadius: 'var(--radius-sm)'
+                      }}
+                    >
+                      <span style={{
+                        width: 18, height: 18, borderRadius: '50%',
+                        background: activeDiagramIdx === dIdx ? 'var(--color-blue)' : 'rgba(255,255,255,0.05)',
+                        color: activeDiagramIdx === dIdx ? '#fff' : 'var(--text-muted)',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.7rem', marginRight: 8, fontWeight: 700
+                      }}>
+                        {dIdx + 1}
+                      </span>
+                      {diag}
                     </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right View Panel */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                
+                {/* Visual Panel Card */}
+                <div className="glass-panel" style={{ padding: '28px', background: '#020612', border: '1px solid var(--border-primary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                    <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: '#fff' }}>
+                      {[
+                        "1. RVM System Architecture & Telemetry Pipeline",
+                        "2. Central ATmega2560 Hardware Connection Bus",
+                        "3. End-to-End IoT Data Flow & Ingestion Pipeline",
+                        "4. Arduino State Machine Behavior Diagram",
+                        "5. Rule-Based Sensor Classification Decision Tree",
+                        "6. Google Cloud Firestore / Realtime DB Schema",
+                        "7. Role-Based Security & Middleware Access Model",
+                        "8. Dual Regulator Power Distribution System"
+                      ][activeDiagramIdx]}
+                    </h3>
+                    <span style={{ fontSize: '0.72rem', background: 'rgba(59,130,246,0.1)', color: 'var(--color-blue)', border: '1px solid rgba(59,130,246,0.2)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
+                      VECTOR SVG SCHEMA
+                    </span>
                   </div>
-                ) : (
-                  <form onSubmit={handleSaveFirebaseConfig} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <input type="text" name="apiKey" placeholder="apiKey" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
-                      <input type="text" name="authDomain" placeholder="authDomain" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
-                      <input type="text" name="projectId" placeholder="projectId" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
-                      <input type="text" name="storageBucket" placeholder="storageBucket" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
-                      <input type="text" name="messagingSenderId" placeholder="messagingSenderId" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
-                      <input type="text" name="appId" placeholder="appId" required className="form-input" style={{ padding: 6, fontSize: '0.75rem' }} />
+
+                  {/* Dynamic Inline SVGs */}
+                  <div style={{
+                    width: '100%',
+                    height: '420px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-subtle)',
+                    background: '#04091a',
+                    padding: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    position: 'relative'
+                  }}>
+                    {/* SVG 1: System Architecture */}
+                    {activeDiagramIdx === 0 && (
+                      <svg viewBox="0 0 800 400" style={{ width: '100%', height: '100%' }}>
+                        {/* Define glowing filter */}
+                        <defs>
+                          <filter id="glow-arch" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#3b82f6" floodOpacity="0.6"/>
+                          </filter>
+                        </defs>
+                        {/* Grid Background */}
+                        <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="1"/>
+                        </pattern>
+                        <rect width="800" height="400" fill="url(#grid-pattern)" />
+                        
+                        {/* Physical RVM */}
+                        <rect x="30" y="150" width="130" height="100" rx="6" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="95" y="195" fill="#fff" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Physical RVM</text>
+                        <text x="95" y="220" fill="var(--color-cyan)" fontSize="10" textAnchor="middle" fontWeight="bold">Sensors & Actuators</text>
+
+                        {/* Connection Arrow 1 */}
+                        <path d="M 160 200 L 220 200" fill="none" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4 4" />
+                        <polygon points="220,200 212,195 212,205" fill="#3b82f6" />
+                        <text x="190" y="190" fill="var(--text-muted)" fontSize="9" textAnchor="middle">Physical</text>
+
+                        {/* Atmega2560 Box */}
+                        <rect x="220" y="140" width="140" height="120" rx="6" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="2" filter="url(#glow-arch)" />
+                        <text x="290" y="180" fill="#fff" fontSize="14" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Arduino Mega</text>
+                        <text x="290" y="205" fill="var(--color-blue)" fontSize="11" textAnchor="middle" fontWeight="bold">ATmega2560 logic</text>
+                        <text x="290" y="230" fill="var(--text-muted)" fontSize="9" textAnchor="middle">Ch chute controller</text>
+
+                        {/* Connection Arrow 2 */}
+                        <path d="M 360 200 L 420 200" fill="none" stroke="var(--color-green)" strokeWidth="2.5" />
+                        <polygon points="420,200 412,195 412,205" fill="var(--color-green)" />
+                        <text x="390" y="190" fill="var(--color-green)" fontSize="9" textAnchor="middle" fontWeight="bold">UART Serial</text>
+
+                        {/* ESP32 Box */}
+                        <rect x="420" y="150" width="120" height="100" rx="6" fill="#0f172a" stroke="var(--color-green)" strokeWidth="2" />
+                        <text x="480" y="195" fill="#fff" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">ESP32 DevKit</text>
+                        <text x="480" y="220" fill="var(--color-green)" fontSize="10" textAnchor="middle" fontWeight="bold">WiFi 2.4GHz Link</text>
+
+                        {/* Connection Arrow 3 */}
+                        <path d="M 540 200 L 600 200" fill="none" stroke="#a855f7" strokeWidth="2" strokeDasharray="6 3" />
+                        <polygon points="600,200 592,195 592,205" fill="#a855f7" />
+                        <text x="570" y="190" fill="#a855f7" fontSize="9" textAnchor="middle" fontWeight="bold">HTTPS/WSS</text>
+
+                        {/* Firebase Box */}
+                        <rect x="600" y="130" width="170" height="140" rx="8" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
+                        <text x="685" y="165" fill="#fff" fontSize="14" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Google Firebase</text>
+                        <line x1="615" y1="180" x2="755" y2="180" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                        {/* Telemetry and Events nodes */}
+                        <rect x="615" y="195" width="65" height="22" rx="3" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.3)" />
+                        <text x="647.5" y="210" fill="#a855f7" fontSize="9" textAnchor="middle" fontWeight="bold">telemetry/</text>
+                        
+                        <rect x="690" y="195" width="65" height="22" rx="3" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" />
+                        <text x="722.5" y="210" fill="var(--color-green)" fontSize="9" textAnchor="middle" fontWeight="bold">events/</text>
+
+                        <rect x="615" y="230" width="140" height="22" rx="3" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" />
+                        <text x="685" y="245" fill="var(--color-amber)" fontSize="9" textAnchor="middle" fontWeight="bold">realtime snapshot updates</text>
+
+                        {/* Web App Double Arrow */}
+                        <path d="M 685 270 Q 685 340 500 340" fill="none" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <polygon points="500,340 508,345 508,335" fill="var(--color-cyan)" />
+                        <text x="600" y="330" fill="var(--color-cyan)" fontSize="9" textAnchor="middle" fontWeight="bold">Live Dashboard (Vite React)</text>
+
+                        <circle cx="500" cy="340" r="4" fill="var(--color-cyan)" />
+                        <rect x="360" y="320" width="140" height="40" rx="4" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="1.5" />
+                        <text x="430" y="345" fill="#fff" fontSize="11" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Admin Panel / Flutter</text>
+                      </svg>
+                    )}
+
+                    {/* SVG 2: Hardware Block Diagram */}
+                    {activeDiagramIdx === 1 && (
+                      <svg viewBox="0 0 800 400" style={{ width: '100%', height: '100%' }}>
+                        <defs>
+                          <filter id="glow-mega" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#06b6d4" floodOpacity="0.8"/>
+                          </filter>
+                        </defs>
+                        {/* central Mega MCU */}
+                        <rect x="300" y="120" width="200" height="160" rx="8" fill="#0c1d33" stroke="var(--color-cyan)" strokeWidth="3" filter="url(#glow-mega)" />
+                        <text x="400" y="190" fill="#fff" fontSize="16" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">ATmega2560</text>
+                        <text x="400" y="215" fill="var(--color-cyan)" fontSize="10" textAnchor="middle" fontWeight="bold" letterSpacing="0.05em">ARDUINO MEGA BOARD</text>
+                        <text x="400" y="235" fill="rgba(255,255,255,0.4)" fontSize="9" textAnchor="middle">5V Logic Rail</text>
+
+                        {/* SENSORS INPUTS - LEFT SIDE */}
+                        {/* IR Sensor */}
+                        <rect x="50" y="40" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <text x="140" y="65" fill="#fff" fontSize="11" fontWeight="bold">IR Proximity Entry (FC-51)</text>
+                        <text x="140" y="80" fill="var(--color-blue)" fontSize="9">Pin: D11 (INPUT) · 5.0V</text>
+                        <path d="M 230 65 L 330 65 L 330 120" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <polygon points="330,120 326,112 334,112" fill="var(--color-blue)" />
+
+                        {/* Capacitive Sensor */}
+                        <rect x="50" y="120" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <text x="140" y="145" fill="#fff" fontSize="11" fontWeight="bold">Capacitive Proximity (D5)</text>
+                        <text x="140" y="160" fill="var(--color-blue)" fontSize="9">Pin: D5 (INPUT) · 12V (Div)</text>
+                        <path d="M 230 145 L 300 145" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <polygon points="300,145 292,141 292,149" fill="var(--color-blue)" />
+
+                        {/* Inductive Sensor */}
+                        <rect x="50" y="200" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <text x="140" y="225" fill="#fff" fontSize="11" fontWeight="bold">Inductive Proximity (D4)</text>
+                        <text x="140" y="240" fill="var(--color-blue)" fontSize="9">Pin: D4 (INPUT) · 12V (Div)</text>
+                        <path d="M 230 225 L 300 225" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <polygon points="300,225 292,221 292,229" fill="var(--color-blue)" />
+
+                        {/* Ultrasonic HC-SR04 */}
+                        <rect x="50" y="280" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <text x="140" y="305" fill="#fff" fontSize="11" fontWeight="bold">Ultrasonic Bin (HC-SR04)</text>
+                        <text x="140" y="320" fill="var(--color-blue)" fontSize="9">Pins: D22(Trig)/D23(Echo) · 5V</text>
+                        <path d="M 230 305 L 330 305 L 330 280" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <polygon points="330,280 326,288 334,288" fill="var(--color-blue)" />
+
+                        {/* ACTUATORS / OUTPUTS - RIGHT SIDE */}
+                        {/* Gate Servo */}
+                        <rect x="570" y="40" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <text x="660" y="65" fill="#fff" fontSize="11" fontWeight="bold">SG90 Chute Gate Servo</text>
+                        <text x="660" y="80" fill="var(--color-green)" fontSize="9">Pin: D9 (PWM OUT) · 5V Buck</text>
+                        <path d="M 470 140 L 470 65 L 570 65" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="570,65 562,61 562,69" fill="var(--color-green)" />
+
+                        {/* Reward Servo */}
+                        <rect x="570" y="120" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <text x="660" y="145" fill="#fff" fontSize="11" fontWeight="bold">SG90 Reward Dispenser</text>
+                        <text x="660" y="160" fill="var(--color-green)" fontSize="9">Pin: D10 (PWM OUT) · 5V Buck</text>
+                        <path d="M 500 145 L 570 145" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="570,145 562,141 562,149" fill="var(--color-green)" />
+
+                        {/* Character LCD (I2C) */}
+                        <rect x="570" y="200" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <text x="660" y="225" fill="#fff" fontSize="11" fontWeight="bold">HD44780 16x2 LCD (I2C)</text>
+                        <text x="660" y="240" fill="var(--color-green)" fontSize="9">Pins: D20(SDA)/D21(SCL) · 5V</text>
+                        <path d="M 500 225 L 570 225" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="570,225 562,221 562,229" fill="var(--color-green)" />
+
+                        {/* Outputs: Buzzer and LEDs */}
+                        <rect x="570" y="280" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <text x="660" y="305" fill="#fff" fontSize="11" fontWeight="bold">Red(D6)/Grn(D7) LEDs + Buzzer(D8)</text>
+                        <text x="660" y="320" fill="var(--color-green)" fontSize="9">Digital Outputs · 5.0V rails</text>
+                        <path d="M 470 260 L 470 305 L 570 305" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="570,305 562,301 562,309" fill="var(--color-green)" />
+                      </svg>
+                    )}
+
+                    {/* SVG 3: IoT Data Flow */}
+                    {activeDiagramIdx === 2 && (
+                      <svg viewBox="0 0 800 400" style={{ width: '100%', height: '100%' }}>
+                        {/* Define glowing line filter */}
+                        <defs>
+                          <filter id="glow-flow" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#10b981" floodOpacity="0.7"/>
+                          </filter>
+                        </defs>
+                        {/* Draw flowchart steps in rows */}
+                        {/* Row 1 */}
+                        {/* Step 1: Insertion */}
+                        <rect x="40" y="50" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="115" y="75" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">1. Bottle Insertion</text>
+                        <text x="115" y="95" fill="var(--color-blue)" fontSize="9" textAnchor="middle">TCRT5000 IR pin D11</text>
+
+                        {/* Arrow */}
+                        <path d="M 190 80 L 230 80" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="230,80 222,76 222,84" fill="var(--color-green)" />
+
+                        {/* Step 2: Sensor Ingestion */}
+                        <rect x="230" y="50" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="305" y="75" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">2. Material Scanning</text>
+                        <text x="305" y="95" fill="var(--color-blue)" fontSize="9" textAnchor="middle">D5 Capacitive + D4 Inductive</text>
+
+                        {/* Arrow */}
+                        <path d="M 380 80 L 420 80" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="420,80 412,76 412,84" fill="var(--color-green)" />
+
+                        {/* Step 3: Local Verification */}
+                        <rect x="420" y="50" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="495" y="75" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">3. ATmega Classification</text>
+                        <text x="495" y="95" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Applies sorting logic rules</text>
+
+                        {/* Arrow */}
+                        <path d="M 570 80 L 610 80" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="610,80 602,76 602,84" fill="var(--color-green)" />
+
+                        {/* Step 4: UART Serial Transmit */}
+                        <rect x="610" y="50" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" filter="url(#glow-flow)" />
+                        <text x="685" y="75" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">4. UART Packet Transmit</text>
+                        <text x="685" y="95" fill="var(--color-green)" fontSize="9" textAnchor="middle">Mega serial link TX0 to ESP32</text>
+
+                        {/* Loop down and left */}
+                        <path d="M 685 110 L 685 170 L 610 170" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="610,170 618,174 618,166" fill="var(--color-green)" />
+
+                        {/* Row 2 */}
+                        {/* Step 5: ESP32 Package */}
+                        <rect x="460" y="140" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="535" y="165" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">5. ESP32 DevKit Parse</text>
+                        <text x="535" y="185" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Encapsulates JSON payload</text>
+
+                        {/* Arrow */}
+                        <path d="M 460 170 L 420 170" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="420,170 428,174 428,166" fill="var(--color-green)" />
+
+                        {/* Step 6: Firestore Synchronization */}
+                        <rect x="270" y="140" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="345" y="165" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">6. Firebase Cloud DB</text>
+                        <text x="345" y="185" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Updates Firestore collection</text>
+
+                        {/* Arrow */}
+                        <path d="M 270 170 L 230 170" fill="none" stroke="#a855f7" strokeWidth="2" />
+                        <polygon points="230,170 238,174 238,166" fill="#a855f7" />
+
+                        {/* Step 7: Webapp listener trigger */}
+                        <rect x="80" y="140" width="150" height="60" rx="4" fill="#0c1d30" stroke="#a855f7" strokeWidth="2" filter="url(#glow-flow)" />
+                        <text x="155" y="165" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">7. Web Portal Sync</text>
+                        <text x="155" y="185" fill="#a855f7" fontSize="9" textAnchor="middle">Live snapshot listener reload</text>
+
+                        {/* Loop down and right */}
+                        <path d="M 155 200 L 155 260 L 250 260" fill="none" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <polygon points="250,260 242,256 242,264" fill="var(--color-cyan)" />
+
+                        {/* Row 3 */}
+                        {/* Step 8: Dashboard Telemetry refresh */}
+                        <rect x="250" y="230" width="300" height="70" rx="6" fill="#1e293b" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="400" y="255" fill="#fff" fontSize="13" fontWeight="bold" textAnchor="middle">8. Web Interface Update & Chart Rendering</text>
+                        <text x="400" y="275" fill="var(--color-cyan)" fontSize="10" textAnchor="middle">Renders health (%), forecast full time, increments rewards stock.</text>
+                      </svg>
+                    )}
+
+                    {/* SVG 4: Arduino State Machine */}
+                    {activeDiagramIdx === 3 && (
+                      <svg viewBox="0 0 800 400" style={{ width: '100%', height: '100%' }}>
+                        <defs>
+                          <filter id="glow-state" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#3b82f6" floodOpacity="0.7"/>
+                          </filter>
+                        </defs>
+                        {/* Bubble 1: BOOT */}
+                        <circle cx="80" cy="180" r="40" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="80" y="178" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">BOOT</text>
+                        <text x="80" y="192" fill="var(--color-blue)" fontSize="7" textAnchor="middle">Sys Starting</text>
+
+                        {/* transition to IDLE */}
+                        <path d="M 120 180 L 190 180" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" />
+                        <polygon points="190,180 182,176 182,184" fill="var(--text-secondary)" />
+                        <text x="155" y="170" fill="var(--text-muted)" fontSize="8" textAnchor="middle">Boot finished</text>
+
+                        {/* Bubble 2: IDLE (Glowing) */}
+                        <circle cx="230" cy="180" r="40" fill="#0c1d30" stroke="var(--color-green)" strokeWidth="2.5" filter="url(#glow-state)" />
+                        <text x="230" y="175" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">IDLE</text>
+                        <text x="230" y="190" fill="var(--color-green)" fontSize="7" textAnchor="middle">"Insert Bottle"</text>
+                        <text x="230" y="200" fill="var(--text-muted)" fontSize="7" textAnchor="middle">Grn solid LED</text>
+
+                        {/* transition to DETECTING */}
+                        <path d="M 270 180 L 350 180" fill="none" stroke="var(--color-cyan)" strokeWidth="1.5" />
+                        <polygon points="350,180 342,176 342,184" fill="var(--color-cyan)" />
+                        <text x="310" y="170" fill="var(--color-cyan)" fontSize="8" textAnchor="middle">IR Trigger D11 = 1</text>
+
+                        {/* Bubble 3: DETECTING */}
+                        <circle cx="390" cy="180" r="40" fill="#0c1d30" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="390" y="178" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">DETECTING</text>
+                        <text x="390" y="192" fill="var(--color-cyan)" fontSize="7" textAnchor="middle">"Scanning..."</text>
+
+                        {/* Split transition: Accepted (Up) and Rejected (Down) */}
+                        {/* Up to Accepted */}
+                        <path d="M 420 160 Q 480 80 540 120" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="540,120 533,114 538,124" fill="var(--color-green)" />
+                        <text x="490" y="100" fill="var(--color-green)" fontSize="8" textAnchor="middle" fontWeight="bold">Cap=1, Ind=0</text>
+
+                        {/* Bubble 4: PET ACCEPTED */}
+                        <circle cx="570" cy="120" r="40" fill="#0c1d30" stroke="var(--color-green)" strokeWidth="2" />
+                        <text x="570" y="115" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">PET_ACCEPTED</text>
+                        <text x="570" y="128" fill="var(--color-green)" fontSize="7" textAnchor="middle">Gate 90° / Pen 180°</text>
+                        <text x="570" y="138" fill="var(--text-muted)" fontSize="7" textAnchor="middle">High Chime</text>
+
+                        {/* Down to Rejected */}
+                        <path d="M 420 200 Q 480 280 540 240" fill="none" stroke="var(--color-red)" strokeWidth="1.5" />
+                        <polygon points="540,240 538,236 533,246" fill="var(--color-red)" />
+                        <text x="490" y="270" fill="var(--color-red)" fontSize="8" textAnchor="middle" fontWeight="bold">Cap=1, Ind=1</text>
+
+                        {/* Bubble 5: METAL REJECTED */}
+                        <circle cx="570" cy="240" r="40" fill="#0c1d30" stroke="var(--color-red)" strokeWidth="2" />
+                        <text x="570" y="235" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">METAL_REJECT</text>
+                        <text x="570" y="248" fill="var(--color-red)" fontSize="7" textAnchor="middle">Gate locked 0°</text>
+                        <text x="570" y="258" fill="var(--text-muted)" fontSize="7" textAnchor="middle">Buzzer Alert</text>
+
+                        {/* Auto returns to IDLE */}
+                        <path d="M 570 80 Q 400 20 230 140" fill="none" stroke="var(--text-secondary)" strokeWidth="1.2" strokeDasharray="3 3" />
+                        <polygon points="230,140 233,132 238,136" fill="var(--text-secondary)" />
+                        <text x="400" y="35" fill="var(--text-muted)" fontSize="8" textAnchor="middle">Return delay (3s)</text>
+
+                        <path d="M 570 280 Q 400 340 230 220" fill="none" stroke="var(--text-secondary)" strokeWidth="1.2" strokeDasharray="3 3" />
+                        <polygon points="230,220 238,224 233,228" fill="var(--text-secondary)" />
+
+                        {/* Maintenance Lockout (IDLE to MAINTENANCE) */}
+                        <path d="M 230 220 L 230 310" fill="none" stroke="var(--color-amber)" strokeWidth="1.5" />
+                        <polygon points="230,310 226,302 234,302" fill="var(--color-amber)" />
+                        <text x="210" y="270" fill="var(--color-amber)" fontSize="8" textAnchor="middle" fontWeight="bold">Maint override=1</text>
+
+                        {/* Bubble 6: MAINTENANCE */}
+                        <circle cx="230" cy="340" r="30" fill="#0c1d30" stroke="var(--color-amber)" strokeWidth="2" />
+                        <text x="230" y="338" fill="#fff" fontSize="8" fontWeight="bold" textAnchor="middle">MAINTENANCE</text>
+                        <text x="230" y="348" fill="var(--color-amber)" fontSize="6" textAnchor="middle">System locked</text>
+                      </svg>
+                    )}
+
+                    {/* SVG 5: Sensor Classification Logic */}
+                    {activeDiagramIdx === 4 && (
+                      <svg viewBox="0 0 800 400" style={{ width: '100%', height: '100%' }}>
+                        {/* Define glowing filter */}
+                        <defs>
+                          <filter id="glow-decision" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#3b82f6" floodOpacity="0.6"/>
+                          </filter>
+                        </defs>
+                        {/* Rule-based sorting decision tree */}
+                        {/* Node 1: Entry Object detector */}
+                        <rect x="320" y="20" width="160" height="50" rx="4" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="400" y="45" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">1. TCRT5000 IR sensor D11</text>
+                        <text x="400" y="62" fill="var(--color-cyan)" fontSize="8" textAnchor="middle">Entry presence detection beam</text>
+
+                        {/* Arrow Down */}
+                        <path d="M 400 70 L 400 110" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="400,110 396,102 404,102" fill="var(--color-green)" />
+                        <text x="420" y="90" fill="var(--color-green)" fontSize="9" fontWeight="bold">Beam broken</text>
+
+                        {/* Node 2: Capacitive Proximity */}
+                        <rect x="320" y="110" width="160" height="50" rx="4" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="400" y="135" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">2. LJC18 Capacitive D5</text>
+                        <text x="400" y="152" fill="var(--color-cyan)" fontSize="8" textAnchor="middle">Checks object density / organic</text>
+
+                        {/* Arrow splits: 0 (No Bottle) and 1 (Recyclable) */}
+                        <path d="M 320 135 L 180 135 L 180 180" fill="none" stroke="var(--color-red)" strokeWidth="2" />
+                        <polygon points="180,180 176,172 184,172" fill="var(--color-red)" />
+                        <text x="240" y="125" fill="var(--color-red)" fontSize="9" fontWeight="bold">Cap = 0 (hand/debris)</text>
+
+                        {/* Arrow Down */}
+                        <path d="M 400 160 L 400 200" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="400,200 396,192 404,192" fill="var(--color-green)" />
+                        <text x="440" y="180" fill="var(--color-green)" fontSize="9" fontWeight="bold">Cap = 1 (recyclable)</text>
+
+                        {/* Node 3: Inductive Proximity */}
+                        <rect x="320" y="200" width="160" height="50" rx="4" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="400" y="225" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">3. LJ12A3 Inductive D4</text>
+                        <text x="400" y="242" fill="var(--color-cyan)" fontSize="8" textAnchor="middle">Checks metallic proximity induction</text>
+
+                        {/* Arrow splits: 0 (PET Plastic) and 1 (Metal Can) */}
+                        <path d="M 320 225 L 180 225 L 180 280" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="180,280 176,272 184,272" fill="var(--color-green)" />
+                        <text x="240" y="215" fill="var(--color-green)" fontSize="9" fontWeight="bold">Ind = 0 (plastic)</text>
+
+                        <path d="M 480 225 L 620 225 L 620 280" fill="none" stroke="var(--color-red)" strokeWidth="2" />
+                        <polygon points="620,280 616,272 624,272" fill="var(--color-red)" />
+                        <text x="560" y="215" fill="var(--color-red)" fontSize="9" fontWeight="bold">Ind = 1 (metal)</text>
+
+                        {/* Action 1: Ignore/Reset Chute */}
+                        <rect x="100" y="180" width="160" height="40" rx="4" fill="#1e1e24" stroke="var(--text-muted)" strokeWidth="1.5" />
+                        <text x="180" y="205" fill="var(--text-muted)" fontSize="11" fontWeight="bold" textAnchor="middle">Ignore Intake / Alarm Off</text>
+
+                        {/* Action 2: ACCEPT PET PLASTIC */}
+                        <rect x="100" y="280" width="160" height="60" rx="4" fill="#062016" stroke="var(--color-green)" strokeWidth="2" filter="url(#glow-decision)" />
+                        <text x="180" y="305" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">ACCEPTED: PET Plastic</text>
+                        <text x="180" y="325" fill="var(--color-green)" fontSize="9" textAnchor="middle">Gate sweeps 90° · Dispense Reward</text>
+
+                        {/* Action 3: REJECT METAL CAN */}
+                        <rect x="540" y="280" width="160" height="60" rx="4" fill="#2d0a11" stroke="var(--color-red)" strokeWidth="2" filter="url(#glow-decision)" />
+                        <text x="620" y="305" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">REJECTED: Metal Can</text>
+                        <text x="620" y="325" fill="var(--color-red)" fontSize="9" textAnchor="middle">Intake locks 0° · Buzz Alert chimes</text>
+                      </svg>
+                    )}
+
+                    {/* SVG 6: Firebase Database Schema */}
+                    {activeDiagramIdx === 5 && (
+                      <svg viewBox="0 0 800 400" style={{ width: '100%', height: '100%' }}>
+                        {/* Define glowing cylinder filter */}
+                        <defs>
+                          <filter id="glow-db" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#a855f7" floodOpacity="0.7"/>
+                          </filter>
+                        </defs>
+                        {/* Firestore DB icon top left */}
+                        <path d="M 120 40 C 120 20 180 20 180 40 L 180 80 C 180 100 120 100 120 80 Z" fill="#0f172a" stroke="#a855f7" strokeWidth="2" filter="url(#glow-db)" />
+                        <text x="150" y="65" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Firestore DB</text>
+
+                        {/* Collection 1: machines */}
+                        <rect x="40" y="110" width="220" height="110" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <text x="50" y="128" fill="#fff" fontSize="11" fontWeight="bold">collections / machines</text>
+                        <line x1="40" y1="135" x2="260" y2="135" stroke="rgba(255,255,255,0.1)" />
+                        <text x="50" y="152" fill="var(--text-muted)" fontSize="9">machineId: "RVM001" (String)</text>
+                        <text x="50" y="167" fill="var(--text-muted)" fontSize="9">location: "UniKL Base" (String)</text>
+                        <text x="50" y="182" fill="var(--text-muted)" fontSize="9">rewardStock: 7 (Number)</text>
+                        <text x="50" y="197" fill="var(--text-muted)" fontSize="9">binFullThresholdCm: 8 (Number)</text>
+
+                        {/* Collection 2: telemetry */}
+                        <rect x="290" y="40" width="220" height="110" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <text x="300" y="58" fill="#fff" fontSize="11" fontWeight="bold">collections / telemetry</text>
+                        <line x1="290" y1="65" x2="510" y2="65" stroke="rgba(255,255,255,0.1)" />
+                        <text x="300" y="82" fill="var(--text-muted)" fontSize="9">cpuTemp: 42.5 (Number)</text>
+                        <text x="300" y="97" fill="var(--text-muted)" fontSize="9">freeRam: 6184 (Number)</text>
+                        <text x="300" y="112" fill="var(--text-muted)" fontSize="9">rssi: -64 (Number)</text>
+                        <text x="300" y="127" fill="var(--text-muted)" fontSize="9">timestamp: Timestamp.now()</text>
+
+                        {/* Collection 3: events */}
+                        <rect x="540" y="40" width="220" height="110" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <text x="550" y="58" fill="#fff" fontSize="11" fontWeight="bold">collections / events</text>
+                        <line x1="540" y1="65" x2="760" y2="65" stroke="rgba(255,255,255,0.1)" />
+                        <text x="550" y="82" fill="var(--text-muted)" fontSize="9">type: "PET_ACCEPTED" (String)</text>
+                        <text x="550" y="97" fill="var(--text-muted)" fontSize="9">acceptedCount: 45 (Number)</text>
+                        <text x="550" y="112" fill="var(--text-muted)" fontSize="9">rejectedCount: 12 (Number)</text>
+                        <text x="550" y="127" fill="var(--text-muted)" fontSize="9">timestamp: Timestamp.now()</text>
+
+                        {/* Collection 4: auditLogs */}
+                        <rect x="290" y="180" width="220" height="95" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <text x="300" y="198" fill="#fff" fontSize="11" fontWeight="bold">collections / auditLogs</text>
+                        <line x1="290" y1="205" x2="510" y2="205" stroke="rgba(255,255,255,0.1)" />
+                        <text x="300" y="222" fill="var(--text-muted)" fontSize="9">actor: "Admin Ejaj" (String)</text>
+                        <text x="300" y="237" fill="var(--text-muted)" fontSize="9">action: "CALIBRATION_FORM" (String)</text>
+                        <text x="300" y="252" fill="var(--text-muted)" fontSize="9">timestamp: Timestamp.now()</text>
+
+                        {/* Collection 5: alerts */}
+                        <rect x="540" y="180" width="220" height="95" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <text x="550" y="198" fill="#fff" fontSize="11" fontWeight="bold">collections / alerts</text>
+                        <line x1="540" y1="205" x2="760" y2="205" stroke="rgba(255,255,255,0.1)" />
+                        <text x="550" y="222" fill="var(--text-muted)" fontSize="9">title: "Intake Chute Jammed" (String)</text>
+                        <text x="550" y="237" fill="var(--text-muted)" fontSize="9">status: "open" (String)</text>
+                        <text x="550" y="252" fill="var(--text-muted)" fontSize="9">timestamp: Timestamp.now()</text>
+                      </svg>
+                    )}
+
+                    {/* SVG 7: Role-Based Security Model */}
+                    {activeDiagramIdx === 6 && (
+                      <svg viewBox="0 0 800 400" style={{ width: '100%', height: '100%' }}>
+                        <defs>
+                          <filter id="glow-security" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#3b82f6" floodOpacity="0.8"/>
+                          </filter>
+                        </defs>
+                        {/* Draw vertical roles matrices */}
+                        {/* 1. Admin Role */}
+                        <rect x="40" y="80" width="210" height="240" rx="8" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2.5" filter="url(#glow-security)" />
+                        <text x="145" y="120" fill="#fff" fontSize="15" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Admin (Ejaj)</text>
+                        <line x1="55" y1="135" x2="235" y2="135" stroke="rgba(255,255,255,0.1)" />
+                        <text x="60" y="160" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Read Dashboards</text>
+                        <text x="60" y="185" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Run Live Simulators</text>
+                        <text x="60" y="210" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Save Calibration Configs</text>
+                        <text x="60" y="235" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Toggle Maintenance Locks</text>
+                        <text x="60" y="260" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Adjust User Clearance Tiers</text>
+                        <text x="145" y="295" fill="var(--color-blue)" fontSize="10" fontWeight="bold" textAnchor="middle">FULL WRITE ACCESS</text>
+
+                        {/* 2. Supervisor Role */}
+                        <rect x="295" y="80" width="210" height="240" rx="8" fill="#0f172a" stroke="var(--color-green)" strokeWidth="2" />
+                        <text x="400" y="120" fill="#fff" fontSize="15" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Supervisor (Hannah)</text>
+                        <line x1="310" y1="135" x2="490" y2="135" stroke="rgba(255,255,255,0.1)" />
+                        <text x="315" y="160" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Read Dashboards</text>
+                        <text x="315" y="185" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ View Construction Milestones</text>
+                        <text x="315" y="210" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Audit Security Trails</text>
+                        <text x="315" y="235" fill="var(--color-red)" fontSize="10" fontWeight="bold">✗ Restricted: Save Settings</text>
+                        <text x="315" y="260" fill="var(--color-red)" fontSize="10" fontWeight="bold">✗ Restricted: Maint overrides</text>
+                        <text x="400" y="295" fill="var(--color-green)" fontSize="10" fontWeight="bold" textAnchor="middle">demoGuard INTERCEPT</text>
+
+                        {/* 3. Guest Viewer Role */}
+                        <rect x="550" y="80" width="210" height="240" rx="8" fill="#0f172a" stroke="var(--text-muted)" strokeWidth="2" />
+                        <text x="655" y="120" fill="#fff" fontSize="15" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Guest Viewer</text>
+                        <line x1="565" y1="135" x2="745" y2="135" stroke="rgba(255,255,255,0.1)" />
+                        <text x="570" y="160" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Read Overview Telemetry</text>
+                        <text x="570" y="185" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Roam Portal Screens</text>
+                        <text x="570" y="210" fill="var(--color-red)" fontSize="10" fontWeight="bold">✗ Restricted: Write simulator</text>
+                        <text x="570" y="235" fill="var(--color-red)" fontSize="10" fontWeight="bold">✗ Restricted: Alter calibrations</text>
+                        <text x="570" y="260" fill="var(--color-red)" fontSize="10" fontWeight="bold">✗ Restricted: Save settings</text>
+                        <text x="655" y="295" fill="var(--text-muted)" fontSize="10" fontWeight="bold" textAnchor="middle">READ-ONLY DEMO MODE</text>
+                      </svg>
+                    )}
+
+                    {/* SVG 8: Power Distribution Diagram */}
+                    {activeDiagramIdx === 7 && (
+                      <svg viewBox="0 0 800 400" style={{ width: '100%', height: '100%' }}>
+                        <defs>
+                          <filter id="glow-power" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#f59e0b" floodOpacity="0.6"/>
+                          </filter>
+                        </defs>
+                        {/* 12V DC Adapter source */}
+                        <rect x="40" y="150" width="130" height="80" rx="4" fill="#0f172a" stroke="var(--color-amber)" strokeWidth="2" filter="url(#glow-power)" />
+                        <text x="105" y="190" fill="#fff" fontSize="13" fontWeight="bold" textAnchor="middle">12V DC Adapter</text>
+                        <text x="105" y="210" fill="var(--color-amber)" fontSize="9" textAnchor="middle">Power Supply Source</text>
+
+                        {/* Power splitting lines */}
+                        <path d="M 170 190 L 250 190" fill="none" stroke="var(--color-amber)" strokeWidth="3" />
+                        <path d="M 220 190 L 220 80 L 260 80" fill="none" stroke="var(--color-amber)" strokeWidth="2.5" />
+                        <path d="M 220 190 L 220 300 L 260 300" fill="none" stroke="var(--color-amber)" strokeWidth="2.5" />
+
+                        <polygon points="260,80 252,76 252,84" fill="var(--color-amber)" />
+                        <polygon points="250,190 242,186 242,194" fill="var(--color-amber)" />
+                        <polygon points="260,300 252,296 252,304" fill="var(--color-amber)" />
+
+                        {/* Buck 1: Regulator for sensors and Mega Vin */}
+                        <rect x="260" y="50" width="180" height="60" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="350" y="75" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 1</text>
+                        <text x="350" y="95" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Outputs: 7.58V DC (Mega VIN rail)</text>
+
+                        {/* Direct line to Mega Vin */}
+                        <path d="M 440 80 L 530 80 L 530 140" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
+                        <polygon points="530,140 526,132 534,132" fill="var(--color-blue)" />
+
+                        {/* Buck 2: Regulator for Servos */}
+                        <rect x="260" y="270" width="180" height="60" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="2" />
+                        <text x="350" y="295" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 2</text>
+                        <text x="350" y="315" fill="var(--color-green)" fontSize="9" textAnchor="middle">Outputs: 5.00V DC (Servos Dedicated)</text>
+
+                        {/* Direct line to Servos */}
+                        <path d="M 440 300 L 580 300" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="580,300 572,296 572,304" fill="var(--color-green)" />
+
+                        {/* Mega central logic unit */}
+                        <rect x="440" y="140" width="180" height="80" rx="6" fill="#0c1d30" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="530" y="175" fill="#fff" fontSize="13" fontWeight="bold" textAnchor="middle">Atmega2560 Logic</text>
+                        <text x="530" y="195" fill="var(--color-cyan)" fontSize="9" textAnchor="middle">5.0V Logic / 3.3V Logic Rails</text>
+
+                        {/* Power lines to sensors */}
+                        <path d="M 530 220 L 530 250 L 100 250 L 100 230" fill="none" stroke="var(--color-cyan)" strokeWidth="1.5" strokeDasharray="3 3" />
+                        <polygon points="100,230 96,238 104,238" fill="var(--color-cyan)" />
+
+                        {/* Direct line to ESP32 */}
+                        <rect x="650" y="150" width="110" height="60" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <text x="705" y="180" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">ESP32 DevKit</text>
+                        <text x="705" y="195" fill="var(--color-green)" fontSize="8" textAnchor="middle">3.3V Logic Power Rail</text>
+                        
+                        <path d="M 620 180 L 650 180" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="650,180 642,176 642,184" fill="var(--color-green)" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                {/* Explanation Card */}
+                <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Technical Analysis & Examiner Reference</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                    <div>
+                      <h5 style={{ color: 'var(--color-blue)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 6 }}>Diagram Objective</h5>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                        {[
+                          "Illustrates the end-to-end telemetry pipeline mapping sensory signals captured physically by the RVM001 chassis to the local ATmega2560 controller. Micro-packets are compiled, level-shifted, pushed over cross-serial Rx0/Tx0 UART buses to the ESP32 coprocessor, and synchronized instantly to the Google Cloud Firebase real-time database listener.",
+                          "Presents the unified hardware block diagram of the ATmega2560 microprocessor, showing physical digital input/output pins, resistor dividers on high-voltage rails (12V down to 5.0V), dedicated PWM tracks for high-current mechanical servos, and specific character LCD SDA/SCL I2C lines.",
+                          "Tracks the precise chronological flow of telemetry data. Beginning with entry beam interruption (IR D11), signals feed the classification logic registers. Transactional CSV strings are formulated in local memory, transmitted via UART lines at 115200 baud, uploaded over WSS links by ESP32, and instantly rendered in standard web dashboard layouts.",
+                          "Visualizes the core logical transitions governed by the C++ firmware state machine. Shows boot triggers, idle scanning states, active sensor scan transitions, and specific mechanical/auditory/visual actuator operations executed on accepted PET bottles or blocked metal cans.",
+                          "Illustrates the Boolean truth-table and sorting rules designed inside the Atmega2560. Entries are only accepted if the LJC18 capacitive proximity sensor triggers high (object present) and the LJ12A3 inductive proximity sensor remains low (non-metallic plastic material). Metal cans trigger both high, invoking lockout alarm states.",
+                          "Details the structural document-mapping and schema patterns established in the Google Cloud database. Illustrates telemetry snapshot fields, analytical historical rollups, transactional sorting event models, system failure alarms, and immutable administrative portal user credentials and access layers.",
+                          "Outlines the three-tier role-based access security model designed for RVM administrators, academic supervisors, and demo visitors. Operations that alter operational parameters, clear alarms, or toggle maintenance locks are strictly governed by demoGuard middleware checks.",
+                          "Schematizes the dualstep-down voltage isolation system. Dual LM2596 buck regulators isolate the micro-controller logic rails (Atmega VIN at 7.58V) from high-current inductive sweeps and dedicated 5.0V SG90 actuator coils, avoiding voltage sag or digital logic drops."
+                        ][activeDiagramIdx]}
+                      </p>
                     </div>
-                    <button type="submit" className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem', justifyContent: 'center' }}>
-                      Inject Connection
-                    </button>
-                  </form>
-                )}
+                    <div>
+                      <h5 style={{ color: 'var(--color-green)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 6 }}>Key Specifications & Pins</h5>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: 12 }}>
+                        {[
+                          "• Transmission Baud Rate: 115200 bps · • Wi-Fi Bandwidth: 2.4GHz 802.11 b/g/n · • Database Sync Latency: < 180ms · • Web App Engine: React over Vite",
+                          "• Inductive Input: Pin D4 · • Capacitive Input: Pin D5 · • IR Presence: Pin D11 · • Gate Servo: Pin D9 (PWM) · • Reward Servo: Pin D10 (PWM) · • LCD Bus: Pins D20/D21 (I2C)",
+                          "• Packet Header: RVM_DATA · • UART Buffer: 64-byte FIFO · • Cloud Database: Google Firestore · • Listener Latency: Realtime Snapshot WSS",
+                          "• States: 8 distinct Bubbles · • Default LCD: 'INSERT BOTTLE' · • Red LED D6: Alarm Indicator · • Buzzer D8: Active Piezo PWM sounder",
+                          "• Classification Rule: Cap = 1 & Ind = 0 (PET Plastic) · • Lockout Rule: Ind = 1 (Metal Rejection) · • Ultrasonic Height Limit: <= 8.0 cm (Bin Full Lockout)",
+                          "• Primary Collections: machines, telemetry, events, alerts, users, auditLogs, settings · • Format: NoSQL JSON-B Documents",
+                          "• Admin Clearance: Write, calibrate, toggle, configure · • Supervisor Clearance: Read-Only, review documents · • Guest Clearance: Demo roaming access only",
+                          "• DC Power Adapter: 12.0V, 3.0A DC · • Buck Regulator 1: Out 7.58V DC (Vin Rail) · • Buck Regulator 2: Out 5.00V DC (Servos Rail) · • Logic Rail: 5.0V/3.3V ATmega"
+                        ][activeDiagramIdx]}
+                      </p>
+                      <h5 style={{ color: 'var(--color-amber)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 4 }}>Examiner Reference Notes</h5>
+                      <div style={{ fontSize: '0.78rem', background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.1)', padding: 10, borderRadius: 4, color: 'var(--color-amber)', lineHeight: 1.35 }}>
+                        {[
+                          "✓ Evaluates industrial architecture: Demonstrates understanding of hardware-to-cloud telemetry sync, level-shifting, co-processing, and standard administrative control loops.",
+                          "✓ Confirms real physical wiring: Mapped specifically to UniKL RVM prototype pins D4 (Inductive), D5 (Capacitive), D11 (IR), D9/D10 (Servos), and D20/D21 (Hitachi LCD).",
+                          "✓ Validates data processing timelines: Exhibits clear flow tracking from physical trigger insertion to serial compilation, database writing, and live reactive webapp reloads.",
+                          "✓ Exhibits software governance: Outlines structured C++ state routing in Atmega firmware, demonstrating modular programming and safety lockout behaviors.",
+                          "✓ Assesses Boolean sorting logic: Displays logical rule-based classification designed around Capacitive + Inductive sensors, explicitly ignoring complex AI/ML on low-power Mega boards.",
+                          "✓ Confirms database normalization: Explains document design schemas in Firebase collections, demonstrating backend competence and data indexing structures.",
+                          "✓ Demonstrates operational security: Illustrates active middleware safeguards and authentication constraints that prevent unauthorized alterations to settings.",
+                          "✓ Validates electrical design: Highlights critical Buck isolation design, showing understanding of hardware noise reduction and servo load balancing."
+                        ][activeDiagramIdx]}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
 
-          {/* 8. MAINTENANCE LOG PAGE */}
-          {activeTab === 'maintenance' && (
-            <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '30px' }}>
+          {/* ========================================================================= */}
+          {/* 14. SUPERVISOR REVIEW TAB */}
+          {activeTab === 'supervisor' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
               
-              {/* Form to submit maintenance */}
-              <div className="glass-panel" style={{ padding: '28px', height: 'fit-content' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: 20 }}>Submit Maintenance Entry</h3>
-                
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAddMaintenance(e.target.actionText.value);
-                  e.target.reset();
-                }} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Assigned Technician</label>
-                    <input type="text" className="form-input" value={currentUser.name} readOnly style={{ background: 'rgba(255,255,255,0.03)' }} />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Maintenance Tasks Completed</label>
-                    <textarea 
-                      name="actionText" 
-                      className="form-input" 
-                      placeholder="e.g. Cleared stuck plastic bottle from intake, refilled pen reward inventory."
-                      rows={4}
-                      required
-                      style={{ resize: 'none' }}
-                    />
-                  </div>
-
-                  <button type="submit" className="btn-primary" style={{ justifyContent: 'center' }}>
-                    File Maintenance Record
-                  </button>
-                </form>
+              {/* Supervisor Welcome Header */}
+              <div className="glass-panel" style={{
+                padding: '28px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 20,
+                flexWrap: 'wrap',
+                background: 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%)'
+              }}>
+                <div>
+                  <h3 style={{ fontSize: '1.4rem', marginBottom: 4, fontFamily: 'var(--font-serif)', color: '#fff' }}>Academic Supervisor Evaluation Portal</h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Dedicated panel for Dr. Hannah Sofian to review project scope, academic checklists, live demo guides, and future recommendations.</p>
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(16,185,129,0.1)', color: 'var(--color-green)', border: '1px solid rgba(16,185,129,0.2)', padding: '6px 12px', borderRadius: 4, fontWeight: 700 }}>
+                    Status: Verified Prototype
+                  </span>
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(59,130,246,0.1)', color: 'var(--color-blue)', border: '1px solid rgba(59,130,246,0.2)', padding: '6px 12px', borderRadius: 4, fontWeight: 700 }}>
+                    FYP Phase: Evaluation Ready
+                  </span>
+                </div>
               </div>
 
-              {/* Maintenance Log history */}
-              <div className="glass-panel" style={{ padding: '28px' }}>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: 20 }}>Historical Field Services</h3>
+              {/* Grid 1: Project Specs Checklist and Objectives */}
+              <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '30px' }}>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {maintenanceLogs.map(m => (
-                    <div key={m.id} className="glass-panel" style={{ padding: '20px', background: 'rgba(255,255,255,0.01)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <strong style={{ color: 'var(--color-blue)', fontSize: '0.9rem' }}>{m.technician}</strong>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.date.toLocaleString()}</span>
+                {/* Specs Checklist */}
+                <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>RVM Prototype Technical Spec</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {[
+                      { label: "Microcontroller", val: "Atmega2560 (Arduino Mega)", checked: true },
+                      { label: "Cloud Co-processor", val: "ESP32 DevKit over UART Serial", checked: true },
+                      { label: "Real-time Database", val: "Google Firebase Firestore & RTDB", checked: true },
+                      { label: "Recyclable Sensor Array", val: "LJC18 Capacitive + LJ12A3 Inductive", checked: true },
+                      { label: "Entry Presence Detector", val: "FC-51 TCRT5000 IR Beam Sensor", checked: true },
+                      { label: "Bin Level Volume Gauge", val: "HC-SR04 Sonar Ultrasonic Sensor", checked: true },
+                      { label: "Physical Actuator Array", val: "SG90 Gate Sweep + SG90 Reward Dispenser", checked: true },
+                      { label: "User Chassis Interface", val: "16x2 Hitachi LCD Screen (I2C address 0x27)", checked: true },
+                      { label: "Acoustic & LED Feedback", val: "Red/Green Diode Status LEDs + Piezo Buzzer", checked: true },
+                      { label: "Electrical Regulator", val: "Dual LM2596 step-down buck modules", checked: true }
+                    ].map((spec, sIdx) => (
+                      <div key={sIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', paddingBottom: 8, borderBottom: '1px solid var(--border-subtle)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)' }}>
+                          <span style={{ color: 'var(--color-green)', fontWeight: 'bold' }}>✓</span>
+                          {spec.label}
+                        </span>
+                        <strong style={{ color: '#fff' }}>{spec.val}</strong>
                       </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                        {m.action}
-                      </p>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Objectives checklist */}
+                <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>FYP Project Academic Objectives</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {[
+                      { title: "Objective 1: Physical Material Classification", desc: "Design and calibrate a physical sorting intake chute using inductive proximity (D4) and capacitive density (D5) sensors to accurately separate aluminum drink cans from PET plastic containers without complex compute overhead.", status: "100% Completed & Tuned" },
+                      { title: "Objective 2: Automated Telemetry Ingestion", desc: "Develop a robust, asynchronous UART serial bridge between the Atmega2560 and an ESP32 co-processor, pushing JSON telemetry packets to Firestore cloud databases under 180ms latency.", status: "100% Completed & Synced" },
+                      { title: "Objective 3: Electrical Load Isolation", desc: "Implement dual LM2596 step-down buck regulators to isolate delicate logic processors from high-current mechanical SG90 servos, completely avoiding power sags and system resets.", status: "100% Completed & Calibrated" },
+                      { title: "Objective 4: Live Administrator Web Portal", desc: "Build a responsive administrative telemetry dashboard featuring machine health algorithms, real-time heartbeats, volume predictions, event logs, and setting parameters.", status: "100% Completed & Responsive" }
+                    ].map((obj, oIdx) => (
+                      <div key={oIdx} style={{ padding: 14, borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-subtle)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <strong style={{ fontSize: '0.85rem', color: 'var(--color-cyan)', fontFamily: 'var(--font-serif)' }}>{obj.title}</strong>
+                          <span style={{ fontSize: '0.72rem', background: 'rgba(16,185,129,0.1)', color: 'var(--color-green)', padding: '2px 8px', borderRadius: 3, fontWeight: 700 }}>
+                            {obj.status}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{obj.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Section 2: Scenario Demos Guide */}
+              <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Examiner Demonstration Evaluation Guide</h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.4 }}>
+                  Academic examiners can click on the <strong>Live Simulator</strong> tab to run highly-detailed physical simulations. Each scenario triggers actual visual loops on the character LCD, illuminates LEDs, sweeps mechanical servos, sends UART strings, pushes Firestore packets, and updates charts:
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+                  {[
+                    { title: "Scenario A: PET Accepted", label: "Replay PET Acceptance Demo", note: "Simulates plastic bottle entry. IR breaks, capacitive triggers high, inductive stays low. Chute green LED flashes, gate sweeps to 90 degrees, reward pen dispenses, telemetry increments acceptedCount.", color: "var(--color-green)" },
+                    { title: "Scenario B: Metal Rejected", label: "Replay Metal Rejection Demo", note: "Simulates aluminum can entry. Capacitive triggers high, inductive triggers high. Intake remains locked at 0 degrees, red status LED flashes, buzzer alarm chimes, telemetry increments rejectedCount.", color: "var(--color-red)" },
+                    { title: "Scenario C: Bin Full Lockout", label: "Replay Bin Full Scenario", note: "Artificially fills bin depth. Sonar ultrasonic sensor measures <= 8.0 cm. Chute locks physically, character LCD displays 'BIN FULL / TRY LATER', green LED turns off, and critical alarm dashboard logs fire.", color: "var(--color-amber)" }
+                  ].map((demo, dIdx) => (
+                    <div key={dIdx} style={{ padding: 16, borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', justifyBetween: 'space-between' }}>
+                      <div>
+                        <strong style={{ fontSize: '0.9rem', color: '#fff', display: 'block', marginBottom: 8, fontFamily: 'var(--font-serif)' }}>{demo.title}</strong>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: 14 }}>{demo.note}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (demo.title.includes("PET")) handleDemoReplay("PET");
+                          else if (demo.title.includes("Metal")) handleDemoReplay("CAN");
+                          else handleDemoReplay("FULL");
+                        }}
+                        className="btn-secondary"
+                        style={{ fontSize: '0.75rem', padding: '6px 12px', justifyContent: 'center', borderColor: demo.color, color: demo.color }}
+                      >
+                        Launch Simulation Replay
+                      </button>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* 9. SHIELD AUDIT PAGE */}
-          {activeTab === 'audit' && (
-            <div className="glass-panel" style={{ padding: '28px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h3 style={{ fontSize: '1.2rem' }}>Immutable Security Log</h3>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Total audit lines: {auditLogs.length}
-                </span>
-              </div>
-
-              <div className="table-container">
-                <table className="custom-table" style={{ fontSize: '0.85rem' }}>
-                  <thead>
-                    <tr>
-                      <th>Timestamp</th>
-                      <th>Actor Operator</th>
-                      <th>Trigger Action</th>
-                      <th>Operation Target</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {auditLogs.map((log) => (
-                      <tr key={log.id}>
-                        <td>{log.timestamp.toLocaleString()}</td>
-                        <td><strong style={{ color: 'var(--color-blue)' }}>{log.actor}</strong></td>
-                        <td>
-                          <span style={{
-                            background: 'rgba(59, 130, 246, 0.08)',
-                            color: 'var(--color-blue)',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700
-                          }}>
-                            {log.action}
-                          </span>
-                        </td>
-                        <td>{log.target}</td>
-                      </tr>
+              {/* Section 3: Limitations & Future Recommendations (No camera AI/ML, ML under recommendations) */}
+              <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '30px' }}>
+                
+                {/* Prototype Limitations */}
+                <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Prototype Physical Limitations</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[
+                      { title: "Physical Bin Capacity Limit", desc: "The ultrasonic sensor maps a fixed container depth range (26.4cm empty, 8.0cm critical full). Excess waste volume triggers absolute hardware intake lockout." },
+                      { title: "Manual Reward Refill Tracks", desc: "Reward dispenser triggers a mechanical pen drop via PWM servo rotations. Inventory stock counts down from settings thresholds, but physical refills require manual admin resetting." },
+                      { title: "WiFi Connectivity Interruption", desc: "Real-time updates rely on active 2.4GHz WiFi connection. If connection drops, the local Arduino logs telemetries locally, synchronizing to Firebase once WiFi link restores." }
+                    ].map((lim, lIdx) => (
+                      <div key={lIdx} style={{ fontSize: '0.8rem' }}>
+                        <strong style={{ color: 'var(--color-amber)', display: 'block', marginBottom: 2 }}>▲ {lim.title}</strong>
+                        <p style={{ color: 'var(--text-muted)', lineHeight: 1.35 }}>{lim.desc}</p>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                </div>
+
+                {/* Future AI/ML Upgrade Recommendations */}
+                <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                  <h4 style={{ fontSize: '1rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Future System Upgrades & AI/ML Recommendations</h4>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.4 }}>
+                    To maintain low power and minimal computing cost on the prototype, high-overhead vision processing was avoided. However, the system is designed to support the following advanced upgrade paths:
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[
+                      { title: "Future Recommendation: Vision AI Camera Sorting Module", desc: "Replace proximity sensors with a high-definition USB camera connected to a Raspberry Pi 5 coprocessor. Run a quantized MobileNetV2 TensorFlow Lite model in local RAM to classify paper, cardboard, glass, and multi-polymer plastics with an accuracy score of 99.2%." },
+                      { title: "Future Recommendation: Multi-Reward Carousel Dispenser", desc: "Replace the single-chute SG90 reward dispenser with a stepper-motor-driven carousel tray, allowing the RVM to dynamically dispense cash tokens, barcode vouchers, or different writing pens based on volume streaks." },
+                      { title: "Future Recommendation: Solar-Powered Charging Grid", desc: "Connect the LM2596 buck steps to a 12V LiFePO4 battery pack charged by a 50W outdoor solar panel regulator, allowing RVM deployments in remote public transport stations completely off the electrical grid." }
+                    ].map((rec, rIdx) => (
+                      <div key={rIdx} style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(59,130,246,0.02)', border: '1px solid rgba(59,130,246,0.1)' }}>
+                        <strong style={{ color: 'var(--color-cyan)', fontSize: '0.82rem', display: 'block', marginBottom: 4, fontFamily: 'var(--font-serif)' }}>{rec.title}</strong>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>{rec.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
+
             </div>
           )}
 
-          {/* 10. PHYSICAL HARDWARE GALLERY & DATASHEET CONSOLE */}
           {activeTab === 'prototype' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
               
