@@ -1418,6 +1418,90 @@ export default function App() {
     logAudit(loginUser.name, 'DEMO_LOGIN', `Enterprise demo access as ${u.role}`);
   };
 
+  const downloadDiagramAsPng = () => {
+    // Select the active SVG inside our diagrams panel
+    const svgEl = document.querySelector('.glass-panel svg');
+    if (!svgEl) {
+      showToast("Diagram SVG element not found in DOM", "error");
+      return;
+    }
+    
+    try {
+      showToast("Generating Ultra-HQ diagram export...", "info");
+      
+      // Clone the SVG so we don't mutate the live DOM
+      const clonedSvg = svgEl.cloneNode(true);
+      
+      // Set explicit styling attributes to ensure proper rendering in raw Image
+      clonedSvg.setAttribute('style', 'font-family: "Marcellus", serif;');
+      
+      // Convert cloned SVG to XML string
+      const svgString = new XMLSerializer().serializeToString(clonedSvg);
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const URL = window.URL || window.webkitURL || window;
+      const blobURL = URL.createObjectURL(svgBlob);
+      
+      const image = new Image();
+      image.onload = () => {
+        // Create high-resolution UHQ Canvas (3x scaling)
+        const canvas = document.createElement('canvas');
+        const scale = 3; 
+        
+        const viewBox = svgEl.getAttribute('viewBox') || '0 0 800 400';
+        const [, , width, height] = viewBox.split(' ').map(Number);
+        
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        
+        const context = canvas.getContext('2d');
+        // Fill canvas with our gorgeous deep dark slate cosmic background #04091a
+        context.fillStyle = '#04091a';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Apply high-quality image smoothing
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+        
+        // Draw the scaled SVG image onto the canvas
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        
+        // Export to high quality PNG data URL
+        const pngURL = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        
+        const diagramNames = [
+          "RVM_System_Architecture",
+          "RVM_Hardware_Block_Diagram",
+          "RVM_IoT_Data_Flow",
+          "RVM_Arduino_State_Machine",
+          "RVM_Sensor_Classification_Logic",
+          "RVM_Firebase_DB_Schema",
+          "RVM_Role_Based_Security_Model",
+          "RVM_Power_Distribution_Diagram"
+        ];
+        
+        downloadLink.href = pngURL;
+        downloadLink.download = `${diagramNames[activeDiagramIdx] || 'RVM_Diagram'}_UHQ.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        URL.revokeObjectURL(blobURL);
+        showToast("Ultra-HQ diagram downloaded successfully!", "success");
+      };
+      
+      image.onerror = (err) => {
+        console.error("UHQ rendering error: ", err);
+        showToast("Failed to render diagram image", "error");
+      };
+      
+      image.src = blobURL;
+    } catch (error) {
+      console.error("Export error: ", error);
+      showToast("Diagram export failed", "error");
+    }
+  };
+
   // --- AUTH ROUTER WALL ---
   if (!isLoggedIn) {
     const DEMO_USERS = [
@@ -4757,9 +4841,45 @@ export default function App() {
                         "8. Dual Regulator Power Distribution System"
                       ][activeDiagramIdx]}
                     </h3>
-                    <span style={{ fontSize: '0.72rem', background: 'rgba(59,130,246,0.1)', color: 'var(--color-blue)', border: '1px solid rgba(59,130,246,0.2)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
-                      VECTOR SVG SCHEMA
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: '0.72rem', background: 'rgba(59,130,246,0.1)', color: 'var(--color-blue)', border: '1px solid rgba(59,130,246,0.2)', padding: '4px 10px', borderRadius: 4, fontWeight: 700 }}>
+                        VECTOR SVG SCHEMA
+                      </span>
+                      <button
+                        onClick={downloadDiagramAsPng}
+                        title="Download Diagram as Ultra-HQ PNG"
+                        style={{
+                          background: 'rgba(16,185,129,0.1)',
+                          border: '1px solid rgba(16,185,129,0.3)',
+                          color: 'var(--color-green)',
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          transition: 'var(--transition-base)',
+                          fontFamily: 'var(--font-sans)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = 'var(--color-green)';
+                          e.currentTarget.style.color = '#ffffff';
+                          e.currentTarget.style.borderColor = 'var(--color-green)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = 'rgba(16,185,129,0.1)';
+                          e.currentTarget.style.color = 'var(--color-green)';
+                          e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)';
+                        }}
+                      >
+                        <Download size={14} />
+                        Download UHQ PNG
+                      </button>
+                    </div>
                   </div>
 
                   {/* Dynamic Inline SVGs */}
@@ -4791,58 +4911,69 @@ export default function App() {
                         </pattern>
                         <rect width="800" height="400" fill="url(#grid-pattern)" />
                         
-                        {/* Physical RVM */}
-                        <rect x="30" y="150" width="130" height="100" rx="6" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
-                        <text x="95" y="195" fill="#fff" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Physical RVM</text>
-                        <text x="95" y="220" fill="var(--color-cyan)" fontSize="10" textAnchor="middle" fontWeight="bold">Sensors & Actuators</text>
-
+                        {/* ── CONNECTION LINES LAYER (First) ── */}
                         {/* Connection Arrow 1 */}
                         <path d="M 160 200 L 220 200" fill="none" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4 4" />
                         <polygon points="220,200 212,195 212,205" fill="#3b82f6" />
-                        <text x="190" y="190" fill="var(--text-muted)" fontSize="9" textAnchor="middle">Physical</text>
-
-                        {/* Atmega2560 Box */}
-                        <rect x="220" y="140" width="140" height="120" rx="6" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="2" filter="url(#glow-arch)" />
-                        <text x="290" y="180" fill="#fff" fontSize="14" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Arduino Mega</text>
-                        <text x="290" y="205" fill="var(--color-blue)" fontSize="11" textAnchor="middle" fontWeight="bold">ATmega2560 logic</text>
-                        <text x="290" y="230" fill="var(--text-muted)" fontSize="9" textAnchor="middle">Ch chute controller</text>
 
                         {/* Connection Arrow 2 */}
                         <path d="M 360 200 L 420 200" fill="none" stroke="var(--color-green)" strokeWidth="2.5" />
                         <polygon points="420,200 412,195 412,205" fill="var(--color-green)" />
-                        <text x="390" y="190" fill="var(--color-green)" fontSize="9" textAnchor="middle" fontWeight="bold">UART Serial</text>
-
-                        {/* ESP32 Box */}
-                        <rect x="420" y="150" width="120" height="100" rx="6" fill="#0f172a" stroke="var(--color-green)" strokeWidth="2" />
-                        <text x="480" y="195" fill="#fff" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">ESP32 DevKit</text>
-                        <text x="480" y="220" fill="var(--color-green)" fontSize="10" textAnchor="middle" fontWeight="bold">WiFi 2.4GHz Link</text>
 
                         {/* Connection Arrow 3 */}
                         <path d="M 540 200 L 600 200" fill="none" stroke="#a855f7" strokeWidth="2" strokeDasharray="6 3" />
                         <polygon points="600,200 592,195 592,205" fill="#a855f7" />
-                        <text x="570" y="190" fill="#a855f7" fontSize="9" textAnchor="middle" fontWeight="bold">HTTPS/WSS</text>
-
-                        {/* Firebase Box */}
-                        <rect x="600" y="130" width="170" height="140" rx="8" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
-                        <text x="685" y="165" fill="#fff" fontSize="14" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Google Firebase</text>
-                        <line x1="615" y1="180" x2="755" y2="180" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                        {/* Telemetry and Events nodes */}
-                        <rect x="615" y="195" width="65" height="22" rx="3" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.3)" />
-                        <text x="647.5" y="210" fill="#a855f7" fontSize="9" textAnchor="middle" fontWeight="bold">telemetry/</text>
-                        
-                        <rect x="690" y="195" width="65" height="22" rx="3" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" />
-                        <text x="722.5" y="210" fill="var(--color-green)" fontSize="9" textAnchor="middle" fontWeight="bold">events/</text>
-
-                        <rect x="615" y="230" width="140" height="22" rx="3" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" />
-                        <text x="685" y="245" fill="var(--color-amber)" fontSize="9" textAnchor="middle" fontWeight="bold">realtime snapshot updates</text>
 
                         {/* Web App Double Arrow */}
                         <path d="M 685 270 Q 685 340 500 340" fill="none" stroke="var(--color-cyan)" strokeWidth="2" />
                         <polygon points="500,340 508,345 508,335" fill="var(--color-cyan)" />
-                        <text x="600" y="330" fill="var(--color-cyan)" fontSize="9" textAnchor="middle" fontWeight="bold">Live Dashboard (Vite React)</text>
 
+                        {/* ── CARD NODES LAYER (Second) ── */}
+                        {/* Physical RVM */}
+                        <rect x="30" y="150" width="130" height="100" rx="6" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
+
+                        {/* Atmega2560 Box */}
+                        <rect x="220" y="140" width="140" height="120" rx="6" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="2" filter="url(#glow-arch)" />
+
+                        {/* ESP32 Box */}
+                        <rect x="420" y="150" width="120" height="100" rx="6" fill="#0f172a" stroke="var(--color-green)" strokeWidth="2" />
+
+                        {/* Firebase Box */}
+                        <rect x="600" y="130" width="170" height="140" rx="8" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
+                        <line x1="615" y1="180" x2="755" y2="180" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                        
+                        {/* Telemetry and Events nodes */}
+                        <rect x="615" y="195" width="65" height="22" rx="3" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.3)" />
+                        <rect x="690" y="195" width="65" height="22" rx="3" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" />
+                        <rect x="615" y="230" width="140" height="22" rx="3" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.3)" />
+
+                        {/* Admin Panel / Flutter */}
                         <circle cx="500" cy="340" r="4" fill="var(--color-cyan)" />
                         <rect x="360" y="320" width="140" height="40" rx="4" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="1.5" />
+
+                        {/* ── TEXTS AND LABELS LAYER (Third / Last) ── */}
+                        <text x="95" y="195" fill="#fff" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Physical RVM</text>
+                        <text x="95" y="220" fill="var(--color-cyan)" fontSize="10" textAnchor="middle" fontWeight="bold">Sensors & Actuators</text>
+                        
+                        <text x="190" y="190" fill="var(--text-muted)" fontSize="9" textAnchor="middle">Physical</text>
+                        
+                        <text x="290" y="180" fill="#fff" fontSize="14" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Arduino Mega</text>
+                        <text x="290" y="205" fill="var(--color-blue)" fontSize="11" textAnchor="middle" fontWeight="bold">ATmega2560 logic</text>
+                        <text x="290" y="230" fill="var(--text-muted)" fontSize="9" textAnchor="middle">Ch chute controller</text>
+                        
+                        <text x="390" y="190" fill="var(--color-green)" fontSize="9" textAnchor="middle" fontWeight="bold">UART Serial</text>
+                        
+                        <text x="480" y="195" fill="#fff" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">ESP32 DevKit</text>
+                        <text x="480" y="220" fill="var(--color-green)" fontSize="10" textAnchor="middle" fontWeight="bold">WiFi 2.4GHz Link</text>
+                        
+                        <text x="570" y="190" fill="#a855f7" fontSize="9" textAnchor="middle" fontWeight="bold">HTTPS/WSS</text>
+                        
+                        <text x="685" y="165" fill="#fff" fontSize="14" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Google Firebase</text>
+                        <text x="647.5" y="210" fill="#a855f7" fontSize="9" textAnchor="middle" fontWeight="bold">telemetry/</text>
+                        <text x="722.5" y="210" fill="var(--color-green)" fontSize="9" textAnchor="middle" fontWeight="bold">events/</text>
+                        <text x="685" y="245" fill="var(--color-amber)" fontSize="9" textAnchor="middle" fontWeight="bold">realtime snapshot updates</text>
+                        
+                        <text x="600" y="330" fill="var(--color-cyan)" fontSize="9" textAnchor="middle" fontWeight="bold">Live Dashboard (Vite React)</text>
                         <text x="430" y="345" fill="#fff" fontSize="11" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Admin Panel / Flutter</text>
                       </svg>
                     )}
@@ -4855,69 +4986,87 @@ export default function App() {
                             <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#06b6d4" floodOpacity="0.8"/>
                           </filter>
                         </defs>
+                        
+                        {/* ── CONNECTION WIRES LAYER (First) ── */}
+                        {/* IR Sensor link */}
+                        <path d="M 230 65 L 330 65 L 330 120" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <polygon points="330,120 326,112 334,112" fill="var(--color-blue)" />
+
+                        {/* Capacitive Sensor link */}
+                        <path d="M 230 145 L 300 145" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <polygon points="300,145 292,141 292,149" fill="var(--color-blue)" />
+
+                        {/* Inductive Sensor link */}
+                        <path d="M 230 225 L 300 225" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <polygon points="300,225 292,221 292,229" fill="var(--color-blue)" />
+
+                        {/* Ultrasonic Sensor link */}
+                        <path d="M 230 305 L 330 305 L 330 280" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <polygon points="330,280 326,288 334,288" fill="var(--color-blue)" />
+
+                        {/* Gate Servo link */}
+                        <path d="M 470 140 L 470 65 L 570 65" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="570,65 562,61 562,69" fill="var(--color-green)" />
+
+                        {/* Reward Servo link */}
+                        <path d="M 500 145 L 570 145" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="570,145 562,141 562,149" fill="var(--color-green)" />
+
+                        {/* LCD link */}
+                        <path d="M 500 225 L 570 225" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="570,225 562,221 562,229" fill="var(--color-green)" />
+
+                        {/* LEDs & Buzzer link */}
+                        <path d="M 470 260 L 470 305 L 570 305" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="570,305 562,301 562,309" fill="var(--color-green)" />
+
+                        {/* ── CENTRAL MCU AND PERIPHERAL PANELS LAYER (Second) ── */}
                         {/* central Mega MCU */}
                         <rect x="300" y="120" width="200" height="160" rx="8" fill="#0c1d33" stroke="var(--color-cyan)" strokeWidth="3" filter="url(#glow-mega)" />
+
+                        {/* SENSORS INPUT PANELS */}
+                        <rect x="50" y="40" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <rect x="50" y="120" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <rect x="50" y="200" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <rect x="50" y="280" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
+
+                        {/* ACTUATORS OUTPUT PANELS */}
+                        <rect x="570" y="40" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <rect x="570" y="120" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <rect x="570" y="200" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <rect x="570" y="280" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+
+                        {/* ── TEXTS LAYER (Third / Last) ── */}
+                        {/* ATmega Texts */}
                         <text x="400" y="190" fill="#fff" fontSize="16" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">ATmega2560</text>
                         <text x="400" y="215" fill="var(--color-cyan)" fontSize="10" textAnchor="middle" fontWeight="bold" letterSpacing="0.05em">ARDUINO MEGA BOARD</text>
                         <text x="400" y="235" fill="rgba(255,255,255,0.4)" fontSize="9" textAnchor="middle">5V Logic Rail</text>
 
-                        {/* SENSORS INPUTS - LEFT SIDE */}
-                        {/* IR Sensor */}
-                        <rect x="50" y="40" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <text x="140" y="65" fill="#fff" fontSize="11" fontWeight="bold">IR Proximity Entry (FC-51)</text>
-                        <text x="140" y="80" fill="var(--color-blue)" fontSize="9">Pin: D11 (INPUT) · 5.0V</text>
-                        <path d="M 230 65 L 330 65 L 330 120" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <polygon points="330,120 326,112 334,112" fill="var(--color-blue)" />
+                        {/* Sensor Texts (Centered) */}
+                        <text x="140" y="65" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">IR Proximity Entry (FC-51)</text>
+                        <text x="140" y="80" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Pin: D11 (INPUT) · 5.0V</text>
 
-                        {/* Capacitive Sensor */}
-                        <rect x="50" y="120" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <text x="140" y="145" fill="#fff" fontSize="11" fontWeight="bold">Capacitive Proximity (D5)</text>
-                        <text x="140" y="160" fill="var(--color-blue)" fontSize="9">Pin: D5 (INPUT) · 12V (Div)</text>
-                        <path d="M 230 145 L 300 145" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <polygon points="300,145 292,141 292,149" fill="var(--color-blue)" />
+                        <text x="140" y="145" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Capacitive Proximity (D5)</text>
+                        <text x="140" y="160" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Pin: D5 (INPUT) · 12V (Div)</text>
 
-                        {/* Inductive Sensor */}
-                        <rect x="50" y="200" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <text x="140" y="225" fill="#fff" fontSize="11" fontWeight="bold">Inductive Proximity (D4)</text>
-                        <text x="140" y="240" fill="var(--color-blue)" fontSize="9">Pin: D4 (INPUT) · 12V (Div)</text>
-                        <path d="M 230 225 L 300 225" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <polygon points="300,225 292,221 292,229" fill="var(--color-blue)" />
+                        <text x="140" y="225" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Inductive Proximity (D4)</text>
+                        <text x="140" y="240" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Pin: D4 (INPUT) · 12V (Div)</text>
 
-                        {/* Ultrasonic HC-SR04 */}
-                        <rect x="50" y="280" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <text x="140" y="305" fill="#fff" fontSize="11" fontWeight="bold">Ultrasonic Bin (HC-SR04)</text>
-                        <text x="140" y="320" fill="var(--color-blue)" fontSize="9">Pins: D22(Trig)/D23(Echo) · 5V</text>
-                        <path d="M 230 305 L 330 305 L 330 280" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <polygon points="330,280 326,288 334,288" fill="var(--color-blue)" />
+                        <text x="140" y="305" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Ultrasonic Bin (HC-SR04)</text>
+                        <text x="140" y="320" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Pins: D22(Trig)/D23(Echo) · 5V</text>
 
-                        {/* ACTUATORS / OUTPUTS - RIGHT SIDE */}
-                        {/* Gate Servo */}
-                        <rect x="570" y="40" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <text x="660" y="65" fill="#fff" fontSize="11" fontWeight="bold">SG90 Chute Gate Servo</text>
-                        <text x="660" y="80" fill="var(--color-green)" fontSize="9">Pin: D9 (PWM OUT) · 5V Buck</text>
-                        <path d="M 470 140 L 470 65 L 570 65" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <polygon points="570,65 562,61 562,69" fill="var(--color-green)" />
+                        {/* Actuator Texts (Centered) */}
+                        <text x="660" y="65" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">SG90 Chute Gate Servo</text>
+                        <text x="660" y="80" fill="var(--color-green)" fontSize="9" textAnchor="middle">Pin: D9 (PWM OUT) · 5V Buck</text>
 
-                        {/* Reward Servo */}
-                        <rect x="570" y="120" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <text x="660" y="145" fill="#fff" fontSize="11" fontWeight="bold">SG90 Reward Dispenser</text>
-                        <text x="660" y="160" fill="var(--color-green)" fontSize="9">Pin: D10 (PWM OUT) · 5V Buck</text>
-                        <path d="M 500 145 L 570 145" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <polygon points="570,145 562,141 562,149" fill="var(--color-green)" />
+                        <text x="660" y="145" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">SG90 Reward Dispenser</text>
+                        <text x="660" y="160" fill="var(--color-green)" fontSize="9" textAnchor="middle">Pin: D10 (PWM OUT) · 5V Buck</text>
 
-                        {/* Character LCD (I2C) */}
-                        <rect x="570" y="200" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <text x="660" y="225" fill="#fff" fontSize="11" fontWeight="bold">HD44780 16x2 LCD (I2C)</text>
-                        <text x="660" y="240" fill="var(--color-green)" fontSize="9">Pins: D20(SDA)/D21(SCL) · 5V</text>
-                        <path d="M 500 225 L 570 225" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <polygon points="570,225 562,221 562,229" fill="var(--color-green)" />
+                        <text x="660" y="225" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">HD44780 16x2 LCD (I2C)</text>
+                        <text x="660" y="240" fill="var(--color-green)" fontSize="9" textAnchor="middle">Pins: D20(SDA)/D21(SCL) · 5V</text>
 
-                        {/* Outputs: Buzzer and LEDs */}
-                        <rect x="570" y="280" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <text x="660" y="305" fill="#fff" fontSize="11" fontWeight="bold">Red(D6)/Grn(D7) LEDs + Buzzer(D8)</text>
-                        <text x="660" y="320" fill="var(--color-green)" fontSize="9">Digital Outputs · 5.0V rails</text>
-                        <path d="M 470 260 L 470 305 L 570 305" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <polygon points="570,305 562,301 562,309" fill="var(--color-green)" />
+                        <text x="660" y="305" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Red(D6)/Grn(D7) LEDs + Buzzer(D8)</text>
+                        <text x="660" y="320" fill="var(--color-green)" fontSize="9" textAnchor="middle">Digital Outputs · 5.0V rails</text>
                       </svg>
                     )}
 
