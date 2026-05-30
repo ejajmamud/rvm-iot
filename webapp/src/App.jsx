@@ -4401,6 +4401,7 @@ export default function App() {
                         "/progress/IMG_0790.jpeg"
                       ][activePhotoIdx]} 
                       alt="Physical Prototype construction step" 
+                      onError={(e) => { e.target.onerror = null; e.target.src = '/gear_icon.svg'; }}
                       style={{
                         width: '100%',
                         height: '100%',
