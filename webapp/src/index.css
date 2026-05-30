@@ -458,7 +458,7 @@ h1, h2, h3, h4, h5 {
     left: 0;
     right: 0;
     height: 56px;
-    z-index: 200;
+    z-index: 350;
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
