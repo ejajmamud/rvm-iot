@@ -67,17 +67,13 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('rvm_logged_in_user') !== null;
   });
-  const [emailInput, setEmailInput] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // --- PIN Modal (Ejaj Admin Login) ---
-  const [showPinModal, setShowPinModal] = useState(false);
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState('');
-  const [pinShake, setPinShake] = useState(false);
-  const ADMIN_PIN = '642421'; // Ejaj's secure admin PIN
+  // --- Security Parameters (Ejaj Admin Login) ---
   const EJAJ_EMAIL = 'ejaj@student.unikl.edu.my';
+
 
   // --- Demo Mode (non-admin users: read-only enterprise demo) ---
   // isDemo = true means logged in but NO write access
@@ -595,21 +591,24 @@ export default function App() {
     }
   }, [fbConfig]);
 
-  // --- Handlers ---
   const handleLogin = (e) => {
     e.preventDefault();
     setAuthError('');
     
-    // Look up email inside users list
-    const foundUser = users.find(u => u.email.toLowerCase() === emailInput.toLowerCase());
-    
-    if (foundUser) {
+    if (usernameInput.trim().toLowerCase() === 'ejaj' && passwordInput === 'commonRVM@5005') {
+      const foundUser = users.find(u => u.email.toLowerCase() === EJAJ_EMAIL.toLowerCase()) || {
+        uid: 'u1', name: 'MD Ejaj Mahmud', email: EJAJ_EMAIL, role: 'admin', createdAt: new Date()
+      };
       setIsLoggedIn(true);
       setCurrentUser(foundUser);
       localStorage.setItem('rvm_logged_in_user', JSON.stringify(foundUser));
-      logAudit(foundUser.name, "USER_LOGIN", "Logged into admin portal");
+      setUsernameInput('');
+      setPasswordInput('');
+      setAuthError('');
+      logAudit(foundUser.name, 'ADMIN_CREDENTIALS_LOGIN', 'Full admin write access granted');
+      showToast("Access granted. Welcome back, Ejaj!", "success");
     } else {
-      setAuthError("Unauthorized user. Only registered university accounts can log in.");
+      setAuthError('Incorrect username or password. Please try again.');
     }
   };
 
@@ -619,7 +618,7 @@ export default function App() {
     }
     setIsLoggedIn(false);
     setCurrentUser(null);
-    setEmailInput('');
+    setUsernameInput('');
     setPasswordInput('');
     localStorage.removeItem('rvm_logged_in_user');
   };
@@ -1405,39 +1404,7 @@ export default function App() {
     showToast("Credentials cleared — using local simulator", "info");
   };
 
-  // --- PIN Modal Login Logic (Ejaj Admin) ---
-  const handlePinDigit = (digit) => {
-    if (pinInput.length >= 6) return;
-    const next = pinInput + digit;
-    setPinInput(next);
-    setPinError('');
-    if (next.length === 6) {
-      // Auto-verify after 6th digit
-      setTimeout(() => {
-        if (next === ADMIN_PIN) {
-          const foundUser = users.find(u => u.email.toLowerCase() === EJAJ_EMAIL.toLowerCase()) || {
-            uid: 'u1', name: 'MD Ejaj Mahmud', email: EJAJ_EMAIL, role: 'admin', createdAt: new Date()
-          };
-          setIsLoggedIn(true);
-          setCurrentUser(foundUser);
-          localStorage.setItem('rvm_logged_in_user', JSON.stringify(foundUser));
-          setShowPinModal(false);
-          setPinInput('');
-          setPinError('');
-          logAudit(foundUser.name, 'ADMIN_PIN_LOGIN', 'Full admin access granted');
-        } else {
-          setPinShake(true);
-          setPinError('Incorrect PIN. Try again.');
-          setTimeout(() => { setPinInput(''); setPinShake(false); }, 600);
-        }
-      }, 120);
-    }
-  };
 
-  const handlePinBackspace = () => {
-    setPinInput(p => p.slice(0, -1));
-    setPinError('');
-  };
 
   const loginAsDemo = (u) => {
     const foundUser = users.find(user => user.email.toLowerCase() === u.email.toLowerCase());
@@ -1467,88 +1434,6 @@ export default function App() {
           backgroundSize: '40px 40px', pointerEvents: 'none'
         }} />
 
-        {/* PIN Modal Overlay */}
-        {showPinModal && (
-          <div style={{
-            position: 'fixed', inset: 0, zIndex: 999,
-            background: 'rgba(3, 7, 15, 0.85)', backdropFilter: 'blur(12px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
-          }}>
-            <div className="glass-panel" style={{
-              width: '100%', maxWidth: 350, padding: '36px 30px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24,
-              border: '1px solid var(--border-primary)',
-              boxShadow: 'var(--shadow-lg)'
-            }}>
-              {/* Header */}
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: 52, height: 52, borderRadius: '50%',
-                  background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 12px', color: 'var(--color-green)'
-                }}>
-                  <ShieldAlert size={24} />
-                </div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.05em', fontFamily: 'var(--font-serif)' }}>Security Override</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>System Administrator PIN Verification</div>
-              </div>
-
-              {/* PIN Dots */}
-              <div className={pinShake ? 'pin-shake' : ''} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                {[0,1,2,3,4,5].map(i => (
-                  <div key={i} style={{
-                    width: 14, height: 14, borderRadius: '50%',
-                    background: i < pinInput.length ? 'var(--color-green)' : 'transparent',
-                    border: `2px solid ${i < pinInput.length ? 'var(--color-green)' : 'var(--border-primary)'}`,
-                    boxShadow: i < pinInput.length ? '0 0 10px rgba(16,185,129,0.6)' : 'none',
-                    transition: 'all 0.15s ease'
-                  }} />
-                ))}
-              </div>
-
-              {pinError && (
-                <div style={{
-                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                  color: 'var(--color-red)', padding: '8px 14px', borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.75rem', textAlign: 'center', width: '100%', fontWeight: 600
-                }}>{pinError}</div>
-              )}
-
-              {/* Number Pad */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, width: '100%' }}>
-                {[1,2,3,4,5,6,7,8,9].map(n => (
-                  <button key={n} onClick={() => handlePinDigit(String(n))} className="pin-keypad-btn">{n}</button>
-                ))}
-                {/* Bottom row: backspace, 0, cancel */}
-                <button onClick={handlePinBackspace} style={{
-                  background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)',
-                  color: 'var(--color-red)', borderRadius: 'var(--radius-sm)', padding: '14px 0',
-                  fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'var(--transition-fast)'
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.12)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.06)'}
-                >⌫</button>
-                
-                <button onClick={() => handlePinDigit('0')} className="pin-keypad-btn">0</button>
-                
-                <button onClick={() => { setShowPinModal(false); setPinInput(''); setPinError(''); }} style={{
-                  background: 'transparent', border: '1px solid var(--border-primary)',
-                  color: 'var(--text-muted)', borderRadius: 'var(--radius-sm)', padding: '14px 0',
-                  fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'var(--transition-fast)'
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-elevated)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >Cancel</button>
-              </div>
-
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textAlign: 'center' }}>
-                🔐 6-digit secure admin access PIN required
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Main Login Card */}
         <div className="login-card">
           {/* Logo */}
@@ -1575,41 +1460,75 @@ export default function App() {
             <span>ENTERPRISE DEMO — GUEST ACCESS ENABLED</span>
           </div>
 
-          {/* Admin Login Button — triggers PIN */}
-          <div style={{ width: '100%', marginBottom: 20 }}>
+          {/* Admin Login Credentials Form */}
+          <form onSubmit={handleLogin} style={{ width: '100%', marginBottom: 20 }}>
             <div style={{
-              fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase',
-              letterSpacing: '0.08em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8
+              fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase',
+              letterSpacing: '0.08em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12
             }}>
               <ShieldAlert size={12} color="var(--color-blue)" /> System Administrator Access
             </div>
-            <button
-              onClick={() => { setPinInput(''); setPinError(''); setShowPinModal(true); }}
-              className="login-admin-btn"
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  👤
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>MD Ejaj Mahmud</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--color-blue)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Admin Owner · Full Write Access
-                  </div>
-                </div>
-              </div>
+
+            {authError && (
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(59,130,246,0.1)',
-                border: '1px solid rgba(59,130,246,0.2)', borderRadius: 'var(--radius-sm)',
-                padding: '4px 10px', fontSize: '0.68rem', color: 'var(--color-blue)', fontWeight: 700
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                color: 'var(--color-red)',
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.75rem',
+                marginBottom: 16,
+                fontWeight: 600,
+                textAlign: 'center'
               }}>
-                <ShieldAlert size={12} /> SECURE PIN
+                {authError}
               </div>
+            )}
+
+            {/* Username Input Group */}
+            <div className="login-form-group">
+              <div style={{
+                position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                color: 'var(--text-muted)', display: 'flex', alignItems: 'center'
+              }}>
+                <Users size={16} />
+              </div>
+              <input
+                type="text"
+                placeholder="Username"
+                value={usernameInput}
+                onChange={(e) => { setUsernameInput(e.target.value); setAuthError(''); }}
+                className="login-form-input"
+                required
+              />
+            </div>
+
+            {/* Password Input Group */}
+            <div className="login-form-group">
+              <div style={{
+                position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                color: 'var(--text-muted)', display: 'flex', alignItems: 'center'
+              }}>
+                <Eye size={16} />
+              </div>
+              <input
+                type="password"
+                placeholder="Password"
+                value={passwordInput}
+                onChange={(e) => { setPasswordInput(e.target.value); setAuthError(''); }}
+                className="login-form-input"
+                required
+              />
+            </div>
+
+            {/* Sign In Button */}
+            <button
+              type="submit"
+              className="login-submit-btn"
+            >
+              Sign In to Portal
             </button>
-          </div>
+          </form>
 
           {/* Divider */}
           <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
@@ -1628,9 +1547,10 @@ export default function App() {
                   <div style={{
                     width: 32, height: 32, borderRadius: '50%',
                     background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: u.role.includes('Supervisor') ? 'var(--color-green)' : 'var(--text-muted)'
                   }}>
-                    {u.role === 'Supervisor' ? '👩‍🏫' : u.role === 'Supervisor 1' ? '👨‍💼' : '👁️'}
+                    {u.role.includes('Supervisor') ? <Users size={16} /> : <Eye size={16} />}
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)' }}>{u.name}</div>

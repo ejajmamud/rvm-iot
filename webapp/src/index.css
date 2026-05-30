@@ -1496,3 +1496,60 @@ body.light-theme .login-container {
   background: var(--bg-hover);
   border-color: var(--color-green);
 }
+
+/* Credentials Login Form Styling */
+.login-form-group {
+  width: 100%;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.login-form-input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.login-form-input:focus {
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.login-submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--color-blue);
+  border: 1px solid var(--color-blue);
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: var(--transition-base);
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.login-submit-btn:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+body.light-theme .login-submit-btn {
+  color: #ffffff !important;
+}
+
