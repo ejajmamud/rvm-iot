@@ -6,7 +6,7 @@
 :root {
   /* ── Typography ── */
   --font-sans: 'Marcellus', serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  --font-mono: 'Marcellus', serif;
 
   /* ── Cosmic Dark Theme (Cosmic Navy Refined) ── */
   --bg-base: #03070f;
@@ -1261,4 +1261,103 @@ h1, h2, h3, h4, h5 {
   align-items: center;
   gap: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* ══════════════════════════════════════════════
+   PIN MODAL & DEMO MODE
+   ══════════════════════════════════════════════ */
+
+/* PIN numpad shake animation on wrong PIN */
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-8px); }
+  30%       { transform: translateX(8px); }
+  45%       { transform: translateX(-6px); }
+  60%       { transform: translateX(6px); }
+  75%       { transform: translateX(-3px); }
+  90%       { transform: translateX(3px); }
+}
+
+.pin-shake {
+  animation: pin-shake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Demo mode read-only banner — fixed at top of app */
+.demo-mode-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  background: linear-gradient(90deg, rgba(245,158,11,0.18) 0%, rgba(245,158,11,0.1) 100%);
+  border-bottom: 1px solid rgba(245,158,11,0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 6px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 36px;
+}
+
+.demo-mode-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-amber);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Buttons that are disabled for demo users — visual cue */
+.demo-locked-btn {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  position: relative;
+}
+
+.demo-locked-btn::after {
+  content: '🔒';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+/* When demo banner is shown, shift sidebar and main content down */
+.has-demo-banner .app-sidebar {
+  padding-top: calc(24px + 36px) !important;
+}
+
+.has-demo-banner .app-main {
+  padding-top: calc(40px + 36px) !important;
+}
+
+@media (max-width: 1199px) {
+  .has-demo-banner .app-main {
+    padding-top: calc(80px + 36px) !important;
+  }
+  .has-demo-banner .mobile-top-bar {
+    top: 36px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .demo-mode-banner {
+    height: 32px;
+    padding: 4px 12px;
+  }
+  .demo-mode-banner-text {
+    font-size: 0.62rem;
+  }
+  .has-demo-banner .app-main {
+    padding-top: calc(72px + 32px) !important;
+  }
+  .has-demo-banner .mobile-top-bar {
+    top: 32px !important;
+  }
 }

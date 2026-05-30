@@ -71,6 +71,28 @@ export default function App() {
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
 
+  // --- PIN Modal (Ejaj Admin Login) ---
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinShake, setPinShake] = useState(false);
+  const ADMIN_PIN = '2611'; // Ejaj's secure admin PIN
+  const EJAJ_EMAIL = 'ejaj@student.unikl.edu.my';
+
+  // --- Demo Mode (non-admin users: read-only enterprise demo) ---
+  // isDemo = true means logged in but NO write access
+  const isDemo = isLoggedIn && currentUser && currentUser.email?.toLowerCase() !== EJAJ_EMAIL.toLowerCase();
+  const isAdmin = isLoggedIn && currentUser && currentUser.email?.toLowerCase() === EJAJ_EMAIL.toLowerCase();
+
+  // Demo guard: shows a toast and returns true if action is blocked
+  const demoGuard = (featureName = 'This action') => {
+    if (isDemo) {
+      showToast(`🔒 ${featureName} is restricted. Admin PIN required for write access.`, 'error');
+      return true;
+    }
+    return false;
+  };
+
   // --- Firebase Connection Configuration State ---
   const [fbConfig, setFbConfig] = useState(() => {
     const saved = localStorage.getItem('rvm_firebase_config');
@@ -625,6 +647,7 @@ export default function App() {
 
   // Save Settings
   const handleSaveSettings = async (newThreshold, newInterval) => {
+    if (demoGuard('Saving settings')) return;
     const updatedSettings = {
       binFullThresholdCm: Number(newThreshold),
       heartbeatInterval: Number(newInterval)
@@ -648,6 +671,7 @@ export default function App() {
 
   // Add Maintenance Log
   const handleAddMaintenance = async (actionText) => {
+    if (demoGuard('Logging maintenance')) return;
     if (!actionText.trim()) return;
     const newLog = {
       id: "m_" + Date.now(),
@@ -675,6 +699,7 @@ export default function App() {
 
   // Acknowledge / Resolve Alerts
   const handleAcknowledgeAlert = async (alertId) => {
+    if (demoGuard('Acknowledging alerts')) return;
     setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: "acknowledged", acknowledgedBy: currentUser.name } : a));
     setSimulatedAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: "acknowledged", acknowledgedBy: currentUser.name } : a));
     logAudit(currentUser.name, "ACKNOWLEDGE_ALERT", `Alert ID: ${alertId}`);
@@ -694,7 +719,7 @@ export default function App() {
   };
 
   const handleResolveAlert = async (alertId) => {
-    setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: "resolved", resolvedAt: new Date() } : a));
+    if (demoGuard('Resolving alerts')) return;
     setSimulatedAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: "resolved", resolvedAt: new Date() } : a));
     logAudit(currentUser.name, "RESOLVE_ALERT", `Alert ID: ${alertId}`);
 
@@ -714,7 +739,7 @@ export default function App() {
 
   // Promote / Manage User Roles
   const handleUpdateRole = async (userId, newRole) => {
-    setUsers(prev => prev.map(u => u.uid === userId ? { ...u, role: newRole } : u));
+    if (demoGuard('Modifying user roles')) return;
     logAudit(currentUser.name, "USER_ROLE_PROMOTED", `UID: ${userId} to role ${newRole}`);
 
     if (isFirebaseConnected) {
@@ -730,6 +755,7 @@ export default function App() {
 
   // --- Real-time Simulator (Browser level) ---
   const handleToggleSimulator = () => {
+    if (demoGuard('Running the live simulator')) return;
     if (isSimulating) {
       clearInterval(simInterval.current);
       setIsSimulating(false);
@@ -744,6 +770,7 @@ export default function App() {
   };
 
   const simulateHardwareEvent = async (type) => {
+    if (demoGuard('Simulating hardware events')) return;
     if (!isPowerOn) {
       showToast("Machine powered off — toggle the rocker switch first", "error");
       return;
@@ -1054,6 +1081,7 @@ export default function App() {
   };
 
   const runTestGateSweep = () => {
+    if (demoGuard('Running gate sweep test')) return;
     if (!isPowerOn) return showToast("Power off", "error");
     if (servoGateFault) return showToast("Gate Servo is Jammed!", "error");
     
@@ -1067,6 +1095,7 @@ export default function App() {
   };
 
   const runTestRewardSweep = () => {
+    if (demoGuard('Running reward sweep test')) return;
     if (!isPowerOn) return showToast("Power off", "error");
     if (servoRewardFault) return showToast("Reward Servo is Jammed!", "error");
     
@@ -1080,6 +1109,7 @@ export default function App() {
   };
 
   const runUltrasonicDiagnosticPing = () => {
+    if (demoGuard('Running ultrasonic diagnostic')) return;
     if (!isPowerOn) return showToast("Power off", "error");
     
     showToast("Executing sonar distance echo measurement...");
@@ -1096,6 +1126,7 @@ export default function App() {
   };
 
   const toggleIRSensorFault = () => {
+    if (demoGuard('Toggling hardware fault simulation')) return;
     const next = !sensorIRFault;
     setSensorIRFault(next);
     if (next) {
@@ -1122,6 +1153,7 @@ export default function App() {
   };
 
   const toggleUSSensorFault = () => {
+    if (demoGuard('Toggling hardware fault simulation')) return;
     const next = !sensorUSFault;
     setSensorUSFault(next);
     if (next) {
@@ -1148,6 +1180,7 @@ export default function App() {
   };
 
   const toggleGateServoFault = () => {
+    if (demoGuard('Toggling hardware fault simulation')) return;
     const next = !servoGateFault;
     setServoGateFault(next);
     if (next) {
@@ -1174,6 +1207,7 @@ export default function App() {
   };
 
   const toggleRewardServoFault = () => {
+    if (demoGuard('Toggling hardware fault simulation')) return;
     const next = !servoRewardFault;
     setServoRewardFault(next);
     if (next) {
@@ -1225,6 +1259,7 @@ export default function App() {
   // Firebase Config Submitter
   const handleSaveFirebaseConfig = (e) => {
     e.preventDefault();
+    if (demoGuard('Modifying Firebase configuration')) return;
     const configData = {
       apiKey: e.target.apiKey.value,
       authDomain: e.target.authDomain.value,
@@ -1240,6 +1275,7 @@ export default function App() {
   };
 
   const handleClearFirebaseConfig = () => {
+    if (demoGuard('Clearing Firebase configuration')) return;
     localStorage.removeItem('rvm_firebase_config');
     setFbConfig(null);
     setIsFirebaseConnected(false);
@@ -1249,202 +1285,298 @@ export default function App() {
     showToast("Credentials cleared — using local simulator", "info");
   };
 
+  // --- PIN Modal Login Logic (Ejaj Admin) ---
+  const handlePinDigit = (digit) => {
+    if (pinInput.length >= 4) return;
+    const next = pinInput + digit;
+    setPinInput(next);
+    setPinError('');
+    if (next.length === 4) {
+      // Auto-verify after 4th digit
+      setTimeout(() => {
+        if (next === ADMIN_PIN) {
+          const foundUser = users.find(u => u.email.toLowerCase() === EJAJ_EMAIL.toLowerCase()) || {
+            uid: 'u1', name: 'MD Ejaj Mahmud', email: EJAJ_EMAIL, role: 'admin', createdAt: new Date()
+          };
+          setIsLoggedIn(true);
+          setCurrentUser(foundUser);
+          localStorage.setItem('rvm_logged_in_user', JSON.stringify(foundUser));
+          setShowPinModal(false);
+          setPinInput('');
+          setPinError('');
+          logAudit(foundUser.name, 'ADMIN_PIN_LOGIN', 'Full admin access granted');
+        } else {
+          setPinShake(true);
+          setPinError('Incorrect PIN. Try again.');
+          setTimeout(() => { setPinInput(''); setPinShake(false); }, 600);
+        }
+      }, 120);
+    }
+  };
+
+  const handlePinBackspace = () => {
+    setPinInput(p => p.slice(0, -1));
+    setPinError('');
+  };
+
+  const loginAsDemo = (u) => {
+    const foundUser = users.find(user => user.email.toLowerCase() === u.email.toLowerCase());
+    const loginUser = foundUser || {
+      uid: 'u_' + u.role.toLowerCase().replace(' ', '_'),
+      name: u.name, email: u.email, role: u.role.toLowerCase(), createdAt: new Date()
+    };
+    setIsLoggedIn(true);
+    setCurrentUser(loginUser);
+    localStorage.setItem('rvm_logged_in_user', JSON.stringify(loginUser));
+    logAudit(loginUser.name, 'DEMO_LOGIN', `Enterprise demo access as ${u.role}`);
+  };
+
   // --- AUTH ROUTER WALL ---
   if (!isLoggedIn) {
+    const DEMO_USERS = [
+      { name: 'Dr. Hannah', role: 'Supervisor', email: 'hannah@unikl.edu.my', color: 'var(--color-green)' },
+      { name: 'Sayed Aziz', role: 'Supervisor 1', email: 'sayedaziz@unikl.edu.my', color: 'var(--color-green)' },
+      { name: 'Visitor', role: 'Read-Only', email: 'visitor@unikl.edu.my', color: 'var(--text-muted)' },
+    ];
     return (
       <div style={{
-        height: '100vh',
-        width: '100vw',
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'radial-gradient(circle at top right, #08172c 0%, #03070f 100%)',
-        padding: '16px',
-        boxSizing: 'border-box'
+        minHeight: '100vh', width: '100vw',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'radial-gradient(ellipse at 20% 0%, #07183a 0%, #03070f 60%)',
+        padding: '16px', boxSizing: 'border-box', position: 'relative', overflow: 'hidden'
       }}>
-        <div className="glass-panel" style={{
-          width: '100%',
-          maxWidth: '400px',
-          padding: '20px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          boxSizing: 'border-box'
-        }}>
+        {/* Animated background grid */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'linear-gradient(rgba(16,185,129,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.03) 1px, transparent 1px)',
+          backgroundSize: '40px 40px', pointerEvents: 'none'
+        }} />
+
+        {/* PIN Modal Overlay */}
+        {showPinModal && (
           <div style={{
-            background: 'rgba(16, 185, 129, 0.1)',
-            padding: '12px',
-            borderRadius: '50%',
-            marginBottom: '12px',
-            color: 'var(--color-green)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
+            position: 'fixed', inset: 0, zIndex: 999,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
           }}>
-            <LayoutDashboard size={32} className="pulse-indicator" />
-          </div>
-          
-          <h1 style={{
-            fontSize: '1.4rem',
-            textAlign: 'center',
-            marginBottom: '4px',
-            color: '#ffffff',
-            fontWeight: 700,
-            letterSpacing: '0.06em'
-          }}>Smart Recycling Portal</h1>
-          <p style={{
-            color: 'var(--text-muted)',
-            fontSize: '0.8rem',
-            textAlign: 'center',
-            marginBottom: '16px'
-          }}>Final Year Project 2 Admin Portal</p>
-
-          <form onSubmit={handleLogin} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>University Email</label>
-              <input 
-                type="email" 
-                className="form-input" 
-                placeholder="name@student.unikl.edu.my"
-                required
-                style={{ padding: '8px 12px', fontSize: '0.8rem' }}
-                value={emailInput}
-                onChange={e => setEmailInput(e.target.value)}
-              />
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Console Access Password</label>
-              <input 
-                type="password" 
-                className="form-input" 
-                placeholder="••••••••"
-                required
-                style={{ padding: '8px 12px', fontSize: '0.8rem' }}
-                value={passwordInput}
-                onChange={e => setPasswordInput(e.target.value)}
-              />
-            </div>
-
-            {authError && (
-              <div style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
-                color: 'var(--color-red)',
-                padding: '8px',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.75rem',
-                textAlign: 'center'
-              }}>
-                {authError}
+            <div className="glass-panel" style={{
+              width: '100%', maxWidth: 340, padding: '32px 28px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24,
+              border: '1px solid rgba(16,185,129,0.25)',
+              boxShadow: '0 0 60px rgba(16,185,129,0.1), 0 20px 60px rgba(0,0,0,0.8)'
+            }}>
+              {/* Header */}
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: '50%',
+                  background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 12px', color: 'var(--color-green)'
+                }}>
+                  <ShieldAlert size={24} />
+                </div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', letterSpacing: '0.05em' }}>Admin PIN Required</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>MD Ejaj Mahmud · Full System Access</div>
               </div>
-            )}
 
-            <button type="submit" className="btn-primary" style={{ justifyContent: 'center', padding: '10px', fontSize: '0.8rem' }}>
-              Authenticate Portal Access
-            </button>
-          </form>
+              {/* PIN Dots */}
+              <div className={pinShake ? 'pin-shake' : ''} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                {[0,1,2,3].map(i => (
+                  <div key={i} style={{
+                    width: 18, height: 18, borderRadius: '50%',
+                    background: i < pinInput.length ? 'var(--color-green)' : 'transparent',
+                    border: `2px solid ${i < pinInput.length ? 'var(--color-green)' : 'rgba(255,255,255,0.2)'}`,
+                    boxShadow: i < pinInput.length ? '0 0 10px rgba(16,185,129,0.6)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }} />
+                ))}
+              </div>
 
-          {/* Quick Demo Login Buttons */}
-          <div style={{
-            width: '100%',
-            marginTop: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '6px'
-          }}>
-            <span style={{
-              fontSize: '0.65rem',
-              color: 'var(--text-muted)',
-              textAlign: 'center',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              marginBottom: '2px'
-            }}>
-              Quick Demo Login
-            </span>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '6px'
-            }}>
-              {[
-                { name: "MD Ejaj", role: "Admin", email: "ejaj@student.unikl.edu.my" },
-                { name: "Dr. Hannah", role: "Supervisor", email: "hannah@unikl.edu.my" },
-                { name: "Sayed Aziz", role: "Supervisor 1", email: "sayedaziz@unikl.edu.my" },
-                { name: "Visitor", role: "Viewer", email: "visitor@unikl.edu.my" }
-              ].map((u, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setEmailInput(u.email);
-                    setPasswordInput("demo123");
-                    
-                    // Look up user in active DB
-                    const foundUser = users.find(user => user.email.toLowerCase() === u.email.toLowerCase());
-                    if (foundUser) {
-                      setIsLoggedIn(true);
-                      setCurrentUser(foundUser);
-                      localStorage.setItem('rvm_logged_in_user', JSON.stringify(foundUser));
-                      logAudit(foundUser.name, "QUICK_DEMO_LOGIN", `Authenticated as ${u.role}`);
-                    } else {
-                      // Fallback
-                      const fallbackUser = {
-                        uid: "u_" + u.role.toLowerCase().replace(" ", "_"),
-                        name: u.name,
-                        email: u.email,
-                        role: u.role.toLowerCase(),
-                        createdAt: new Date()
-                      };
-                      setIsLoggedIn(true);
-                      setCurrentUser(fallbackUser);
-                      localStorage.setItem('rvm_logged_in_user', JSON.stringify(fallbackUser));
-                    }
+              {pinError && (
+                <div style={{
+                  background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+                  color: 'var(--color-red)', padding: '7px 14px', borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.75rem', textAlign: 'center', width: '100%'
+                }}>{pinError}</div>
+              )}
+
+              {/* Number Pad */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, width: '100%' }}>
+                {[1,2,3,4,5,6,7,8,9].map(n => (
+                  <button key={n} onClick={() => handlePinDigit(String(n))} style={{
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                    color: '#fff', borderRadius: 'var(--radius-sm)', padding: '14px 0',
+                    fontSize: '1.2rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-mono)',
+                    transition: 'all 0.1s ease'
                   }}
-                  className="btn-secondary"
-                  style={{
-                    padding: '8px 10px',
-                    fontSize: '0.75rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    gap: '2px',
-                    borderColor: 'rgba(16, 185, 129, 0.12)',
-                    background: 'rgba(16, 185, 129, 0.01)',
-                    borderRadius: 'var(--radius-sm)',
-                    width: '100%',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  <span style={{ fontWeight: 600, fontSize: '0.72rem', color: '#fff' }}>{u.name}</span>
-                  <span style={{
-                    fontSize: '0.6rem',
-                    background: u.role === 'Admin' ? 'rgba(59, 130, 246, 0.1)' : 
-                               (u.role === 'Supervisor' || u.role === 'Supervisor 1') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
-                    color: u.role === 'Admin' ? 'var(--color-blue)' : 
-                           (u.role === 'Supervisor' || u.role === 'Supervisor 1') ? 'var(--color-green)' : 'var(--text-muted)',
-                    padding: '1px 4px',
-                    borderRadius: '3px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase'
-                  }}>{u.role}</span>
-                </button>
-              ))}
+                  onMouseEnter={e => e.target.style.background = 'rgba(16,185,129,0.1)'}
+                  onMouseLeave={e => e.target.style.background = 'rgba(255,255,255,0.04)'}
+                  >{n}</button>
+                ))}
+                {/* Bottom row: blank, 0, backspace */}
+                <button onClick={handlePinBackspace} style={{
+                  background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)',
+                  color: 'var(--color-red)', borderRadius: 'var(--radius-sm)', padding: '14px 0',
+                  fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)'
+                }}>⌫</button>
+                <button onClick={() => handlePinDigit('0')} style={{
+                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                  color: '#fff', borderRadius: 'var(--radius-sm)', padding: '14px 0',
+                  fontSize: '1.2rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-mono)'
+                }}
+                onMouseEnter={e => e.target.style.background = 'rgba(16,185,129,0.1)'}
+                onMouseLeave={e => e.target.style.background = 'rgba(255,255,255,0.04)'}
+                >0</button>
+                <button onClick={() => { setShowPinModal(false); setPinInput(''); setPinError(''); }} style={{
+                  background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
+                  color: 'var(--text-muted)', borderRadius: 'var(--radius-sm)', padding: '14px 0',
+                  fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-sans)'
+                }}>Cancel</button>
+              </div>
+
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', textAlign: 'center' }}>
+                🔐 4-digit admin access PIN required
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* Main Login Card */}
+        <div className="glass-panel" style={{
+          width: '100%', maxWidth: '420px', padding: '28px 28px 22px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box',
+          border: '1px solid rgba(16,185,129,0.12)',
+          boxShadow: '0 0 80px rgba(16,185,129,0.05), 0 30px 80px rgba(0,0,0,0.7)'
+        }}>
+          {/* Logo */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05))',
+            border: '1px solid rgba(16,185,129,0.25)', padding: '14px', borderRadius: '50%',
+            marginBottom: '14px', color: 'var(--color-green)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 30px rgba(16,185,129,0.15)'
+          }}>
+            <LayoutDashboard size={30} className="pulse-indicator" />
+          </div>
+          <h1 style={{
+            fontSize: '1.35rem', textAlign: 'center', marginBottom: '2px', color: '#fff',
+            fontWeight: 700, letterSpacing: '0.06em'
+          }}>Smart Recycling IoT Portal</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'center', marginBottom: '20px' }}>
+            UniKL MIIT · FYP2 Admin Dashboard · 2026
+          </p>
+
+          {/* Enterprise badge */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20,
+            background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.15)',
+            borderRadius: 'var(--radius-sm)', padding: '7px 14px', width: '100%', justifyContent: 'center'
+          }}>
+            <Globe size={13} color="var(--color-blue)" />
+            <span style={{ fontSize: '0.72rem', color: 'var(--color-blue)', fontWeight: 600, letterSpacing: '0.06em' }}>
+              ENTERPRISE DEMO — READ-ONLY ACCESS FOR GUESTS
+            </span>
+          </div>
+
+          {/* Admin Login Button — triggers PIN */}
+          <div style={{ width: '100%', marginBottom: 14 }}>
+            <div style={{
+              fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase',
+              letterSpacing: '0.1em', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6
+            }}>
+              <ShieldAlert size={11} color="var(--color-blue)" /> Admin Login
+            </div>
+            <button
+              onClick={() => { setPinInput(''); setPinError(''); setShowPinModal(true); }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '13px 16px', borderRadius: 'var(--radius-sm)',
+                background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.04))',
+                border: '1px solid rgba(59,130,246,0.3)', color: '#fff', cursor: 'pointer',
+                transition: 'all 0.2s ease', gap: 12, boxSizing: 'border-box',
+                fontFamily: 'var(--font-sans)'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.08))'}
+              onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.04))'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  <span style={{ fontSize: '1rem' }}>👤</span>
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff' }}>MD Ejaj Mahmud</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--color-blue)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    System Administrator · Full Access
+                  </div>
+                </div>
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(59,130,246,0.15)',
+                border: '1px solid rgba(59,130,246,0.25)', borderRadius: 'var(--radius-sm)',
+                padding: '4px 10px', fontSize: '0.68rem', color: 'var(--color-blue)', fontWeight: 700
+              }}>
+                <ShieldAlert size={11} /> PIN
+              </div>
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--border-primary)' }} />
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              Enterprise Demo — One-Click
+            </span>
+            <div style={{ flex: 1, height: 1, background: 'var(--border-primary)' }} />
+          </div>
+
+          {/* Demo User Buttons */}
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
+            {DEMO_USERS.map((u, i) => (
+              <button key={i} onClick={() => loginAsDemo(u)} style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '11px 16px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+                transition: 'all 0.15s ease', gap: 12, boxSizing: 'border-box',
+                fontFamily: 'var(--font-sans)'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.06)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem'
+                  }}>
+                    {u.role === 'Supervisor' ? '👩‍🏫' : u.role === 'Supervisor 1' ? '👨‍💼' : '👁️'}
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#e2e8f0' }}>{u.name}</div>
+                    <div style={{ fontSize: '0.63rem', color: u.color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {u.role}
+                    </div>
+                  </div>
+                </div>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)',
+                  borderRadius: 'var(--radius-sm)', padding: '3px 9px',
+                  fontSize: '0.63rem', color: 'var(--color-green)', fontWeight: 700, letterSpacing: '0.04em'
+                }}>
+                  ▶ ENTER DEMO
+                </div>
+              </button>
+            ))}
           </div>
 
           <div style={{
-            marginTop: '16px',
-            fontSize: '0.7rem',
-            color: 'var(--text-muted)',
-            textAlign: 'center',
-            borderTop: '1px solid var(--border-primary)',
-            paddingTop: '12px',
-            width: '100%',
-            lineHeight: '1.4'
+            fontSize: '0.68rem', color: 'var(--text-dim)', textAlign: 'center',
+            borderTop: '1px solid var(--border-primary)', paddingTop: '14px', width: '100%', lineHeight: '1.5'
           }}>
-            MD Ejaj Mahmud | Student ID: 52222222123<br />
+            MD Ejaj Mahmud · Student ID: 52222222123<br />
             UniKL MIIT Final Year Project 2 © 2026
           </div>
         </div>
@@ -1482,7 +1614,33 @@ export default function App() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
+    <div className={isDemo ? 'has-demo-banner' : ''} style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
+      
+      {/* ── DEMO MODE BANNER — visible when non-admin is logged in ── */}
+      {isDemo && (
+        <div className="demo-mode-banner">
+          <div className="demo-mode-banner-text">
+            <Eye size={13} />
+            <span>Read-Only Enterprise Demo — Write actions are restricted</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '0.68rem', color: 'var(--color-amber)', opacity: 0.7 }}>
+              Logged in as <strong>{currentUser?.name}</strong>
+            </span>
+            <button
+              onClick={handleLogout}
+              style={{
+                background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.2)',
+                color: 'var(--color-amber)', padding: '2px 9px', borderRadius: 'var(--radius-sm)',
+                fontSize: '0.63rem', cursor: 'pointer', fontWeight: 700,
+                fontFamily: 'var(--font-sans)', letterSpacing: '0.04em'
+              }}
+            >
+              Exit Demo
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Mobile Sidebar Overlay Backdrop */}
       {isMobileMenuOpen && (
@@ -2501,7 +2659,7 @@ export default function App() {
                                       )}
 
                                       <rect x="15" y="88" width="130" height="16" fill="rgba(0,0,0,0.75)" rx="3" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-                                      <text x="80" y="99" fill={machine.binFull ? "var(--color-red)" : "var(--color-green)"} fontSize="7" fontWeight="900" textAnchor="middle" fontFamily="monospace">
+                                      <text x="80" y="99" fill={machine.binFull ? "var(--color-red)" : "var(--color-green)"} fontSize="7" fontWeight="900" textAnchor="middle" fontFamily="var(--font-sans)">
                                         {machine.binFull ? "8.0 cm (100% FULL)" : `${(26.4 - Math.min(15, machine.acceptedCount * 0.4)).toFixed(1)} cm (24%)`}
                                       </text>
                                     </svg>
@@ -3314,7 +3472,7 @@ export default function App() {
 
                           {/* glowing segment display output */}
                           <rect x="44" y="34" width="52" height="24" fill="#000" rx="3" stroke="#334155" strokeWidth="1" />
-                          <text x="70" y="51" fill={isPowerOn ? "#ef4444" : "#2d0606"} fontSize="13" fontWeight="900" textAnchor="middle" fontFamily="monospace" textShadow={isPowerOn ? "0 0 5px #ef4444" : "none"}>
+                          <text x="70" y="51" fill={isPowerOn ? "#ef4444" : "#2d0606"} fontSize="13" fontWeight="900" textAnchor="middle" fontFamily="var(--font-sans)" textShadow={isPowerOn ? "0 0 5px #ef4444" : "none"}>
                             {isPowerOn ? "7.58" : "0.00"}
                           </text>
 
@@ -3342,7 +3500,7 @@ export default function App() {
                           <line x1="91" y1="12" x2="95" y2="16" stroke="#451a03" strokeWidth="0.8" />
 
                           <rect x="44" y="34" width="52" height="24" fill="#000" rx="3" stroke="#334155" strokeWidth="1" />
-                          <text x="70" y="51" fill={isPowerOn ? "#ef4444" : "#2d0606"} fontSize="13" fontWeight="900" textAnchor="middle" fontFamily="monospace" textShadow={isPowerOn ? "0 0 5px #ef4444" : "none"}>
+                          <text x="70" y="51" fill={isPowerOn ? "#ef4444" : "#2d0606"} fontSize="13" fontWeight="900" textAnchor="middle" fontFamily="var(--font-sans)" textShadow={isPowerOn ? "0 0 5px #ef4444" : "none"}>
                             {isPowerOn ? "5.00" : "0.00"}
                           </text>
 
@@ -3520,7 +3678,7 @@ export default function App() {
                         padding: '12px 16px',
                         borderRadius: 'var(--radius-sm)',
                         fontSize: '0.72rem',
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-sans)',
                         lineHeight: '1.6'
                       }}>
                         {selectedPinout === 'IR' && (
@@ -3623,7 +3781,7 @@ export default function App() {
                             • Pins: <span style={{ color: '#fff' }}>D20(SDA), D21(SCL)</span><br />
                             • Address: <span style={{ color: '#fff' }}>0x27</span><br />
                             • Screen:<br />
-                            <span style={{ color: 'var(--color-green)', background: '#000', padding: '2px 6px', display: 'inline-block', border: '1px solid #10b981', marginTop: 4, fontFamily: 'monospace' }}>
+                            <span style={{ color: 'var(--color-green)', background: '#000', padding: '2px 6px', display: 'inline-block', border: '1px solid #10b981', marginTop: 4, fontFamily: 'var(--font-sans)' }}>
                               [{lcdLine1.padEnd(16, " ")}]<br />
                               [{lcdLine2.padEnd(16, " ")}]
                             </span>
@@ -3665,7 +3823,7 @@ export default function App() {
                     {events.map((e) => (
                       <tr key={e.id}>
                         <td>{e.timestamp ? e.timestamp.toLocaleString() : 'N/A'}</td>
-                        <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>RVM001</span></td>
+                        <td><span style={{ fontFamily: 'var(--font-sans)', fontWeight: 600 }}>RVM001</span></td>
                         <td>
                           <span style={{
                             background: e.type === 'PET_ACCEPTED' ? 'rgba(16, 185, 129, 0.1)' : 
