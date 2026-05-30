@@ -59,6 +59,7 @@ const INITIAL_HISTORICAL_DATA = [
 export default function App() {
   const [theme, setTheme] = useState('dark');
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('rvm_logged_in_user');
     return saved ? JSON.parse(saved) : null;
@@ -1451,35 +1452,105 @@ export default function App() {
     );
   }
 
+  // Nav items for mobile bottom bar and sidebar
+  const NAV_ITEMS = [
+    { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
+    { id: 'simulator', label: 'Machine Simulator', icon: Cpu },
+    { id: 'events', label: 'Live Events Feed', icon: Activity },
+    { id: 'alerts', label: 'Alert Notification Center', icon: Bell, count: alerts.filter(a => a.status === 'open').length },
+    { id: 'analytics', label: 'Analytics Console', icon: BarChart2 },
+    { id: 'prototype', label: 'Physical RVM Gallery', icon: CircuitBoard },
+    { id: 'datasheets', label: 'Datasheet Explorer', icon: FileText },
+    { id: 'users', label: 'Users & Roles', icon: Users },
+    { id: 'settings', label: 'Machine Settings', icon: SettingsIcon },
+    { id: 'maintenance', label: 'Maintenance Logs', icon: Wrench },
+    { id: 'audit', label: 'System Audit Trails', icon: ShieldAlert }
+  ];
+
+  const PAGE_TITLES = {
+    dashboard: 'System Overview',
+    simulator: 'Hardware Console',
+    events: 'Telemetry Events',
+    alerts: 'Alerts Hub',
+    analytics: 'Analytics',
+    prototype: 'RVM Gallery',
+    datasheets: 'Datasheets',
+    users: 'Users & Roles',
+    settings: 'Settings',
+    maintenance: 'Maintenance',
+    audit: 'Audit Trails'
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
       
+      {/* Mobile Sidebar Overlay Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="mobile-sidebar-overlay"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Top Header Bar — hidden on desktop */}
+      <div className="mobile-top-bar">
+        <div className="mobile-top-bar-left">
+          <div style={{
+            background: 'linear-gradient(135deg, var(--color-green), var(--color-green))',
+            color: 'white',
+            padding: '6px',
+            borderRadius: 'var(--radius-sm)',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <LayoutDashboard size={18} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.1 }}>RVM IoT Panel</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{PAGE_TITLES[activeTab]}</div>
+          </div>
+        </div>
+        <div className="mobile-top-bar-right">
+          <span style={{
+            fontSize: '0.65rem',
+            color: machine.status === 'online' ? 'var(--color-green)' : 'var(--color-amber)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4
+          }}>
+            <span style={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              background: machine.status === 'online' ? 'var(--color-green)' : 'var(--color-amber)',
+              display: 'inline-block'
+            }} className="pulse-indicator" />
+            {machine.status.toUpperCase()}
+          </span>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="mobile-hamburger-btn"
+            aria-label="Toggle navigation menu"
+          >
+            <div className={`hamburger-icon ${isMobileMenuOpen ? 'open' : ''}`}>
+              <span /><span /><span />
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* Inline Toast Notification */}
       {toastMessage && (
-        <div style={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          zIndex: 9999,
+        <div className="toast-notification" style={{
           background: toastMessage.type === 'error' ? 'rgba(239, 68, 68, 0.15)' : 
                      toastMessage.type === 'info' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-          backgroundColor: '#07101e', // solid navy dark base to block background elements completely
+          backgroundColor: '#07101e',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           border: `1px solid ${toastMessage.type === 'error' ? 'rgba(239, 68, 68, 0.4)' : 
                                 toastMessage.type === 'info' ? 'rgba(59, 130, 246, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
           color: toastMessage.type === 'error' ? 'var(--color-red)' : 
                  toastMessage.type === 'info' ? 'var(--color-blue)' : 'var(--color-green)',
-          padding: '12px 20px',
-          borderRadius: 'var(--radius-sm)',
-          fontSize: '0.8rem',
-          fontWeight: 700,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.08)',
-          animation: 'toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-          letterSpacing: '0.04em'
         }}>
           {toastMessage.type === 'error' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
           {toastMessage.msg}
@@ -1487,7 +1558,7 @@ export default function App() {
       )}
 
       {/* --- SIDEBAR PANEL --- */}
-      <aside className="glass-panel" style={{
+      <aside className={`glass-panel app-sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`} style={{
         width: '260px',
         borderRadius: 0,
         borderRight: '1px solid var(--border-primary)',
@@ -1551,25 +1622,13 @@ export default function App() {
           </div>
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {[
-              { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
-              { id: 'simulator', label: 'Machine Simulator', icon: Cpu },
-              { id: 'events', label: 'Live Events Feed', icon: Activity },
-              { id: 'alerts', label: 'Alert Notification Center', icon: Bell, count: alerts.filter(a => a.status === 'open').length },
-              { id: 'analytics', label: 'Analytics Console', icon: BarChart2 },
-              { id: 'prototype', label: 'Physical RVM Gallery', icon: CircuitBoard },
-              { id: 'datasheets', label: 'Datasheet Explorer', icon: FileText },
-              { id: 'users', label: 'Users & Roles', icon: Users },
-              { id: 'settings', label: 'Machine Settings', icon: SettingsIcon },
-              { id: 'maintenance', label: 'Maintenance Logs', icon: Wrench },
-              { id: 'audit', label: 'System Audit Trails', icon: ShieldAlert }
-            ].map(item => {
+            {NAV_ITEMS.map(item => {
               const IconComp = item.icon;
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
                   style={{
                     width: '100%',
                     display: 'flex',
@@ -1729,7 +1788,7 @@ export default function App() {
       </aside>
 
       {/* --- MAIN PAGE DISPLAY --- */}
-      <main style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+      <main className="app-main" style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
         
         {/* --- HEADER CONTROL BAR --- */}
         <header style={{
@@ -1855,7 +1914,7 @@ export default function App() {
         </header>
 
         {/* --- VIEW ROUTER PANEL --- */}
-        <section>
+        <section className="content-section">
           
           {/* 1. DASHBOARD OVERVIEW PAGE */}
           {activeTab === 'dashboard' && (
@@ -1879,7 +1938,7 @@ export default function App() {
               </div>
 
               {/* Middle Section: Machine Telemetry & Simple Graph */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '20px', marginBottom: '24px' }}>
+              <div className="resp-grid-mid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '20px', marginBottom: '24px' }}>
                 
                 {/* RVM Status Card */}
                 <div className="glass-panel" style={{ padding: '28px' }}>
@@ -2388,7 +2447,7 @@ export default function App() {
                               </div>
 
                               {/* SECTION 6: Viewport splits (Ultrasonic collection bin and Dispenser drawer) */}
-                              <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1.4fr 1.6fr', gap: '14px' }}>
+                              <div className="resp-grid-sim" style={{ width: '100%', display: 'grid', gridTemplateColumns: '1.4fr 1.6fr', gap: '14px' }}>
                                 
                                 {/* A. Waste bin with HC-SR04 ultrasonic */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -3744,7 +3803,7 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               
               {/* Analytics Top widgets */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+              <div className="resp-grid-analytics" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
                 
                 {/* Large Line graph */}
                 <div className="glass-panel" style={{ padding: '28px' }}>
@@ -4023,7 +4082,7 @@ export default function App() {
 
           {/* 8. MAINTENANCE LOG PAGE */}
           {activeTab === 'maintenance' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '30px' }}>
+            <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '30px' }}>
               
               {/* Form to submit maintenance */}
               <div className="glass-panel" style={{ padding: '28px', height: 'fit-content' }}>
@@ -4777,6 +4836,43 @@ export default function App() {
 
         </section>
       </main>
+
+      {/* --- MOBILE BOTTOM NAVIGATION BAR --- hidden on desktop via CSS */}
+      <nav className="mobile-bottom-nav">
+        {[
+          { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { id: 'simulator', label: 'Simulator', icon: Cpu },
+          { id: 'alerts', label: 'Alerts', icon: Bell, count: alerts.filter(a => a.status === 'open').length },
+          { id: 'analytics', label: 'Analytics', icon: BarChart2 },
+          { id: 'events', label: 'Events', icon: Activity },
+        ].map(item => {
+          const IconComp = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`mobile-bottom-nav-item ${isActive ? 'active' : ''}`}
+            >
+              <div style={{ position: 'relative', display: 'inline-flex' }}>
+                <IconComp size={22} />
+                {item.count > 0 && (
+                  <span className="mobile-nav-badge">{item.count}</span>
+                )}
+              </div>
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="mobile-bottom-nav-item"
+        >
+          <SettingsIcon size={22} />
+          <span>More</span>
+        </button>
+      </nav>
+
     </div>
   );
 }

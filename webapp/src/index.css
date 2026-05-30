@@ -412,12 +412,557 @@ h1, h2, h3, h4, h5 {
   background: rgba(255, 255, 255, 0.005);
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   MOBILE & TABLET RESPONSIVE DESIGN
+   Desktop (≥1200px): Untouched
+   Tablet  (768px – 1199px): Collapsible sidebar overlay, 2-col grids
+   Mobile  (≤767px): Bottom nav bar, single-col, full-screen panels
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Hidden-by-default mobile-only elements (visible only on mobile/tablet) ── */
+.mobile-top-bar,
+.mobile-bottom-nav,
+.mobile-sidebar-overlay {
+  display: none;
+}
+
+/* ── Toast notification — desktop default ── */
+.toast-notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  animation: toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.04em;
+  max-width: 420px;
+}
+
 /* ══════════════════════════════════════════════
-   RESPONSIVE DESIGN
+   TABLET BREAKPOINT (768px – 1199px)
    ══════════════════════════════════════════════ */
-@media (max-width: 768px) {
+@media (max-width: 1199px) {
+
+  /* Show mobile top bar on tablet too */
+  .mobile-top-bar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    z-index: 200;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: linear-gradient(180deg, #091324 0%, #04091a 100%);
+    border-bottom: 1px solid var(--border-primary);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    gap: 12px;
+  }
+
+  .mobile-top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mobile-top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* Sidebar becomes a fixed overlay drawer */
+  .app-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: -300px !important;
+    width: 280px !important;
+    height: 100vh;
+    z-index: 300;
+    overflow-y: auto;
+    transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
+    border-right: 1px solid rgba(16, 185, 129, 0.15) !important;
+    padding-top: 72px !important;
+  }
+
+  .app-sidebar.mobile-open {
+    left: 0 !important;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.8), 4px 0 30px rgba(0,0,0,0.6) !important;
+  }
+
+  /* Overlay backdrop behind open sidebar */
+  .mobile-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: fade-in 0.2s ease;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Main content shifts down for top bar */
+  .app-main {
+    padding: 24px !important;
+    padding-top: 80px !important;
+    margin-left: 0 !important;
+  }
+
+  /* Dashboard KPI grid — 2 columns on tablet */
   .dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Header shrinks on tablet */
+  .app-main > header {
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .app-main > header h1 {
+    font-size: 1.5rem !important;
+  }
+
+  .app-main > header > div:last-child {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Toast repositioned for tablet */
+  .toast-notification {
+    bottom: 24px;
+    right: 16px;
+    left: 16px;
+    max-width: none;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   MOBILE BREAKPOINT (≤ 767px)
+   ══════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* === HAMBURGER ICON === */
+  .mobile-hamburger-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+  }
+
+  .hamburger-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 18px;
+  }
+
+  .hamburger-icon span {
+    display: block;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: center;
+  }
+
+  .hamburger-icon.open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .hamburger-icon.open span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .hamburger-icon.open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* === BOTTOM NAVIGATION BAR === */
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    height: 64px;
+    background: linear-gradient(180deg, #091324 0%, #04091a 100%);
+    border-top: 1px solid var(--border-primary);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    align-items: stretch;
+    justify-content: space-around;
+  }
+
+  .mobile-bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px 2px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+    font-size: 0.58rem;
+    font-family: var(--font-sans);
+    letter-spacing: 0.02em;
+    position: relative;
+    min-width: 0;
+  }
+
+  .mobile-bottom-nav-item.active {
+    color: var(--color-green);
+  }
+
+  .mobile-bottom-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 2px;
+    background: var(--color-green);
+    border-radius: 0 0 2px 2px;
+  }
+
+  .mobile-nav-badge {
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    background: var(--color-red);
+    color: white;
+    font-size: 0.55rem;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 8px;
+    min-width: 14px;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  /* === MAIN CONTENT === */
+  .app-main {
+    padding: 16px !important;
+    padding-top: 72px !important;
+    padding-bottom: 80px !important;
+    margin-left: 0 !important;
+  }
+
+  /* === HEADER === */
+  .app-main > header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px !important;
+  }
+
+  .app-main > header > div:first-child h1 {
+    font-size: 1.25rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  .app-main > header > div:first-child p {
+    font-size: 0.78rem !important;
+  }
+
+  .app-main > header > div:last-child {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .app-main > header > div:last-child > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .app-main > header > div:last-child > button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* === KPI DASHBOARD GRID === */
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .stat-card {
+    padding: 14px 16px !important;
+  }
+
+  .stat-card h2 {
+    font-size: 1.8rem !important;
+  }
+
+  /* === DASHBOARD MID SECTION (1.2fr / 1.8fr) === */
+  .app-main div[style*="gridTemplateColumns: '1.2fr 1.8fr'"],
+  .app-main div[style*='gridTemplateColumns: "1.2fr 1.8fr"'] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* === ALL 2-COLUMN GRIDS IN MAIN → SINGLE COLUMN === */
+  .content-section > div > div[style*="grid-template-columns"],
+  .content-section > div > div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* === GLASS PANELS — reduce padding === */
+  .glass-panel {
+    padding: 16px !important;
+  }
+
+  /* === EVENTS TABLE — card-based mobile layout === */
+  .custom-table th:nth-child(n+4),
+  .custom-table td:nth-child(n+4) {
+    display: none;
+  }
+
+  .custom-table th,
+  .custom-table td {
+    padding: 10px 10px !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* === TABLE CONTAINER — horizontal scroll === */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* === BUTTONS — full width in forms === */
+  .btn-primary,
+  .btn-secondary {
+    font-size: 0.75rem !important;
+    padding: 9px 14px !important;
+  }
+
+  /* === FORM INPUTS — larger touch targets === */
+  .form-input {
+    padding: 12px 14px !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* === LCD DISPLAY — scale down === */
+  .blue-lcd-container {
+    max-width: 100% !important;
+  }
+
+  .blue-lcd-line {
+    font-size: 1rem !important;
+    height: 18px !important;
+    line-height: 18px !important;
+  }
+
+  /* === CABINET SIMULATOR — scroll on mobile === */
+  .cabinet-3d-model {
+    max-width: 100% !important;
+    overflow-x: auto;
+  }
+
+  .cabinet-front-panel {
+    padding: 16px 14px !important;
+    gap: 12px !important;
+  }
+
+  /* === WIRING CHASSIS === */
+  .wiring-chassis-wrapper {
+    padding: 14px !important;
+    min-height: 400px !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* === SIDEBAR (on mobile — full width drawer) === */
+  .app-sidebar {
+    width: 100vw !important;
+    max-width: 300px !important;
+    padding-top: 64px !important;
+  }
+
+  /* === TOAST — full width bottom on mobile, above bottom nav === */
+  .toast-notification {
+    bottom: 76px !important;
+    left: 12px !important;
+    right: 12px !important;
+    max-width: none !important;
+    font-size: 0.75rem !important;
+    padding: 10px 14px !important;
+  }
+
+  /* === DIAGNOSTIC VIEWPORT === */
+  .diagnostic-viewport-panel {
+    padding: 8px !important;
+  }
+
+  /* === SEVEN SEGMENT DISPLAY === */
+  .seven-segment-display {
+    font-size: 0.8rem !important;
+    min-width: 44px !important;
+    padding: 2px 4px !important;
+  }
+
+  /* === PHYSICAL LED & BUZZER — smaller on mobile === */
+  .physical-led {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .physical-buzzer {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .rocker-switch-3d {
+    width: 26px !important;
+    height: 40px !important;
+  }
+
+  /* === RICHER INTERACTIONS for mobile charts/bars === */
+  .content-section [style*="height: '280px'"],
+  .content-section [style*="height: '320px'"] {
+    height: 200px !important;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   SMALL MOBILE (≤ 390px — iPhone SE / small phones)
+   ══════════════════════════════════════════════ */
+@media (max-width: 390px) {
+  .app-main {
+    padding: 12px !important;
+    padding-top: 68px !important;
+    padding-bottom: 78px !important;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .stat-card h2 {
+    font-size: 1.5rem !important;
+  }
+
+  .mobile-top-bar {
+    padding: 0 14px;
+  }
+
+  .mobile-bottom-nav {
+    height: 60px;
+  }
+
+  .blue-lcd-line {
+    font-size: 0.85rem !important;
+    letter-spacing: 0.06em !important;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   NAMED RESPONSIVE GRID CLASSES
+   ══════════════════════════════════════════════ */
+
+/* Tablet: all named grids → 1fr 1fr or stacked */
+@media (max-width: 1199px) {
+  .resp-grid-mid,
+  .resp-grid-sim,
+  .resp-grid-analytics,
+  .resp-grid-datasheet {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Datasheet PDF iframe — reduce height on tablet */
+  .resp-grid-datasheet iframe {
+    height: 500px !important;
+  }
+}
+
+/* Mobile: all named grids → single column */
+@media (max-width: 767px) {
+  .resp-grid-mid,
+  .resp-grid-sim,
+  .resp-grid-analytics,
+  .resp-grid-datasheet {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Datasheet PDF iframe — compact height on mobile */
+  .resp-grid-datasheet iframe {
+    height: 350px !important;
+  }
+
+  /* Prototype gallery grid → single col */
+  div[style*="gridTemplateColumns: '1fr 1fr 1fr'"],
+  div[style*="repeat(3, 1fr)"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Users table row wrapping */
+  div[style*="gridTemplateColumns: '1fr 1fr 1fr 1fr'"],
+  div[style*="repeat(4, 1fr)"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Ensure all flex rows wrap on mobile */
+  .glass-panel > div[style*="display: 'flex'"][style*="justifyContent: 'space-between'"] {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Larger touch targets for all buttons */
+  button {
+    min-height: 44px;
+  }
+
+  /* Pinout inspector nav tabs wrap */
+  div[style*="overflow-x: 'auto'"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Analytics chart container */
+  .resp-grid-analytics > div:first-child {
+    order: 1;
+  }
+  .resp-grid-analytics > div:last-child {
+    order: 2;
   }
 }
 
