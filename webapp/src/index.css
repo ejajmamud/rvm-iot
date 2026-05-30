@@ -1381,3 +1381,118 @@ h1, h2, h3, h4, h5 {
     top: 32px !important;
   }
 }
+
+/* ══════════════════════════════════════════════
+   ENTERPRISE LOGIN PORTAL UI
+   ══════════════════════════════════════════════ */
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: radial-gradient(circle at 50% 0%, #0c1d33 0%, #03070f 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+body.light-theme .login-container {
+  background: radial-gradient(circle at 50% 0%, #f4f5f8 0%, #dbe0e8 100%) !important;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 36px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), 0 30px 60px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-base);
+  z-index: 10;
+}
+
+.login-card:hover {
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: var(--shadow-lg), 0 30px 80px rgba(16, 185, 129, 0.05);
+}
+
+.login-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  width: 100%;
+  color: var(--color-blue);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.login-admin-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition-base);
+  font-family: var(--font-sans);
+}
+
+.login-admin-btn:hover {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: var(--color-blue);
+  transform: translateY(-1px);
+}
+
+.login-demo-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition-base);
+  font-family: var(--font-sans);
+}
+
+.login-demo-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--btn-sec-border-hover);
+  transform: translateY(-1px);
+}
+
+.pin-keypad-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 14px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: var(--transition-fast);
+}
+
+.pin-keypad-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--color-green);
+}

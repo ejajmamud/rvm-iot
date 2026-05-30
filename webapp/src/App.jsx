@@ -76,7 +76,7 @@ export default function App() {
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [pinShake, setPinShake] = useState(false);
-  const ADMIN_PIN = '2611'; // Ejaj's secure admin PIN
+  const ADMIN_PIN = '642421'; // Ejaj's secure admin PIN
   const EJAJ_EMAIL = 'ejaj@student.unikl.edu.my';
 
   // --- Demo Mode (non-admin users: read-only enterprise demo) ---
@@ -1407,12 +1407,12 @@ export default function App() {
 
   // --- PIN Modal Login Logic (Ejaj Admin) ---
   const handlePinDigit = (digit) => {
-    if (pinInput.length >= 4) return;
+    if (pinInput.length >= 6) return;
     const next = pinInput + digit;
     setPinInput(next);
     setPinError('');
-    if (next.length === 4) {
-      // Auto-verify after 4th digit
+    if (next.length === 6) {
+      // Auto-verify after 6th digit
       setTimeout(() => {
         if (next === ADMIN_PIN) {
           const foundUser = users.find(u => u.email.toLowerCase() === EJAJ_EMAIL.toLowerCase()) || {
@@ -1459,16 +1459,11 @@ export default function App() {
       { name: 'Visitor', role: 'Read-Only', email: 'visitor@unikl.edu.my', color: 'var(--text-muted)' },
     ];
     return (
-      <div style={{
-        minHeight: '100vh', width: '100vw',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'radial-gradient(ellipse at 20% 0%, #07183a 0%, #03070f 60%)',
-        padding: '16px', boxSizing: 'border-box', position: 'relative', overflow: 'hidden'
-      }}>
+      <div className="login-container">
         {/* Animated background grid */}
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: 'linear-gradient(rgba(16,185,129,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.03) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(rgba(16,185,129,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.02) 1px, transparent 1px)',
           backgroundSize: '40px 40px', pointerEvents: 'none'
         }} />
 
@@ -1476,14 +1471,14 @@ export default function App() {
         {showPinModal && (
           <div style={{
             position: 'fixed', inset: 0, zIndex: 999,
-            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
+            background: 'rgba(3, 7, 15, 0.85)', backdropFilter: 'blur(12px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
           }}>
             <div className="glass-panel" style={{
-              width: '100%', maxWidth: 340, padding: '32px 28px',
+              width: '100%', maxWidth: 350, padding: '36px 30px',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24,
-              border: '1px solid rgba(16,185,129,0.25)',
-              boxShadow: '0 0 60px rgba(16,185,129,0.1), 0 20px 60px rgba(0,0,0,0.8)'
+              border: '1px solid var(--border-primary)',
+              boxShadow: 'var(--shadow-lg)'
             }}>
               {/* Header */}
               <div style={{ textAlign: 'center' }}>
@@ -1495,17 +1490,17 @@ export default function App() {
                 }}>
                   <ShieldAlert size={24} />
                 </div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', letterSpacing: '0.05em' }}>Admin PIN Required</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>MD Ejaj Mahmud · Full System Access</div>
+                <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.05em', fontFamily: 'var(--font-serif)' }}>Security Override</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>System Administrator PIN Verification</div>
               </div>
 
               {/* PIN Dots */}
               <div className={pinShake ? 'pin-shake' : ''} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                {[0,1,2,3].map(i => (
+                {[0,1,2,3,4,5].map(i => (
                   <div key={i} style={{
-                    width: 18, height: 18, borderRadius: '50%',
+                    width: 14, height: 14, borderRadius: '50%',
                     background: i < pinInput.length ? 'var(--color-green)' : 'transparent',
-                    border: `2px solid ${i < pinInput.length ? 'var(--color-green)' : 'rgba(255,255,255,0.2)'}`,
+                    border: `2px solid ${i < pinInput.length ? 'var(--color-green)' : 'var(--border-primary)'}`,
                     boxShadow: i < pinInput.length ? '0 0 10px rgba(16,185,129,0.6)' : 'none',
                     transition: 'all 0.15s ease'
                   }} />
@@ -1514,189 +1509,150 @@ export default function App() {
 
               {pinError && (
                 <div style={{
-                  background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
-                  color: 'var(--color-red)', padding: '7px 14px', borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.75rem', textAlign: 'center', width: '100%'
+                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                  color: 'var(--color-red)', padding: '8px 14px', borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.75rem', textAlign: 'center', width: '100%', fontWeight: 600
                 }}>{pinError}</div>
               )}
 
               {/* Number Pad */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, width: '100%' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, width: '100%' }}>
                 {[1,2,3,4,5,6,7,8,9].map(n => (
-                  <button key={n} onClick={() => handlePinDigit(String(n))} style={{
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                    color: '#fff', borderRadius: 'var(--radius-sm)', padding: '14px 0',
-                    fontSize: '1.2rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-mono)',
-                    transition: 'all 0.1s ease'
-                  }}
-                  onMouseEnter={e => e.target.style.background = 'rgba(16,185,129,0.1)'}
-                  onMouseLeave={e => e.target.style.background = 'rgba(255,255,255,0.04)'}
-                  >{n}</button>
+                  <button key={n} onClick={() => handlePinDigit(String(n))} className="pin-keypad-btn">{n}</button>
                 ))}
-                {/* Bottom row: blank, 0, backspace */}
+                {/* Bottom row: backspace, 0, cancel */}
                 <button onClick={handlePinBackspace} style={{
-                  background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)',
+                  background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)',
                   color: 'var(--color-red)', borderRadius: 'var(--radius-sm)', padding: '14px 0',
-                  fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)'
-                }}>⌫</button>
-                <button onClick={() => handlePinDigit('0')} style={{
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#fff', borderRadius: 'var(--radius-sm)', padding: '14px 0',
-                  fontSize: '1.2rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-mono)'
+                  fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'var(--transition-fast)'
                 }}
-                onMouseEnter={e => e.target.style.background = 'rgba(16,185,129,0.1)'}
-                onMouseLeave={e => e.target.style.background = 'rgba(255,255,255,0.04)'}
-                >0</button>
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.12)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.06)'}
+                >⌫</button>
+                
+                <button onClick={() => handlePinDigit('0')} className="pin-keypad-btn">0</button>
+                
                 <button onClick={() => { setShowPinModal(false); setPinInput(''); setPinError(''); }} style={{
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'transparent', border: '1px solid var(--border-primary)',
                   color: 'var(--text-muted)', borderRadius: 'var(--radius-sm)', padding: '14px 0',
-                  fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-sans)'
-                }}>Cancel</button>
+                  fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'var(--transition-fast)'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >Cancel</button>
               </div>
 
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', textAlign: 'center' }}>
-                🔐 4-digit admin access PIN required
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textAlign: 'center' }}>
+                🔐 6-digit secure admin access PIN required
               </div>
             </div>
           </div>
         )}
 
         {/* Main Login Card */}
-        <div className="glass-panel" style={{
-          width: '100%', maxWidth: '420px', padding: '28px 28px 22px',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box',
-          border: '1px solid rgba(16,185,129,0.12)',
-          boxShadow: '0 0 80px rgba(16,185,129,0.05), 0 30px 80px rgba(0,0,0,0.7)'
-        }}>
+        <div className="login-card">
           {/* Logo */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05))',
-            border: '1px solid rgba(16,185,129,0.25)', padding: '14px', borderRadius: '50%',
-            marginBottom: '14px', color: 'var(--color-green)',
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.02))',
+            border: '1px solid rgba(16,185,129,0.22)', padding: '16px', borderRadius: '50%',
+            marginBottom: '16px', color: 'var(--color-green)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 30px rgba(16,185,129,0.15)'
+            boxShadow: '0 0 25px rgba(16,185,129,0.1)'
           }}>
-            <LayoutDashboard size={30} className="pulse-indicator" />
+            <LayoutDashboard size={32} className="pulse-indicator" />
           </div>
           <h1 style={{
-            fontSize: '1.35rem', textAlign: 'center', marginBottom: '2px', color: '#fff',
-            fontWeight: 700, letterSpacing: '0.06em'
-          }}>Smart Recycling IoT Portal</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'center', marginBottom: '20px' }}>
+            fontSize: '1.4rem', textAlign: 'center', marginBottom: '4px', color: 'var(--text-primary)',
+            fontWeight: 700, letterSpacing: '0.06em', fontFamily: 'var(--font-serif)'
+          }}>Smart Recycling RVM Portal</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'center', marginBottom: '24px' }}>
             UniKL MIIT · FYP2 Admin Dashboard · 2026
           </p>
 
           {/* Enterprise badge */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20,
-            background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.15)',
-            borderRadius: 'var(--radius-sm)', padding: '7px 14px', width: '100%', justifyContent: 'center'
-          }}>
-            <Globe size={13} color="var(--color-blue)" />
-            <span style={{ fontSize: '0.72rem', color: 'var(--color-blue)', fontWeight: 600, letterSpacing: '0.06em' }}>
-              ENTERPRISE DEMO — READ-ONLY ACCESS FOR GUESTS
-            </span>
+          <div className="login-badge" style={{ marginBottom: 24 }}>
+            <Globe size={14} color="var(--color-blue)" />
+            <span>ENTERPRISE DEMO — GUEST ACCESS ENABLED</span>
           </div>
 
           {/* Admin Login Button — triggers PIN */}
-          <div style={{ width: '100%', marginBottom: 14 }}>
+          <div style={{ width: '100%', marginBottom: 20 }}>
             <div style={{
-              fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase',
-              letterSpacing: '0.1em', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6
+              fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase',
+              letterSpacing: '0.08em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8
             }}>
-              <ShieldAlert size={11} color="var(--color-blue)" /> Admin Login
+              <ShieldAlert size={12} color="var(--color-blue)" /> System Administrator Access
             </div>
             <button
               onClick={() => { setPinInput(''); setPinError(''); setShowPinModal(true); }}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '13px 16px', borderRadius: 'var(--radius-sm)',
-                background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.04))',
-                border: '1px solid rgba(59,130,246,0.3)', color: '#fff', cursor: 'pointer',
-                transition: 'all 0.2s ease', gap: 12, boxSizing: 'border-box',
-                fontFamily: 'var(--font-sans)'
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.08))'}
-              onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.04))'}
+              className="login-admin-btn"
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: '50%',
-                  background: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                  <span style={{ fontSize: '1rem' }}>👤</span>
+                  👤
                 </div>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff' }}>MD Ejaj Mahmud</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--color-blue)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    System Administrator · Full Access
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>MD Ejaj Mahmud</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--color-blue)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Admin Owner · Full Write Access
                   </div>
                 </div>
               </div>
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(59,130,246,0.15)',
-                border: '1px solid rgba(59,130,246,0.25)', borderRadius: 'var(--radius-sm)',
+                display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(59,130,246,0.1)',
+                border: '1px solid rgba(59,130,246,0.2)', borderRadius: 'var(--radius-sm)',
                 padding: '4px 10px', fontSize: '0.68rem', color: 'var(--color-blue)', fontWeight: 700
               }}>
-                <ShieldAlert size={11} /> PIN
+                <ShieldAlert size={12} /> SECURE PIN
               </div>
             </button>
           </div>
 
           {/* Divider */}
-          <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <div style={{ flex: 1, height: 1, background: 'var(--border-primary)' }} />
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              Enterprise Demo — One-Click
+            <span style={{ fontSize: '0.62rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Supervisor & Guest Access
             </span>
             <div style={{ flex: 1, height: 1, background: 'var(--border-primary)' }} />
           </div>
 
           {/* Demo User Buttons */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
             {DEMO_USERS.map((u, i) => (
-              <button key={i} onClick={() => loginAsDemo(u)} style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '11px 16px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
-                transition: 'all 0.15s ease', gap: 12, boxSizing: 'border-box',
-                fontFamily: 'var(--font-sans)'
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.06)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.2)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button key={i} onClick={() => loginAsDemo(u)} className="login-demo-btn">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 32, height: 32, borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem'
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem'
                   }}>
                     {u.role === 'Supervisor' ? '👩‍🏫' : u.role === 'Supervisor 1' ? '👨‍💼' : '👁️'}
                   </div>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#e2e8f0' }}>{u.name}</div>
-                    <div style={{ fontSize: '0.63rem', color: u.color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {u.role}
+                    <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)' }}>{u.name}</div>
+                    <div style={{ fontSize: '0.63rem', color: u.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {u.role} · Read-Only
                     </div>
                   </div>
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)',
-                  borderRadius: 'var(--radius-sm)', padding: '3px 9px',
+                  background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)',
+                  borderRadius: 'var(--radius-sm)', padding: '4px 10px',
                   fontSize: '0.63rem', color: 'var(--color-green)', fontWeight: 700, letterSpacing: '0.04em'
                 }}>
-                  ▶ ENTER DEMO
+                  ▶ ENTER PORTAL
                 </div>
               </button>
             ))}
           </div>
 
-          <div style={{
-            fontSize: '0.68rem', color: 'var(--text-dim)', textAlign: 'center',
-            borderTop: '1px solid var(--border-primary)', paddingTop: '14px', width: '100%', lineHeight: '1.5'
-          }}>
-            MD Ejaj Mahmud · Student ID: 52222222123<br />
+          {/* Footer note */}
+          <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', textAlign: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: 16, width: '100%' }}>
             UniKL MIIT Final Year Project 2 © 2026
           </div>
         </div>
@@ -1704,7 +1660,6 @@ export default function App() {
     );
   }
 
-  // Nav items for mobile bottom bar and sidebar
   const NAV_ITEMS = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
     { id: 'simulator', label: 'Live Simulator', icon: Cpu },
