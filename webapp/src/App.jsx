@@ -1419,8 +1419,8 @@ export default function App() {
   };
 
   const downloadDiagramAsPng = () => {
-    // Select the active SVG inside our diagrams panel
-    const svgEl = document.querySelector('.glass-panel svg');
+    // Select the active SVG inside our diagrams panel (specifically inside the wrapper, ignoring Lucide icons)
+    const svgEl = document.querySelector('#diagram-canvas-wrapper svg');
     if (!svgEl) {
       showToast("Diagram SVG element not found in DOM", "error");
       return;
@@ -4955,7 +4955,7 @@ export default function App() {
                   </div>
 
                   {/* Dynamic Inline SVGs */}
-                  <div style={{
+                  <div id="diagram-canvas-wrapper" style={{
                     width: '100%',
                     height: '420px',
                     borderRadius: 'var(--radius-md)',
