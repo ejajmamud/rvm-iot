@@ -1716,7 +1716,6 @@ export default function App() {
         </div>
       )}
 
-      {/* --- SIDEBAR PANEL --- */}
       <aside className={`glass-panel app-sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`} style={{
         width: '260px',
         borderRadius: 0,
@@ -1725,7 +1724,7 @@ export default function App() {
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: '24px',
-        zIndex: 10
+        zIndex: 300
       }}>
         <div>
           {/* Brand Logo */}
