@@ -1569,7 +1569,7 @@ export default function App() {
 
           {/* Footer note */}
           <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', textAlign: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: 16, width: '100%' }}>
-            UniKL MIIT Final Year Project 2 © 2026
+            Planned and Build by Ejaj Mahmud. For Exclusively FYP2. All Rights reserved.
           </div>
         </div>
       </div>
