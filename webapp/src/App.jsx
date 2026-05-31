@@ -824,6 +824,11 @@ export default function App() {
       clearInterval(simInterval.current);
       setIsSimulating(false);
     } else {
+      // Auto-switch to Simulation Mode on simulation action to prevent clashing
+      if (isLiveMode) {
+        setIsLiveMode(false);
+        showToast("Auto-switched to Standalone Simulation Mode", "info");
+      }
       setIsSimulating(true);
       setActiveTab('simulator');
       simInterval.current = setInterval(() => {
@@ -2161,6 +2166,10 @@ export default function App() {
               <button
                 onClick={() => {
                   setIsLiveMode(true);
+                  if (isSimulating) {
+                    setIsSimulating(false);
+                    if (simInterval.current) clearInterval(simInterval.current);
+                  }
                   showToast("Switched to Live Data Mode", "info");
                 }}
                 style={{
@@ -2170,6 +2179,7 @@ export default function App() {
                   padding: '6px 12px',
                   fontSize: '0.75rem',
                   fontWeight: 700,
+                  fontFamily: 'var(--font-sans)',
                   borderRadius: 'calc(var(--radius-sm) - 2px)',
                   cursor: 'pointer',
                   display: 'flex',
@@ -2200,6 +2210,7 @@ export default function App() {
                   padding: '6px 12px',
                   fontSize: '0.75rem',
                   fontWeight: 700,
+                  fontFamily: 'var(--font-sans)',
                   borderRadius: 'calc(var(--radius-sm) - 2px)',
                   cursor: 'pointer',
                   display: 'flex',
