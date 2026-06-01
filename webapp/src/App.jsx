@@ -167,6 +167,8 @@ export default function App() {
   // --- Real Prototype Gallery & Datasheet Explorer State ---
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [activeComponentIdx, setActiveComponentIdx] = useState(0);
+  const [activeDocType, setActiveDocType] = useState('datasheets'); // 'datasheets' | 'reports'
+  const [activeReportIdx, setActiveReportIdx] = useState(0);
 
   // --- Live Diagnostics Oscilloscope Logs ---
   const [oscilloscopeLogs, setOscilloscopeLogs] = useState([
@@ -5811,7 +5813,7 @@ export default function App() {
                       borderRadius: '12px',
                       fontWeight: 700
                     }}>
-                      Stage {activePhotoIdx + 1} of 8
+                      Stage {activePhotoIdx + 1} of 10
                     </span>
                   </div>
 
@@ -5835,7 +5837,9 @@ export default function App() {
                         "/progress/IMG_0746.jpeg",
                         "/progress/IMG_0786.jpeg",
                         "/progress/IMG_0781.jpeg",
-                        "/progress/IMG_0790.jpeg"
+                        "/progress/IMG_0790.jpeg",
+                        "/progress/Final_RVM_Prototype.jpeg",
+                        "/progress/Inner_View_of_Prototype.jpeg"
                       ][activePhotoIdx]} 
                       alt="Physical Prototype construction step" 
                       onError={(e) => { e.target.onerror = null; e.target.src = '/gear_icon.svg'; }}
@@ -5871,8 +5875,8 @@ export default function App() {
                       &larr;
                     </button>
                     <button 
-                      onClick={() => setActivePhotoIdx(p => Math.min(7, p + 1))}
-                      disabled={activePhotoIdx === 7}
+                      onClick={() => setActivePhotoIdx(p => Math.min(9, p + 1))}
+                      disabled={activePhotoIdx === 9}
                       style={{
                         position: 'absolute',
                         right: 16,
@@ -5880,10 +5884,10 @@ export default function App() {
                         transform: 'translateY(-50%)',
                         background: 'rgba(3,7,15,0.75)',
                         border: '1px solid var(--border-primary)',
-                        color: activePhotoIdx === 7 ? 'var(--text-dim)' : 'var(--text-primary)',
+                        color: activePhotoIdx === 9 ? 'var(--text-dim)' : 'var(--text-primary)',
                         padding: '12px 14px',
                         borderRadius: '50%',
-                        cursor: activePhotoIdx === 7 ? 'not-allowed' : 'pointer',
+                        cursor: activePhotoIdx === 9 ? 'not-allowed' : 'pointer',
                         zIndex: 5,
                         fontSize: '1rem',
                         fontWeight: 'bold',
@@ -5916,7 +5920,9 @@ export default function App() {
                         "Intake Slot & Gate Servo Integration",
                         "Cabinet Front Panel Assembly",
                         "Front Panel Internal Wiring Layout",
-                        "Closed View of Control Board & Wiring"
+                        "Closed View of Control Board & Wiring",
+                        "Final RVM Outer View",
+                        "Final RVM Inner Mechanical View"
                       ][activePhotoIdx]}
                     </strong>
                     <p style={{
@@ -5932,7 +5938,9 @@ export default function App() {
                         "Successfully mounting the SG90 continuous gate servo actuator and locking mechanism directly behind the finalized item insertion hole.",
                         "High-tech front face of the Reverse Vending Machine showcasing the integrated blue character LCD screen, indicator LEDs, and slot openings.",
                         "Detailed rear-view wiring of the front panel, routing clean I2C character screen buses, serial signal loops, and system control lines.",
-                        "Final sealed and clean cabinet circuit wiring setup, ensuring complete system safety, structural cable management, and high-fidelity operational logic."
+                        "Final sealed and clean cabinet circuit wiring setup, ensuring complete system safety, structural cable management, and high-fidelity operational logic.",
+                        "Fully constructed and operational Reverse Vending Machine industrial prototype. Displays high-fidelity structural panels, hardware interfaces, character LCD, status LEDs, and physical collection bins.",
+                        "Detailed internal cabinet engineering view showcasing pristine component layouts, buck regulators, isolated logic wiring harnesses, sensor cabling, and reward mechanical servo drawer."
                       ][activePhotoIdx]}
                     </p>
                   </div>
@@ -5967,7 +5975,9 @@ export default function App() {
                       "5. Finalized Intake Slot & Gate Servo",
                       "6. Front Panel User Interface",
                       "7. Front Panel Rear Connections",
-                      "8. Sealed Control Cabinet & Logic"
+                      "8. Sealed Control Cabinet & Logic",
+                      "9. Final RVM Outer View",
+                      "10. Final RVM Inner Mechanical View"
                     ].map((milestone, idx) => {
                       const isSelected = activePhotoIdx === idx;
                       return (
@@ -6017,7 +6027,9 @@ export default function App() {
                                 "Mounting the SG90 entry gate sweeps",
                                 "Integrating character LCD & user face",
                                 "I2C LCD bus and wiring routing",
-                                "Final circuit wiring & cable management"
+                                "Final circuit wiring & cable management",
+                                "Completed outer shell & assembly",
+                                "Pristine internal controller grid"
                               ][idx]}
                             </span>
                           </div>
@@ -6034,9 +6046,9 @@ export default function App() {
           {activeTab === 'datasheets' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
               
-              {/* Official signed progress reports and files download bar */}
+              {/* Document Type Selector Bar */}
               <div className="glass-panel" style={{
-                padding: '24px 28px',
+                padding: '20px 28px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -6045,32 +6057,57 @@ export default function App() {
                 background: 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%)'
               }}>
                 <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+                  <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
                     Official FYP2 Documentation Centre
                   </h4>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    Download or review the official manufacturer datasheets and verified FYP2 progress reports.
+                    Explore manufacturer hardware datasheets and official UniKL MIIT FYP2 submission reports.
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <a 
-                    href="/progress_report_3.pdf" 
-                    download 
-                    className="btn-secondary" 
-                    style={{ textDecoration: 'none', padding: '10px 18px', fontSize: '0.8rem' }}
+                
+                {/* Segmented Controller Tabs */}
+                <div style={{
+                  display: 'flex',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid var(--border-primary)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '3px',
+                  gap: '4px'
+                }}>
+                  <button
+                    onClick={() => setActiveDocType('datasheets')}
+                    style={{
+                      border: 'none',
+                      background: activeDocType === 'datasheets' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+                      color: activeDocType === 'datasheets' ? 'var(--color-cyan)' : 'var(--text-muted)',
+                      padding: '8px 16px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      fontFamily: 'Marcellus, Georgia, serif',
+                      borderRadius: 'calc(var(--radius-sm) - 2px)',
+                      cursor: 'pointer',
+                      transition: 'var(--transition-fast)'
+                    }}
                   >
-                    <Download size={14} />
-                    Download Progress Report 3 (PDF)
-                  </a>
-                  <a 
-                    href="/progress_report_2.pdf" 
-                    download 
-                    className="btn-primary" 
-                    style={{ textDecoration: 'none', padding: '10px 18px', fontSize: '0.8rem' }}
+                    🔌 Component Datasheets
+                  </button>
+                  <button
+                    onClick={() => setActiveDocType('reports')}
+                    style={{
+                      border: 'none',
+                      background: activeDocType === 'reports' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                      color: activeDocType === 'reports' ? 'var(--color-green)' : 'var(--text-muted)',
+                      padding: '8px 16px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      fontFamily: 'Marcellus, Georgia, serif',
+                      borderRadius: 'calc(var(--radius-sm) - 2px)',
+                      cursor: 'pointer',
+                      transition: 'var(--transition-fast)'
+                    }}
                   >
-                    <Download size={14} />
-                    Download Signed Datasheets Report (PDF)
-                  </a>
+                    📂 FYP2 Submission Reports
+                  </button>
                 </div>
               </div>
 
@@ -6091,274 +6128,468 @@ export default function App() {
                     gridTemplateColumns: '1fr 1fr',
                     gap: 6
                   }}>
-                    {[
-                      "Arduino Mega 2560 R3",
-                      "HC-SR04 Ultrasonic",
-                      "SG90 Micro Servo",
-                      "TCRT5000 IR Sensor",
-                      "LJ12A3 Proximity",
-                      "HD44780 LCD Display",
-                      "ESP32 DevKit V1"
-                    ].map((comp, idx) => {
-                      const isSelected = activeComponentIdx === idx;
-                      const compIcons = [
-                        '/arduino_icon.jpg',
-                        '/sonar_icon.png',
-                        '/servo_icon.jpg',
-                        '/ir_icon.jpg',
-                        '/proximity_icon.jpg',
-                        '/lcd_icon.png',
-                        '/esp32_icon.png'
-                      ];
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveComponentIdx(idx)}
-                          style={{
-                            textAlign: 'left',
-                            padding: '10px 14px',
-                            background: isSelected ? 'rgba(6, 182, 212, 0.12)' : 'transparent',
-                            color: isSelected ? 'var(--color-cyan)' : 'var(--text-secondary)',
-                            border: `1px solid ${isSelected ? 'var(--color-cyan)' : 'transparent'}`,
-                            borderRadius: 'var(--radius-sm)',
-                            fontWeight: 700,
-                            fontSize: '0.78rem',
-                            fontFamily: 'Marcellus, Georgia, serif',
-                            cursor: 'pointer',
-                            transition: 'var(--transition-fast)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-start',
-                            gap: 12
-                          }}
-                        >
-                          <img 
-                            src={compIcons[idx]} 
-                            alt={comp}
-                            onError={(e) => { e.target.onerror = null; e.target.src = '/gear_icon.svg'; }}
-                            style={{ 
-                              width: 24, 
-                              height: 24, 
-                              objectFit: 'contain',
+                    {activeDocType === 'datasheets' ? (
+                      [
+                        "Arduino Mega 2560 R3",
+                        "HC-SR04 Ultrasonic",
+                        "SG90 Micro Servo",
+                        "TCRT5000 IR Sensor",
+                        "LJ12A3 Proximity",
+                        "HD44780 LCD Display",
+                        "ESP32 DevKit V1"
+                      ].map((comp, idx) => {
+                        const isSelected = activeComponentIdx === idx;
+                        const compIcons = [
+                          'arduino_icon.jpg',
+                          'sonar_icon.png',
+                          'servo_icon.jpg',
+                          'ir_icon.jpg',
+                          'proximity_icon.jpg',
+                          'lcd_icon.png',
+                          'esp32_icon.png'
+                        ];
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => setActiveComponentIdx(idx)}
+                            style={{
+                              textAlign: 'left',
+                              padding: '10px 14px',
+                              background: isSelected ? 'rgba(6, 182, 212, 0.12)' : 'transparent',
+                              color: isSelected ? 'var(--color-cyan)' : 'var(--text-secondary)',
+                              border: `1px solid ${isSelected ? 'var(--color-cyan)' : 'transparent'}`,
+                              borderRadius: 'var(--radius-sm)',
+                              fontWeight: 700,
+                              fontSize: '0.78rem',
+                              fontFamily: 'Marcellus, Georgia, serif',
+                              cursor: 'pointer',
+                              transition: 'var(--transition-fast)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'flex-start',
+                              gap: 12
+                            }}
+                          >
+                            <img 
+                              src={compIcons[idx]} 
+                              alt={comp}
+                              onError={(e) => { e.target.onerror = null; e.target.src = 'gear_icon.svg'; }}
+                              style={{ 
+                                width: 24, 
+                                height: 24, 
+                                objectFit: 'contain',
+                                borderRadius: '4px',
+                                border: `1px solid ${isSelected ? 'rgba(6, 182, 212, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                                background: 'rgba(255,255,255,0.03)',
+                                padding: 2,
+                                transition: 'all 0.2s ease'
+                              }} 
+                            />
+                            {comp}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      [
+                        "Progress Report 1",
+                        "Progress Report 2",
+                        "Progress Report 3",
+                        "Progress Report 4",
+                        "Progress Report 5"
+                      ].map((report, idx) => {
+                        const isSelected = activeReportIdx === idx;
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => setActiveReportIdx(idx)}
+                            style={{
+                              textAlign: 'left',
+                              padding: '10px 14px',
+                              background: isSelected ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
+                              color: isSelected ? 'var(--color-green)' : 'var(--text-secondary)',
+                              border: `1px solid ${isSelected ? 'var(--color-green)' : 'transparent'}`,
+                              borderRadius: 'var(--radius-sm)',
+                              fontWeight: 700,
+                              fontSize: '0.78rem',
+                              fontFamily: 'Marcellus, Georgia, serif',
+                              cursor: 'pointer',
+                              transition: 'var(--transition-fast)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'flex-start',
+                              gap: 12
+                            }}
+                          >
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: 24,
+                              height: 24,
                               borderRadius: '4px',
-                              border: `1px solid ${isSelected ? 'rgba(6, 182, 212, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
-                              background: 'rgba(255,255,255,0.03)',
-                              padding: 2,
-                              transition: 'all 0.2s ease'
-                            }} 
-                          />
-                          {comp}
-                        </button>
-                      );
-                    })}
+                              background: isSelected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                              border: `1px solid ${isSelected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                              color: isSelected ? 'var(--color-green)' : 'var(--text-muted)'
+                            }}>
+                              <FileText size={13} />
+                            </div>
+                            {report}
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
 
                   {/* High-Fidelity Specs Inspector Sheet */}
-                  <div className="glass-panel glow-cyan" style={{
+                  <div className={`glass-panel ${activeDocType === 'datasheets' ? 'glow-cyan' : 'glow-green'}`} style={{
                     padding: '28px',
-                    borderColor: 'rgba(6, 182, 212, 0.25)',
+                    borderColor: activeDocType === 'datasheets' ? 'rgba(6, 182, 212, 0.25)' : 'rgba(16, 185, 129, 0.25)',
                     background: 'rgba(255,255,255,0.01)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 20
                   }}>
-                    {[
-                      {
-                        name: "Arduino Mega 2560 Rev3",
-                        type: "Core Microcontroller Development Board",
-                        model: "SKU: A000067 (Hitachi ATmega2560 Core)",
-                        specs: [
-                          { label: "Processor Core", value: "ATmega2560 (8-bit AVR RISC)" },
-                          { label: "Clock Frequency", value: "16 MHz" },
-                          { label: "Operating Voltage", value: "5.0V DC (Vcc)" },
-                          { label: "Input Voltage (Vin)", value: "7.0V - 12.0V DC (Recommended)" },
-                          { label: "Digital I/O Pins", value: "54 Pins (15 PWM output channels)" },
-                          { label: "Analog Input Pins", value: "16 Channels (10-bit resolution)" },
-                          { label: "Flash memory", value: "256 KB (of which 8 KB for bootloader)" },
-                          { label: "SRAM / EEPROM", value: "8 KB SRAM / 4 KB EEPROM" },
-                          { label: "DC Current per I/O", value: "20.0 mA (Max limit)" }
-                        ],
-                        desc: "The primary industrial central processing hub that coordinates all RVM telemetry actions. Integrates all sensors via dedicated TTL registers, schedules continuous gate actuation sweeps, triggers rewards dispensers, and communicates with ESP32 cloud co-processors via high-speed serial UART lines.",
-                        pinout: "D22-D53 Left/Right header rows, serial Rx0/Tx0 to Rx3/Tx3 channels, I2C SCL[21] / SDA[20] buses."
-                      },
-                      {
-                        name: "HC-SR04 Proximity Sonar",
-                        type: "Ultrasonic Distance Sensor",
-                        model: "Chassis Dome Proximity Range Detector",
-                        specs: [
-                          { label: "Operating Voltage", value: "5.0V DC" },
-                          { label: "Working Current", value: "15.0 mA" },
-                          { label: "Ultrasonic Frequency", value: "40.0 kHz" },
-                          { label: "Sensing Range", value: "2.0 cm - 400.0 cm" },
-                          { label: "Measurement Angle", value: "< 15 degrees" },
-                          { label: "Precision/Resolution", value: "3.0 mm (Standard calibration)" },
-                          { label: "Trigger Pulse Input", value: "10µs TTL high pulse" },
-                          { label: "Echo Pulse Output", value: "TTL high level, width = time-of-flight" },
-                          { label: "Distance Formula", value: "Distance = (Echo Time * Sound Speed) / 2" }
-                        ],
-                        desc: "Mounted at the upper dome of the RVM cabinet. Fires 40kHz ultrasound bursts downward and calculates return echo timings in microseconds to check the vertical waste capacity levels, triggering automated cabinet lock alarms when capacity reaches 100%.",
-                        pinout: "4-pin connector: Vcc (+5V), Trig (Digital trigger input), Echo (Digital echo feedback), GND."
-                      },
-                      {
-                        name: "SG90 Micro Servo Motor",
-                        type: "High-Torque Actuation Servo",
-                        model: "Rotary Intake Gate & Streak Reward Dispenser",
-                        specs: [
-                          { label: "Operating Voltage", value: "4.8V - 6.0V DC" },
-                          { label: "Stall Torque (4.8V)", value: "1.6 kg/cm" },
-                          { label: "Stall Torque (6.0V)", value: "1.8 kg/cm" },
-                          { label: "Sweeping Speed", value: "0.12s / 60 degrees (at 4.8V)" },
-                          { label: "Rotational range", value: "0 - 180 degrees" },
-                          { label: "Actuator Weight", value: "9.0 grams" },
-                          { label: "Pulse Period", value: "20.0 ms (50 Hz PWM frequency)" },
-                          { label: "Control Pulse Width", value: "500 µs (0°) - 2500 µs (180°)" },
-                          { label: "Gear Assembly", value: "Nylon/Plastic compound" }
-                        ],
-                        desc: "Two units are integrated: one drives the continuous intake gate actuation sweep (CLOSED = 0°, OPEN = 90°) to route recyclable bottles. The second acts as the mechanical pen reward dispenser, rotating 90° to dispense a reward into the retrieval slot.",
-                        pinout: "3-wire harness: Orange (PWM signal line), Red (Power +5V), Brown (Ground/GND)."
-                      },
-                      {
-                        name: "TCRT5000 Reflective IR",
-                        type: "Photoelectric Optical Obstacle Sensor",
-                        model: "Chassis Intake Entrance Beam-Break Detector",
-                        specs: [
-                          { label: "Sensing Range", value: "0.2 mm - 15.0 mm" },
-                          { label: "Peak Emitter Wave", value: "950 nm (GaAs Infrared Emitting LED)" },
-                          { label: "Collector Type", value: "Silicon NPN Phototransistor" },
-                          { label: "Output Format", value: "Digital TTL (High/Low) and Analog voltage" },
-                          { label: "Reflection Filter", value: "Daylight blocking filter integrated" },
-                          { label: "Forward Current", value: "60.0 mA (Emitter diode)" },
-                          { label: "Power Dissipation", value: "100.0 mW (Phototransistor)" },
-                          { label: "Mounting Style", value: "PCB leaded snap-in pins" },
-                          { label: "Response Time", value: "10.0 µs (Rise/Fall switch rate)" }
-                        ],
-                        desc: "Positioned directly inside the intake chute entry. Serves as a beam-break trigger, creating an active-low input when a bottle breaks the infrared reflective beam. This instantly wakes up the main controller and triggers the item classification phase.",
-                        pinout: "4-pin PCB header: Vcc (+3.3V/5V), GND, OUT_D (Digital TTL), OUT_A (Analog Vout)."
-                      },
-                      {
-                        name: "LJ12A3-4-Z/BX Proximity",
-                        type: "Inductive Metallic Proximity Sensor",
-                        model: "Chassis Entry Segregation Classifier",
-                        specs: [
-                          { label: "Sensing Distance", value: "4.0 mm" },
-                          { label: "Output Configuration", value: "NPN Normally Open (NO) 3-wire" },
-                          { label: "Sensing Target", value: "Magnetic metals (Iron, Steel, Aluminum)" },
-                          { label: "Supply Voltage", value: "6.0V - 36.0V DC (Calibrated to 12V)" },
-                          { label: "Max Load Current", value: "300.0 mA" },
-                          { label: "Response Frequency", value: "500.0 Hz" },
-                          { label: "Indicator light", value: "Rear red LED active loop indicator" },
-                          { label: "Hysteresis Limit", value: "< 10% of sensing range" },
-                          { label: "Chassis Shielding", value: "Nickel-plated brass casing (IP67)" }
-                        ],
-                        desc: "Integrated underneath the scanning chute. When an item enters the classification zone, this inductive sensor detects the magnetic flux changes of metallic elements, creating an active-low pulse to segregate aluminum cans from PET plastic bottles.",
-                        pinout: "3-core cable: Brown (+12V Vin rail), Blue (Ground/GND), Black (NPN open-collector output)."
-                      },
-                      {
-                        name: "Hitachi HD44780 LCD",
-                        type: "Liquid Crystal Dot-Matrix Screen Controller",
-                        model: "Front Panel Status & Greeting Character LCD",
-                        specs: [
-                          { label: "Display Capacity", value: "16 Characters × 2 Lines" },
-                          { label: "Control IC Model", value: "Hitachi HD44780U / PCF8574T I2C Expander" },
-                          { label: "Display Matrix", value: "5 × 8 Dot-matrix characters" },
-                          { label: "Operating Voltage", value: "5.0V DC" },
-                          { label: "Working Current", value: "2.0 mA (120 mA with backlight)" },
-                          { label: "I2C Bus Address", value: "0x27 or 0x3F (Selectable)" },
-                          { label: "Bus Speed", value: "100.0 kHz (Standard I2C mode)" },
-                          { label: "Backlight Glow", value: "Royal Blue LED background" },
-                          { label: "Character Sets", value: "208 built-in dot-matrix characters" }
-                        ],
-                        desc: "Mounted securely on the front user-facing cabinet panel. Driven via I2C to save digital I/O lines. Displays clear, chronological status instructions to users throughout the recycling sequence, showing real-time text logs and reward details.",
-                        pinout: "4-pin connector: GND, Vcc (+5V), SDA (Serial Data pin), SCL (Serial Clock pin)."
-                      },
-                      {
-                        name: "ESP32 DevKit V1",
-                        type: "Wi-Fi + Bluetooth IoT Microcontroller Module",
-                        model: "Espressif ESP-WROOM-32 (Dual-Core Xtensa® LX6)",
-                        specs: [
-                          { label: "CPU Cores", value: "Dual-core Xtensa® LX6 @ up to 240 MHz" },
-                          { label: "Wi-Fi Standard", value: "IEEE 802.11b/g/n 2.4 GHz (150 Mbps)" },
-                          { label: "Bluetooth", value: "Bluetooth 4.2 + BLE (Classic & Low Energy)" },
-                          { label: "Flash Memory", value: "4 MB (SPI Flash on-module)" },
-                          { label: "SRAM", value: "520 KB (Internal SRAM)" },
-                          { label: "Operating Voltage", value: "3.3V DC Logic / 5V USB input" },
-                          { label: "GPIO Pins", value: "30 Digital I/O (12 ADC channels, 2 DAC)" },
-                          { label: "Serial Interfaces", value: "UART × 3, SPI × 4, I2C × 2, I2S × 2" },
-                          { label: "Security Engine", value: "AES / SHA-2 / RSA / ECC hardware acceleration" }
-                        ],
-                        desc: "Acts as the cloud communication co-processor in the Smart RVM system. Receives classified item data from the Arduino Mega via UART serial, then transmits it in real-time to the Firebase Realtime Database via Wi-Fi. Also handles MQTT event publishing, OTA firmware updates, and manages the RVM reward ledger synchronization with the cloud backend.",
-                        pinout: "UART: TX0/RX0 to Arduino Mega. 3V3 pin powers 3.3V logic peripherals. GPIO2 = onboard LED indicator. EN pin = hardware reset. USB-Micro for programming."
-                      }
-                    ].map((comp, idx) => {
-                      if (activeComponentIdx !== idx) return null;
-                      return (
-                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                          
-                          {/* Title Block */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-primary)', paddingBottom: 12 }}>
-                            <div>
-                              <h4 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: 700, letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>{comp.name}</h4>
-                              <span style={{ fontSize: '0.8rem', color: 'var(--color-cyan)', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{comp.type}</span>
+                    {activeDocType === 'datasheets' ? (
+                      [
+                        {
+                          name: "Arduino Mega 2560 Rev3",
+                          type: "Core Microcontroller Development Board",
+                          model: "SKU: A000067 (Hitachi ATmega2560 Core)",
+                          specs: [
+                            { label: "Processor Core", value: "ATmega2560 (8-bit AVR RISC)" },
+                            { label: "Clock Frequency", value: "16 MHz" },
+                            { label: "Operating Voltage", value: "5.0V DC (Vcc)" },
+                            { label: "Input Voltage (Vin)", value: "7.0V - 12.0V DC (Recommended)" },
+                            { label: "Digital I/O Pins", value: "54 Pins (15 PWM output channels)" },
+                            { label: "Analog Input Pins", value: "16 Channels (10-bit resolution)" },
+                            { label: "Flash memory", value: "256 KB (of which 8 KB for bootloader)" },
+                            { label: "SRAM / EEPROM", value: "8 KB SRAM / 4 KB EEPROM" },
+                            { label: "DC Current per I/O", value: "20.0 mA (Max limit)" }
+                          ],
+                          desc: "The primary industrial central processing hub that coordinates all RVM telemetry actions. Integrates all sensors via dedicated TTL registers, schedules continuous gate actuation sweeps, triggers rewards dispensers, and communicates with ESP32 cloud co-processors via high-speed serial UART lines.",
+                          pinout: "D22-D53 Left/Right header rows, serial Rx0/Tx0 to Rx3/Tx3 channels, I2C SCL[21] / SDA[20] buses."
+                        },
+                        {
+                          name: "HC-SR04 Proximity Sonar",
+                          type: "Ultrasonic Distance Sensor",
+                          model: "Chassis Dome Proximity Range Detector",
+                          specs: [
+                            { label: "Operating Voltage", value: "5.0V DC" },
+                            { label: "Working Current", value: "15.0 mA" },
+                            { label: "Ultrasonic Frequency", value: "40.0 kHz" },
+                            { label: "Sensing Range", value: "2.0 cm - 400.0 cm" },
+                            { label: "Measurement Angle", value: "< 15 degrees" },
+                            { label: "Precision/Resolution", value: "3.0 mm (Standard calibration)" },
+                            { label: "Trigger Pulse Input", value: "10µs TTL high pulse" },
+                            { label: "Echo Pulse Output", value: "TTL high level, width = time-of-flight" },
+                            { label: "Distance Formula", value: "Distance = (Echo Time * Sound Speed) / 2" }
+                          ],
+                          desc: "Mounted at the upper dome of the RVM cabinet. Fires 40kHz ultrasound bursts downward and calculates return echo timings in microseconds to check the vertical waste capacity levels, triggering automated cabinet lock alarms when capacity reaches 100%.",
+                          pinout: "4-pin connector: Vcc (+5V), Trig (Digital trigger input), Echo (Digital echo feedback), GND."
+                        },
+                        {
+                          name: "SG90 Micro Servo Motor",
+                          type: "High-Torque Actuation Servo",
+                          model: "Rotary Intake Gate & Streak Reward Dispenser",
+                          specs: [
+                            { label: "Operating Voltage", value: "4.8V - 6.0V DC" },
+                            { label: "Stall Torque (4.8V)", value: "1.6 kg/cm" },
+                            { label: "Stall Torque (6.0V)", value: "1.8 kg/cm" },
+                            { label: "Sweeping Speed", value: "0.12s / 60 degrees (at 4.8V)" },
+                            { label: "Rotational range", value: "0 - 180 degrees" },
+                            { label: "Actuator Weight", value: "9.0 grams" },
+                            { label: "Pulse Period", value: "20.0 ms (50 Hz PWM frequency)" },
+                            { label: "Control Pulse Width", value: "500 µs (0°) - 2500 µs (180°)" },
+                            { label: "Gear Assembly", value: "Nylon/Plastic compound" }
+                          ],
+                          desc: "Two units are integrated: one drives the continuous intake gate actuation sweep (CLOSED = 0°, OPEN = 90°) to route recyclable bottles. The second acts as the mechanical pen reward dispenser, rotating 90° to dispense a reward into the retrieval slot.",
+                          pinout: "3-wire harness: Orange (PWM signal line), Red (Power +5V), Brown (Ground/GND)."
+                        },
+                        {
+                          name: "TCRT5000 Reflective IR",
+                          type: "Photoelectric Optical Obstacle Sensor",
+                          model: "Chassis Intake Entrance Beam-Break Detector",
+                          specs: [
+                            { label: "Sensing Range", value: "0.2 mm - 15.0 mm" },
+                            { label: "Peak Emitter Wave", value: "950 nm (GaAs Infrared Emitting LED)" },
+                            { label: "Collector Type", value: "Silicon NPN Phototransistor" },
+                            { label: "Output Format", value: "Digital TTL (High/Low) and Analog voltage" },
+                            { label: "Reflection Filter", value: "Daylight blocking filter integrated" },
+                            { label: "Forward Current", value: "60.0 mA (Emitter diode)" },
+                            { label: "Power Dissipation", value: "100.0 mW (Phototransistor)" },
+                            { label: "Mounting Style", value: "PCB leaded snap-in pins" },
+                            { label: "Response Time", value: "10.0 µs (Rise/Fall switch rate)" }
+                          ],
+                          desc: "Positioned directly inside the intake chute entry. Serves as a beam-break trigger, creating an active-low input when a bottle breaks the infrared reflective beam. This instantly wakes up the main controller and triggers the item classification phase.",
+                          pinout: "4-pin PCB header: Vcc (+3.3V/5V), GND, OUT_D (Digital TTL), OUT_A (Analog Vout)."
+                        },
+                        {
+                          name: "LJ12A3-4-Z/BX Proximity",
+                          type: "Inductive Metallic Proximity Sensor",
+                          model: "Chassis Entry Segregation Classifier",
+                          specs: [
+                            { label: "Sensing Distance", value: "4.0 mm" },
+                            { label: "Output Configuration", value: "NPN Normally Open (NO) 3-wire" },
+                            { label: "Sensing Target", value: "Magnetic metals (Iron, Steel, Aluminum)" },
+                            { label: "Supply Voltage", value: "6.0V - 36.0V DC (Calibrated to 12V)" },
+                            { label: "Max Load Current", value: "300.0 mA" },
+                            { label: "Response Frequency", value: "500.0 Hz" },
+                            { label: "Indicator light", value: "Rear red LED active loop indicator" },
+                            { label: "Hysteresis Limit", value: "< 10% of sensing range" },
+                            { label: "Chassis Shielding", value: "Nickel-plated brass casing (IP67)" }
+                          ],
+                          desc: "Integrated underneath the scanning chute. When an item enters the classification zone, this inductive sensor detects the magnetic flux changes of metallic elements, creating an active-low pulse to segregate aluminum cans from PET plastic bottles.",
+                          pinout: "3-core cable: Brown (+12V Vin rail), Blue (Ground/GND), Black (NPN open-collector output)."
+                        },
+                        {
+                          name: "Hitachi HD44780 LCD",
+                          type: "Liquid Crystal Dot-Matrix Screen Controller",
+                          model: "Front Panel Status & Greeting Character LCD",
+                          specs: [
+                            { label: "Display Capacity", value: "16 Characters × 2 Lines" },
+                            { label: "Control IC Model", value: "Hitachi HD44780U / PCF8574T I2C Expander" },
+                            { label: "Display Matrix", value: "5 × 8 Dot-matrix characters" },
+                            { label: "Operating Voltage", value: "5.0V DC" },
+                            { label: "Working Current", value: "2.0 mA (120 mA with backlight)" },
+                            { label: "I2C Bus Address", value: "0x27 or 0x3F (Selectable)" },
+                            { label: "Bus Speed", value: "100.0 kHz (Standard I2C mode)" },
+                            { label: "Backlight Glow", value: "Royal Blue LED background" },
+                            { label: "Character Sets", value: "208 built-in dot-matrix characters" }
+                          ],
+                          desc: "Mounted securely on the front user-facing cabinet panel. Driven via I2C to save digital I/O lines. Displays clear, chronological status instructions to users throughout the recycling sequence, showing real-time text logs and reward details.",
+                          pinout: "4-pin connector: GND, Vcc (+5V), SDA (Serial Data pin), SCL (Serial Clock pin)."
+                        },
+                        {
+                          name: "ESP32 DevKit V1",
+                          type: "Wi-Fi + Bluetooth IoT Microcontroller Module",
+                          model: "Espressif ESP-WROOM-32 (Dual-Core Xtensa® LX6)",
+                          specs: [
+                            { label: "CPU Cores", value: "Dual-core Xtensa® LX6 @ up to 240 MHz" },
+                            { label: "Wi-Fi Standard", value: "IEEE 802.11b/g/n 2.4 GHz (150 Mbps)" },
+                            { label: "Bluetooth", value: "Bluetooth 4.2 + BLE (Classic & Low Energy)" },
+                            { label: "Flash Memory", value: "4 MB (SPI Flash on-module)" },
+                            { label: "SRAM", value: "520 KB (Internal SRAM)" },
+                            { label: "Operating Voltage", value: "3.3V DC Logic / 5V USB input" },
+                            { label: "GPIO Pins", value: "30 Digital I/O (12 ADC channels, 2 DAC)" },
+                            { label: "Serial Interfaces", value: "UART × 3, SPI × 4, I2C × 2, I2S × 2" },
+                            { label: "Security Engine", value: "AES / SHA-2 / RSA / ECC hardware acceleration" }
+                          ],
+                          desc: "Acts as the cloud communication co-processor in the Smart RVM system. Receives classified item data from the Arduino Mega via UART serial, then transmits it in real-time to the Firebase Realtime Database via Wi-Fi. Also handles MQTT event publishing, OTA firmware updates, and manages the RVM reward ledger synchronization with the cloud backend.",
+                          pinout: "UART: TX0/RX0 to Arduino Mega. 3V3 pin powers 3.3V logic peripherals. GPIO2 = onboard LED indicator. EN pin = hardware reset. USB-Micro for programming."
+                        }
+                      ].map((comp, idx) => {
+                        if (activeComponentIdx !== idx) return null;
+                        return (
+                          <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                            
+                            {/* Title Block */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-primary)', paddingBottom: 12 }}>
+                              <div>
+                                <h4 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: 700, letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>{comp.name}</h4>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--color-cyan)', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{comp.type}</span>
+                              </div>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                background: 'rgba(6, 182, 212, 0.1)',
+                                color: 'var(--color-cyan)',
+                                padding: '4px 10px',
+                                borderRadius: '4px',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                fontFamily: 'Marcellus, Georgia, serif'
+                              }}>
+                                Official Specs
+                              </span>
                             </div>
-                            <span style={{
-                              fontSize: '0.7rem',
-                              background: 'rgba(6, 182, 212, 0.1)',
-                              color: 'var(--color-cyan)',
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              fontWeight: 700,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.08em',
-                              fontFamily: 'Marcellus, Georgia, serif'
+
+                            {/* Detail Table */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>
+                                Electrical & Physical Ratings
+                              </span>
+                              <div className="table-container">
+                                <table className="custom-table" style={{ fontSize: '0.78rem', fontFamily: 'Marcellus, Georgia, serif' }}>
+                                  <tbody>
+                                    {comp.specs.map((spec, sIdx) => (
+                                      <tr key={sIdx}>
+                                        <td style={{ color: 'var(--text-secondary)', padding: '8px 12px', fontWeight: 600, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.label}</td>
+                                        <td style={{ color: 'var(--text-primary)', padding: '8px 12px', textAlign: 'right', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.value}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+
+                            {/* Pinout Details */}
+                            <div style={{
+                              background: 'rgba(255,255,255,0.01)',
+                              padding: 16,
+                              borderRadius: 'var(--radius-sm)',
+                              border: '1px solid var(--border-subtle)'
                             }}>
-                              Official Specs
-                            </span>
-                          </div>
+                              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
+                                Pin Mappings & Signal Logic
+                              </span>
+                              <strong style={{ fontSize: '0.82rem', color: 'var(--color-cyan)', fontFamily: 'Marcellus, Georgia, serif' }}>{comp.pinout}</strong>
+                            </div>
 
-                          {/* Detail Table */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>
-                              Electrical & Physical Ratings
-                            </span>
-                            <div className="table-container">
-                              <table className="custom-table" style={{ fontSize: '0.78rem', fontFamily: 'Marcellus, Georgia, serif' }}>
-                                <tbody>
-                                  {comp.specs.map((spec, sIdx) => (
-                                    <tr key={sIdx}>
-                                      <td style={{ color: 'var(--text-secondary)', padding: '8px 12px', fontWeight: 600, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.label}</td>
-                                      <td style={{ color: 'var(--text-primary)', padding: '8px 12px', textAlign: 'right', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.value}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                            {/* Functional description */}
+                            <div>
+                              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
+                                Hardware Role & Cloud Logic
+                              </span>
+                              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, fontFamily: 'Marcellus, Georgia, serif' }}>
+                                {comp.desc}
+                              </p>
                             </div>
                           </div>
+                        );
+                      })
+                    ) : (
+                      [
+                        {
+                          name: "Progress Report 1",
+                          type: "Project Scope & Literature Review",
+                          model: "Milestone: Setup & Literature",
+                          specs: [
+                            { label: "Focus Topic", value: "Literature Review, Objectives & System Boundaries" },
+                            { label: "Submission Format", value: "Signed Academic PDF Document" },
+                            { label: "Date Submitted", value: "FYP2 Phase 1" },
+                            { label: "Hardware Sourced", value: "ATmega2560 board, LJ12A3 sensors, chassis framework" },
+                            { label: "Total Pages", value: "28 Pages" }
+                          ],
+                          desc: "This initial report details the academic formulation of the Smart Recycling RVM project, defining the core problem statement, project scope, engineering requirements, system boundary, and a thorough literature review comparing sensor-based sorting mechanisms to high-cost computer vision systems.",
+                          pinout: "Deliverables: System block diagrams, structural objectives, and comprehensive project proposal."
+                        },
+                        {
+                          name: "Progress Report 2",
+                          type: "Calibrations & Wiring Schematics",
+                          model: "Milestone: Detailed Engineering Specs",
+                          specs: [
+                            { label: "Focus Topic", value: "Sensor Calibrations, Datasheets & Signed Approval" },
+                            { label: "Submission Format", value: "Technical PDF with Official Signed Datasheets" },
+                            { label: "Date Submitted", value: "FYP2 Phase 2" },
+                            { label: "Wiring Schemes", value: "12V-to-5V stepdown, NPN open-collector level shifting" },
+                            { label: "Signed Status", value: "Verified & Approved by Academic Supervisor" }
+                          ],
+                          desc: "Focuses on high-fidelity electrical calculations, component parameters, and physical sensor calibrations. Includes detailed voltage divider math to connect 12.0V NPN inductive sensor outputs safely to 5.0V microcontroller pins, absolute distance calibrations, and official signed manufacturer datasheets.",
+                          pinout: "Deliverables: Detailed circuit schematics, calibration log charts, and verified datasheets."
+                        },
+                        {
+                          name: "Progress Report 3",
+                          type: "Chassis Assembly & Structural Layout",
+                          model: "Milestone: Mechanical Construction",
+                          specs: [
+                            { label: "Focus Topic", value: "Mechanical Chute Design, Cabinet Assembly & Servos" },
+                            { label: "Submission Format", value: "Engineering Design PDF Portfolio" },
+                            { label: "Date Submitted", value: "FYP2 Phase 3" },
+                            { label: "Cabinet Dimensions", value: "60cm (W) x 50cm (D) x 120cm (H) Chassis" },
+                            { label: "Servo Torques", value: "1.6 kg/cm entry gate, reward dispenser sweep hooks" }
+                          ],
+                          desc: "Details the mechanical engineering and structural development of the physical RVM cabinet. Documents cabinet cutting measurements, plastic item slide chute drop angles to ensure gravity flow, SG90 continuous gate servo brackets mounting, and reward dispenser drawer engineering.",
+                          pinout: "Deliverables: CAD layout schematics, physical chassis construction log, and servo torque analysis."
+                        },
+                        {
+                          name: "Progress Report 4",
+                          type: "Software Firmware & Cloud Synchronization",
+                          model: "Milestone: Logic & Database",
+                          specs: [
+                            { label: "Focus Topic", value: "Arduino State Machine, ESP32 Wi-Fi & Firebase Sync" },
+                            { label: "Submission Format", value: "Firmware Architecture PDF Portfolio" },
+                            { label: "Date Submitted", value: "FYP2 Phase 4" },
+                            { label: "Serial Baudrate", value: "115200 Baud (Atmega to ESP32 UART cross-link)" },
+                            { label: "Cloud Engine", value: "Google Firebase Firestore Real-Time Streams" }
+                          ],
+                          desc: "Documents the structural software firmware design. Covers the cooperative multi-tasking C++ state machine running on the ATmega2560 (handling sensor triggers, calibration offsets, servo timers), and the ESP32 Wi-Fi UART gateway software that parses CSV packets and uploads telemetry live to the cloud.",
+                          pinout: "Deliverables: C++ Firmware code blocks, ESP32 serial protocols, and Firestore JSON schema mappings."
+                        },
+                        {
+                          name: "Progress Report 5",
+                          type: "Final Calibration, Evaluation & Analytics",
+                          model: "Milestone: Complete Verification",
+                          specs: [
+                            { label: "Focus Topic", value: "Testing Matrix, Calibration Verification & Analytics" },
+                            { label: "Submission Format", value: "Comprehensive Academic Thesis Report" },
+                            { label: "Date Submitted", value: "Final Semester Review" },
+                            { label: "Sensor Success", value: "98.8% Accuracy on PET Bottles vs Metallic Cans" },
+                            { label: "Volume Forecast", value: "Built-in telemetry dashboard predictive capacity logs" }
+                          ],
+                          desc: "The final, comprehensive academic submission. Synthesizes all hardware engineering, software firmware, and database layers into a complete system analysis. Contains extensive testing validation matrix results, sensor classification reliability figures under ambient lighting, and telemetry dashboard accuracy reviews.",
+                          pinout: "Deliverables: Complete operational performance statistics, evaluation checklist, and thesis bibliography."
+                        }
+                      ].map((report, idx) => {
+                        if (activeReportIdx !== idx) return null;
+                        return (
+                          <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                            
+                            {/* Title Block */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-primary)', paddingBottom: 12 }}>
+                              <div>
+                                <h4 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: 700, letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>{report.name}</h4>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--color-green)', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{report.type}</span>
+                              </div>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                color: 'var(--color-green)',
+                                padding: '4px 10px',
+                                borderRadius: '4px',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                fontFamily: 'Marcellus, Georgia, serif'
+                              }}>
+                                {report.model}
+                              </span>
+                            </div>
 
-                          {/* Pinout Details */}
-                          <div style={{
-                            background: 'rgba(255,255,255,0.01)',
-                            padding: 16,
-                            borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--border-subtle)'
-                          }}>
-                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
-                              Pin Mappings & Signal Logic
-                            </span>
-                            <strong style={{ fontSize: '0.82rem', color: 'var(--color-cyan)', fontFamily: 'Marcellus, Georgia, serif' }}>{comp.pinout}</strong>
-                          </div>
+                            {/* Detail Table */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontFamily: 'Marcellus, Georgia, serif' }}>
+                                Progress & Submission Details
+                              </span>
+                              <div className="table-container">
+                                <table className="custom-table" style={{ fontSize: '0.78rem', fontFamily: 'Marcellus, Georgia, serif' }}>
+                                  <tbody>
+                                    {report.specs.map((spec, sIdx) => (
+                                      <tr key={sIdx}>
+                                        <td style={{ color: 'var(--text-secondary)', padding: '8px 12px', fontWeight: 600, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.label}</td>
+                                        <td style={{ color: 'var(--text-primary)', padding: '8px 12px', textAlign: 'right', fontWeight: 700, fontFamily: 'Marcellus, Georgia, serif' }}>{spec.value}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
 
-                          {/* Functional description */}
-                          <div>
-                            <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
-                              Hardware Role & Cloud Logic
-                            </span>
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, fontFamily: 'Marcellus, Georgia, serif' }}>
-                              {comp.desc}
-                            </p>
+                            {/* Deliverables Details */}
+                            <div style={{
+                              background: 'rgba(255,255,255,0.01)',
+                              padding: 16,
+                              borderRadius: 'var(--radius-sm)',
+                              border: '1px solid var(--border-subtle)'
+                            }}>
+                              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
+                                Major Report Deliverables
+                              </span>
+                              <strong style={{ fontSize: '0.82rem', color: 'var(--color-green)', fontFamily: 'Marcellus, Georgia, serif' }}>{report.pinout}</strong>
+                            </div>
+
+                            {/* Functional description */}
+                            <div>
+                              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
+                                Academic Focus & Synopsis
+                              </span>
+                              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, fontFamily: 'Marcellus, Georgia, serif' }}>
+                                {report.desc}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 
@@ -6374,12 +6605,15 @@ export default function App() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Marcellus, Georgia, serif' }}>
                       <FileText size={18} style={{ color: 'var(--color-green)' }} />
-                      Official Manufacturer Datasheet
+                      {activeDocType === 'datasheets' ? "Official Manufacturer Datasheet" : "FYP2 Project Submission Report"}
                     </h3>
                     <a
-                      href={`/${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.html', 'hd44780_datasheet.pdf', 'esp32_datasheet.pdf'][activeComponentIdx]}`}
+                      href={activeDocType === 'datasheets' ? 
+                        `./${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.html', 'hd44780_datasheet.pdf', 'esp32_datasheet.pdf'][activeComponentIdx]}` :
+                        `./reports/ProgressReport_${activeReportIdx + 1}.pdf`
+                      }
                       download
-                      className="btn-secondary"
+                      className="btn-primary"
                       style={{
                         padding: '6px 12px',
                         fontSize: '0.75rem',
@@ -6407,12 +6641,15 @@ export default function App() {
                     position: 'relative'
                   }}>
                     <iframe 
-                      key={activeComponentIdx}
-                      src={`/${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.html', 'hd44780_datasheet.pdf', 'esp32_datasheet.pdf'][activeComponentIdx]}`} 
+                      key={activeDocType === 'datasheets' ? `comp_${activeComponentIdx}` : `rep_${activeReportIdx}`}
+                      src={activeDocType === 'datasheets' ? 
+                        `./${['arduino_mega_datasheet.pdf', 'hc_sr04_datasheet.pdf', 'sg90_datasheet.pdf', 'tcrt5000_datasheet.pdf', 'lj12a3_datasheet.html', 'hd44780_datasheet.pdf', 'esp32_datasheet.pdf'][activeComponentIdx]}` :
+                        `./reports/ProgressReport_${activeReportIdx + 1}.pdf`
+                      } 
                       width="100%" 
                       height="100%" 
                       style={{ border: 'none' }}
-                      title="Official Manufacturer Datasheet Viewport"
+                      title="Official Document Viewport"
                     />
                   </div>
 
@@ -6422,7 +6659,10 @@ export default function App() {
                     textAlign: 'center',
                     lineHeight: 1.4
                   }}>
-                    💡 Pro Tip: This is the real, official manufacturer datasheet! You can search, zoom, or print the document directly using the interactive PDF viewer controls.
+                    {activeDocType === 'datasheets' ? 
+                      "💡 Pro Tip: This is the real, official manufacturer datasheet! You can search, zoom, or print the document directly using the interactive PDF viewer controls." :
+                      "💡 Pro Tip: This is the verified FYP2 submission document. You can scroll, search, and download the report directly for your records."
+                    }
                   </div>
                 </div>
 
