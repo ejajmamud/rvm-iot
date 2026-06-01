@@ -401,6 +401,11 @@ export default function App() {
   const showToast = (msg, type = 'success') => {
     setToastMessage({ msg, type });
     setTimeout(() => setToastMessage(null), 3500);
+
+    // Auto-log all notifications to audit logs in both Live and Simulation Mode
+    const actorName = currentUser?.name || (isLiveMode ? "System Monitor" : "Simulator");
+    const action = type === 'error' ? "NOTIFICATION_ERROR" : type === 'warning' ? "NOTIFICATION_WARNING" : "NOTIFICATION_INFO";
+    logAudit(actorName, action, msg, !isLiveMode);
   };
 
   // Web Audio API Synth to play retro passive buzzer square wave tones!
