@@ -5360,6 +5360,9 @@ export default function App() {
                         {/* Admin Panel / Flutter */}
                         <circle cx="500" cy="340" r="4" fill="var(--color-cyan)" />
                         <rect x="360" y="320" width="140" height="40" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="1.5" />
+                        
+                        {/* Live Dashboard Label Mask */}
+                        <rect x="530" y="320" width="140" height="15" rx="3" fill="var(--diagram-card-bg)" stroke="var(--border-subtle)" strokeWidth="0.5" />
 
                         {/* ── TEXTS AND LABELS LAYER (Third / Last) ── */}
                         <text x="95" y="195" fill="var(--diagram-text)" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Physical RVM</text>
@@ -5383,7 +5386,7 @@ export default function App() {
                         <text x="722.5" y="210" fill="var(--color-green)" fontSize="9" textAnchor="middle" fontWeight="bold">events/</text>
                         <text x="685" y="245" fill="var(--color-amber)" fontSize="9" textAnchor="middle" fontWeight="bold">realtime snapshot updates</text>
                         
-                        <text x="600" y="330" fill="var(--color-cyan)" fontSize="9" textAnchor="middle" fontWeight="bold">Live Dashboard (Vite React)</text>
+                        <text x="600" y="331" fill="var(--color-cyan)" fontSize="9" textAnchor="middle" fontWeight="bold">Live Dashboard (Vite React)</text>
                         <text x="430" y="345" fill="var(--diagram-text)" fontSize="11" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Admin Panel / Flutter</text>
                       </svg>
                     )}
