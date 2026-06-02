@@ -205,29 +205,41 @@ export default function App() {
   // --- Dynamic SMTP Server Configurations State (Million-Dollar Panel Core) ---
   const [smtpConfig, setSmtpConfig] = useState(() => {
     const saved = localStorage.getItem('rvm_smtp_config');
+    // If the cached configuration is not set to the user's Gmail SMTP username,
+    // force reset/update it to use their newly provided verified Gmail credentials.
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Force upgrade/migration to bulletproof API mode by default on first load
-        // so users are not trapped on their browser's old cached credentials state
-        if (parsed.mode === undefined || parsed.mode === "credentials" || parsed.mode === "token") {
-          parsed.mode = "api";
-          localStorage.setItem('rvm_smtp_config', JSON.stringify(parsed));
+        if (parsed.username !== "tawaqqaltualallah1@gmail.com") {
+          const newConfig = {
+            mode: "credentials",
+            host: "smtp.gmail.com",
+            username: "tawaqqaltualallah1@gmail.com",
+            password: "dlptrthlrdqikyhr",
+            from: "tawaqqaltualallah1@gmail.com",
+            to: "ejajjoy3@gmail.com",
+            token: ""
+          };
+          localStorage.setItem('rvm_smtp_config', JSON.stringify(newConfig));
+          return newConfig;
         }
         return parsed;
       } catch (e) {
         console.error("Error parsing saved SMTP config", e);
       }
     }
-    return {
-      mode: "api", // "credentials" | "token" | "api" (Default to dynamic API for instant reliability)
-      host: "mail.privateemail.com",
-      username: "ping@ejaj.website",
-      password: "commonMAIL@5005",
-      from: "ping@ejaj.website",
+    // Default config with dynamic Gmail SMTP presets pre-populated
+    const initialConfig = {
+      mode: "credentials",
+      host: "smtp.gmail.com",
+      username: "tawaqqaltualallah1@gmail.com",
+      password: "dlptrthlrdqikyhr",
+      from: "tawaqqaltualallah1@gmail.com",
       to: "ejajjoy3@gmail.com",
       token: ""
     };
+    localStorage.setItem('rvm_smtp_config', JSON.stringify(initialConfig));
+    return initialConfig;
   });
 
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
