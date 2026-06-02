@@ -202,32 +202,71 @@ export default function App() {
     localStorage.setItem('rvm_live_mode', isLiveMode ? 'true' : 'false');
   }, [isLiveMode]);
 
-  // --- Secure SMTP Email Notifications Bridge via Namecheap Private Email ---
+  // --- Dynamic SMTP Server Configurations State (Million-Dollar Panel Core) ---
+  const [smtpConfig, setSmtpConfig] = useState(() => {
+    const saved = localStorage.getItem('rvm_smtp_config');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error parsing saved SMTP config", e);
+      }
+    }
+    return {
+      host: "mail.privateemail.com",
+      username: "ping@ejaj.website",
+      password: "commonMAIL@5005",
+      from: "ping@ejaj.website",
+      to: "ejajjoy3@gmail.com",
+      useToken: false,
+      token: ""
+    };
+  });
+
+  const [showSmtpPassword, setShowSmtpPassword] = useState(false);
+
+  // --- Secure SMTP Email Notifications Bridge via SmtpJS ---
   const sendSMTPNotification = async (subject, htmlBody) => {
     if (!window.Email) {
       console.warn("SMTP: SmtpJS library not loaded in viewport yet.");
+      showToast("❌ SMTP Library still loading in browser viewport. Please wait...", "error");
       return;
     }
     
     try {
-      const result = await window.Email.send({
-        Host : "mail.privateemail.com",
-        Username : "ping@ejaj.website",
-        Password : "commonMAIL@5005",
-        To : "ejajjoy3@gmail.com",
-        From : "ping@ejaj.website",
+      const payload = smtpConfig.useToken ? {
+        SecureToken : smtpConfig.token,
+        To : smtpConfig.to,
+        From : smtpConfig.from,
         Subject : `[RVM Telemetry Alert] ${subject}`,
         Body : htmlBody
-      });
-      console.log("SMTP Relayed successfully:", result);
-      showToast("✉️ SMTP Alert Notification emailed to ejajjoy3@gmail.com", "success");
+      } : {
+        Host : smtpConfig.host,
+        Username : smtpConfig.username,
+        Password : smtpConfig.password,
+        To : smtpConfig.to,
+        From : smtpConfig.from,
+        Subject : `[RVM Telemetry Alert] ${subject}`,
+        Body : htmlBody
+      };
+
+      const result = await window.Email.send(payload);
+      
+      if (result === "OK") {
+        console.log("SMTP Relayed successfully:", result);
+        showToast(`✉️ SMTP Alert Notification emailed to ${smtpConfig.to}`, "success");
+      } else {
+        console.error("SMTP Relay Server returned failure:", result);
+        showToast(`❌ SMTP Relay Failed: ${result}`, "error");
+      }
     } catch (err) {
-      console.error("SMTP Notification error:", err);
+      console.error("SMTP Client error:", err);
+      showToast(`❌ SMTP Client Error: ${err.message || err}`, "error");
     }
   };
 
   const handleSendTestSMTP = async () => {
-    showToast("Dispatched SMTP test mail to ejajjoy3@gmail.com...", "info");
+    showToast(`Dispatched SMTP test mail to ${smtpConfig.to}...`, "info");
     
     const subject = "TEST CONNECTION SUCCESSFUL";
     const htmlBody = `
@@ -239,10 +278,10 @@ export default function App() {
         
         <div style="margin-bottom: 25px;">
           <p style="font-size: 1rem; line-height: 1.5; color: #fafafa; margin: 0 0 16px 0; text-align: center;">
-            <strong>✓ Congratulations!</strong> Your client-side SMTP bridge is successfully configured and active.
+            <strong>✓ Congratulations!</strong> Your dynamic SMTP client-side bridge is active.
           </p>
           <p style="font-size: 0.95rem; line-height: 1.5; color: #94a3b8; margin: 0; text-align: center;">
-            This email verifies that your Namecheap Private Email (<code>ping@ejaj.website</code>) is successfully relaying operational telemetry logs and system failure alerts to <code>ejajjoy3@gmail.com</code> via SmtpJS.
+            This email verifies that your SMTP relay host (<code>${smtpConfig.useToken ? "Relayed via Secure SmtpJS Token" : smtpConfig.host}</code>) is successfully relaying operational telemetry logs and system failure alerts to <code>${smtpConfig.to}</code>.
           </p>
         </div>
         
@@ -4986,6 +5025,217 @@ export default function App() {
                   )}
                 </div>
 
+              </div>
+
+              {/* SMTP SERVER CONFIGURATION PANEL (Million-Dollar Webapp settings) */}
+              <div className="glass-panel" style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-primary)' }}>
+                <div style={{ borderBottom: '1px solid var(--border-primary)', paddingBottom: 16, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', margin: 0, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      ✉️ SMTP Server Configuration
+                    </h3>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                      Configure client-side SMTP notifications to securely relay operational telemetry logs and system failure alerts to the administrator's email.
+                    </p>
+                  </div>
+                  
+                  {/* Mode Switcher Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--btn-sec-bg)', padding: '4px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-primary)' }}>
+                    <button 
+                      type="button"
+                      onClick={() => setSmtpConfig(prev => {
+                        const updated = { ...prev, useToken: false };
+                        localStorage.setItem('rvm_smtp_config', JSON.stringify(updated));
+                        return updated;
+                      })}
+                      style={{
+                        background: !smtpConfig.useToken ? 'var(--color-cyan)' : 'transparent',
+                        color: !smtpConfig.useToken ? '#000' : 'var(--text-primary)',
+                        border: 'none',
+                        padding: '4px 10px',
+                        borderRadius: 'var(--radius-xs)',
+                        fontSize: '0.72rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'var(--transition-smooth)'
+                      }}
+                    >
+                      SMTP Credentials
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setSmtpConfig(prev => {
+                        const updated = { ...prev, useToken: true };
+                        localStorage.setItem('rvm_smtp_config', JSON.stringify(updated));
+                        return updated;
+                      })}
+                      style={{
+                        background: smtpConfig.useToken ? 'var(--color-cyan)' : 'transparent',
+                        color: smtpConfig.useToken ? '#000' : 'var(--text-primary)',
+                        border: 'none',
+                        padding: '4px 10px',
+                        borderRadius: 'var(--radius-xs)',
+                        fontSize: '0.72rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'var(--transition-smooth)'
+                      }}
+                    >
+                      Secure Token
+                    </button>
+                  </div>
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target);
+                  const updated = smtpConfig.useToken ? {
+                    ...smtpConfig,
+                    from: formData.get('from'),
+                    to: formData.get('to'),
+                    token: formData.get('token')
+                  } : {
+                    ...smtpConfig,
+                    host: formData.get('host'),
+                    username: formData.get('username'),
+                    password: formData.get('password'),
+                    from: formData.get('from'),
+                    to: formData.get('to')
+                  };
+                  setSmtpConfig(updated);
+                  localStorage.setItem('rvm_smtp_config', JSON.stringify(updated));
+                  showToast("💾 SMTP Configurations saved successfully!", "success");
+                }} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  
+                  {smtpConfig.useToken ? (
+                    /* SECURE TOKEN FIELDS */
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>SmtpJS Secure Token</label>
+                        <input 
+                          type="text" 
+                          name="token"
+                          className="form-input" 
+                          placeholder="e.g. 5aa038fa-d6f2-4e4b-914b-7033a5cf0f63"
+                          defaultValue={smtpConfig.token || ""}
+                          required
+                          style={{ fontFamily: 'monospace' }}
+                        />
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          Encrypted credentials token generated from <a href="https://smtpjs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-cyan)', textDecoration: 'none' }}>smtpjs.com</a>. Bypasses browser credential exposures and strict mail relay port blocks.
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    /* DIRECT CREDENTIALS FIELDS */
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>SMTP Relay Host</label>
+                        <input 
+                          type="text" 
+                          name="host"
+                          className="form-input" 
+                          defaultValue={smtpConfig.host || "mail.privateemail.com"}
+                          required
+                        />
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          Namecheap host is <code>mail.privateemail.com</code>
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>SMTP Auth Username</label>
+                        <input 
+                          type="email" 
+                          name="username"
+                          className="form-input" 
+                          defaultValue={smtpConfig.username || "ping@ejaj.website"}
+                          required
+                        />
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>SMTP Auth Password</label>
+                        <div style={{ position: 'relative' }}>
+                          <input 
+                            type={showSmtpPassword ? "text" : "password"} 
+                            name="password"
+                            className="form-input" 
+                            defaultValue={smtpConfig.password || "commonMAIL@5005"}
+                            required
+                            style={{ paddingRight: '40px' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowSmtpPassword(!showSmtpPassword)}
+                            style={{
+                              position: 'absolute',
+                              right: '10px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-muted)',
+                              cursor: 'pointer',
+                              padding: 0,
+                              fontSize: '1rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            {showSmtpPassword ? "👁️" : "🙈"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SENDER AND RECIPIENT FIELDS */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20, borderTop: '1px dashed var(--border-primary)', paddingTop: 20 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Sender Address (From)</label>
+                      <input 
+                        type="email" 
+                        name="from"
+                        className="form-input" 
+                        defaultValue={smtpConfig.from || "ping@ejaj.website"}
+                        required
+                      />
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        Must match authorized sender mailbox (e.g. <code>ping@ejaj.website</code>) to prevent SPF failures.
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Recipient Address (To)</label>
+                      <input 
+                        type="email" 
+                        name="to"
+                        className="form-input" 
+                        defaultValue={smtpConfig.to || "ejajjoy3@gmail.com"}
+                        required
+                      />
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        Recipient admin address receiving RVM telemetry events.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border-primary)', paddingTop: 16, flexWrap: 'wrap' }}>
+                    <button type="submit" className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.82rem', fontWeight: 'bold' }}>
+                      💾 Save SMTP Configurations
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={handleSendTestSMTP} 
+                      className="btn-secondary" 
+                      style={{ padding: '8px 16px', fontSize: '0.82rem', borderColor: 'var(--color-cyan)', color: 'var(--color-cyan)', fontWeight: 'bold' }}
+                    >
+                      ✉️ Test SMTP Relay Connection
+                    </button>
+                  </div>
+                </form>
               </div>
 
               {/* EXPANDABLE ACCORDIONS FOR COMBINED PAGES */}
