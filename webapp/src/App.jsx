@@ -206,6 +206,9 @@ export default function App() {
   const seenAlertIdsRef = useRef(new Set());
   const isFirstAlertsLoadRef = useRef(true);
 
+  const seenEventIdsRef = useRef(new Set());
+  const isFirstEventsLoadRef = useRef(true);
+
   useEffect(() => {
     if (!alerts || alerts.length === 0) {
       isFirstAlertsLoadRef.current = false;
@@ -546,6 +549,32 @@ export default function App() {
           if (isLiveMode) {
             setEvents(evList);
             
+            // Real-time toast alerts for live events
+            evList.forEach(ev => {
+              if (!seenEventIdsRef.current.has(ev.id)) {
+                seenEventIdsRef.current.add(ev.id);
+                if (!isFirstEventsLoadRef.current) {
+                  let toastMsg = "";
+                  let toastType = "info";
+                  if (ev.type === "PET_ACCEPTED") {
+                    toastMsg = `♻️ Live Event: PET Bottle Accepted! Total: ${ev.acceptedCount}`;
+                    toastType = "success";
+                  } else if (ev.type === "METAL_REJECTED" || ev.type === "METAL_REJECT") {
+                    toastMsg = `⚠️ Live Event: Metal Can Rejected! Total: ${ev.rejectedCount}`;
+                    toastType = "error";
+                  } else if (ev.type === "HEARTBEAT") {
+                    toastMsg = `📡 Live Event: Machine Heartbeat received. Online.`;
+                    toastType = "info";
+                  } else {
+                    toastMsg = `📡 Live Event: ${ev.type} registered.`;
+                    toastType = "info";
+                  }
+                  showToast(toastMsg, toastType);
+                }
+              }
+            });
+            isFirstEventsLoadRef.current = false;
+
             // Map latest event to LCD feedback simulation
             const latest = evList[0];
             if (latest.type === "PET_ACCEPTED") {
@@ -569,6 +598,10 @@ export default function App() {
                 setLcdLine2("PET or CAN      ");
               }, 3000);
             }
+          } else {
+            // Fill seen set in simulated mode so we don't double alert if live is toggled back
+            evList.forEach(ev => seenEventIdsRef.current.add(ev.id));
+            isFirstEventsLoadRef.current = false;
           }
         }
       });
@@ -1165,7 +1198,14 @@ export default function App() {
       
       setSimulatedMachine(prev => {
         const next = updateMachineFn(prev);
-        if (!isLiveMode) setMachine(next);
+        if (!isLiveMode) {
+          setMachine(next);
+          if (isAccepted) {
+            showToast(`♻️ Simulated Event: PET Bottle Accepted! Total: ${next.acceptedCount}`, "success");
+          } else {
+            showToast(`⚠️ Simulated Event: Metal Can Rejected! Total: ${next.rejectedCount}`, "error");
+          }
+        }
         return next;
       });
 
@@ -2018,15 +2058,25 @@ export default function App() {
       {/* Inline Toast Notification */}
       {toastMessage && (
         <div className="toast-notification" style={{
-          background: toastMessage.type === 'error' ? 'rgba(239, 68, 68, 0.15)' : 
-                     toastMessage.type === 'info' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-          backgroundColor: '#07101e',
+          background: toastMessage.type === 'error' 
+            ? (theme === 'light' ? 'rgba(220, 38, 38, 0.05)' : 'rgba(239, 68, 68, 0.15)') 
+            : toastMessage.type === 'info' 
+              ? (theme === 'light' ? 'rgba(37, 99, 235, 0.05)' : 'rgba(59, 130, 246, 0.15)') 
+              : (theme === 'light' ? 'rgba(5, 150, 105, 0.05)' : 'rgba(16, 185, 129, 0.15)'),
+          backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.96)' : 'rgba(7, 16, 30, 0.85)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          border: `1px solid ${toastMessage.type === 'error' ? 'rgba(239, 68, 68, 0.4)' : 
-                                toastMessage.type === 'info' ? 'rgba(59, 130, 246, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
+          border: `1px solid ${
+            toastMessage.type === 'error' 
+              ? 'rgba(239, 68, 68, 0.4)' 
+              : toastMessage.type === 'info' 
+                ? 'rgba(59, 130, 246, 0.4)' 
+                : 'rgba(16, 185, 129, 0.4)'
+          }`,
           color: toastMessage.type === 'error' ? 'var(--color-red)' : 
                  toastMessage.type === 'info' ? 'var(--color-blue)' : 'var(--color-green)',
+          boxShadow: theme === 'light' ? 'var(--shadow-md)' : '0 12px 32px rgba(0, 0, 0, 0.5)',
+          zIndex: 99999
         }}>
           {toastMessage.type === 'error' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
           {toastMessage.msg}
