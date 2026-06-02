@@ -208,9 +208,11 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Map old useToken boolean to new mode string format if needed
-        if (parsed.mode === undefined) {
-          parsed.mode = parsed.useToken ? "token" : "credentials";
+        // Force upgrade/migration to bulletproof API mode by default on first load
+        // so users are not trapped on their browser's old cached credentials state
+        if (parsed.mode === undefined || parsed.mode === "credentials" || parsed.mode === "token") {
+          parsed.mode = "api";
+          localStorage.setItem('rvm_smtp_config', JSON.stringify(parsed));
         }
         return parsed;
       } catch (e) {
@@ -274,7 +276,7 @@ export default function App() {
       // --- SmtpJS Modes ---
       if (!window.Email) {
         console.warn("SMTP: SmtpJS library not loaded in viewport yet.");
-        showToast("❌ SMTP Library still loading in browser viewport. Please wait...", "error");
+        showToast("❌ SMTP script blocked! Your browser or network is blocking 'smtpjs.com' (common adblocker action). Please switch your switcher to 'Web API Relay' inside Settings.", "error");
         return;
       }
 
