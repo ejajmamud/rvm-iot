@@ -202,6 +202,59 @@ export default function App() {
     localStorage.setItem('rvm_live_mode', isLiveMode ? 'true' : 'false');
   }, [isLiveMode]);
 
+  // --- Secure SMTP Email Notifications Bridge via Namecheap Private Email ---
+  const sendSMTPNotification = async (subject, htmlBody) => {
+    if (!window.Email) {
+      console.warn("SMTP: SmtpJS library not loaded in viewport yet.");
+      return;
+    }
+    
+    try {
+      const result = await window.Email.send({
+        Host : "mail.privateemail.com",
+        Username : "ping@ejaj.website",
+        Password : "commonMAIL@5005",
+        To : "ejajjoy3@gmail.com",
+        From : "ping@ejaj.website",
+        Subject : `[RVM Telemetry Alert] ${subject}`,
+        Body : htmlBody
+      });
+      console.log("SMTP Relayed successfully:", result);
+      showToast("✉️ SMTP Alert Notification emailed to ejajjoy3@gmail.com", "success");
+    } catch (err) {
+      console.error("SMTP Notification error:", err);
+    }
+  };
+
+  const handleSendTestSMTP = async () => {
+    showToast("Dispatched SMTP test mail to ejajjoy3@gmail.com...", "info");
+    
+    const subject = "TEST CONNECTION SUCCESSFUL";
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; background-color: #03070f; color: #fafafa; padding: 30px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.12); max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; border-bottom: 1px solid rgba(59, 130, 246, 0.12); padding-bottom: 20px; margin-bottom: 20px;">
+          <h2 style="color: #06b6d4; margin: 0; font-size: 1.5rem; letter-spacing: 0.05em;">✉️ SMTP CONNECTION DIAGNOSTIC PING</h2>
+          <p style="color: #94a3b8; font-size: 0.85rem; margin: 5px 0 0 0;">UniKL MIIT · Smart Recycling RVM001 Telemetry Hub</p>
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+          <p style="font-size: 1rem; line-height: 1.5; color: #fafafa; margin: 0 0 16px 0; text-align: center;">
+            <strong>✓ Congratulations!</strong> Your client-side SMTP bridge is successfully configured and active.
+          </p>
+          <p style="font-size: 0.95rem; line-height: 1.5; color: #94a3b8; margin: 0; text-align: center;">
+            This email verifies that your Namecheap Private Email (<code>ping@ejaj.website</code>) is successfully relaying operational telemetry logs and system failure alerts to <code>ejajjoy3@gmail.com</code> via SmtpJS.
+          </p>
+        </div>
+        
+        <div style="text-align: center; border-top: 1px solid rgba(59, 130, 246, 0.12); padding-top: 15px; font-size: 0.72rem; color: #475569;">
+          Planned and Built by Ejaj Mahmud · Final Year Project 2 · UniKL MIIT
+        </div>
+      </div>
+    `;
+    
+    await sendSMTPNotification(subject, htmlBody);
+  };
+
   // --- Alerts & Toast Notification Sync (Notification Center) ---
   const seenAlertIdsRef = useRef(new Set());
   const isFirstAlertsLoadRef = useRef(true);
@@ -244,6 +297,58 @@ export default function App() {
           msg = `🚨 ALERT: ${a.type} - System issue detected!`;
         }
         showToast(msg, a.severity === 'critical' ? 'error' : 'info');
+
+        // Trigger SMTP email alert notification to admin via Namecheap
+        const emailSubject = a.severity === 'critical' ? `CRITICAL SYSTEM ERROR: ${a.type}` : `SYSTEM WARNING: ${a.type}`;
+        const emailHtmlBody = `
+          <div style="font-family: Arial, sans-serif; background-color: #03070f; color: #fafafa; padding: 30px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.12); max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; border-bottom: 1px solid rgba(59, 130, 246, 0.12); padding-bottom: 20px; margin-bottom: 20px;">
+              <h2 style="color: ${a.severity === 'critical' ? '#ef4444' : '#f59e0b'}; margin: 0; font-size: 1.5rem; letter-spacing: 0.05em;">🚨 RVM SYSTEM MALFUNCTION REPORT</h2>
+              <p style="color: #94a3b8; font-size: 0.85rem; margin: 5px 0 0 0;">UniKL MIIT · Smart Recycling RVM001 Telemetry Hub</p>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+              <p style="font-size: 1rem; line-height: 1.5; color: #fafafa; margin: 0 0 16px 0;">
+                A new system issue has been logged by the Reverse Vending Machine controller and synced to Cloud Firestore. Details are outlined below:
+              </p>
+              
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem;">
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 600; width: 140px;">Machine ID</td>
+                  <td style="padding: 10px 0; color: #fafafa; font-weight: 700;">RVM001 (Main Prototype)</td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Alarm Type</td>
+                  <td style="padding: 10px 0; color: ${a.severity === 'critical' ? '#ef4444' : '#f59e0b'}; font-weight: 700;">${a.type}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Severity Level</td>
+                  <td style="padding: 10px 0; color: ${a.severity === 'critical' ? '#ef4444' : '#f59e0b'}; font-weight: 700; text-transform: uppercase;">${a.severity}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Message Summary</td>
+                  <td style="padding: 10px 0; color: #fafafa; line-height: 1.4;">${msg}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Timestamp</td>
+                  <td style="padding: 10px 0; color: #fafafa;">${a.createdAt ? a.createdAt.toLocaleString() : new Date().toLocaleString()}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="background-color: rgba(59, 130, 246, 0.04); border: 1px dashed rgba(59, 130, 246, 0.15); padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+              <strong style="color: #3b82f6; display: block; font-size: 0.85rem; margin-bottom: 4px; text-transform: uppercase;">🛡️ Operator Actions Required:</strong>
+              <span style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; display: block;">
+                Please access the <a href="https://rvm.ejaj.website" style="color: #10b981; text-decoration: none; font-weight: 600;">Live Web Admin Portal</a> to review active alarms, run diagnostic sweeps, and file tech logs once the physical component is resolved.
+              </span>
+            </div>
+            
+            <div style="text-align: center; border-top: 1px solid rgba(59, 130, 246, 0.12); padding-top: 15px; font-size: 0.72rem; color: #475569;">
+              Planned and Built by Ejaj Mahmud · Final Year Project 2 · UniKL MIIT
+            </div>
+          </div>
+        `;
+        sendSMTPNotification(emailSubject, emailHtmlBody);
       }
     });
   }, [alerts]);
@@ -1795,6 +1900,59 @@ export default function App() {
     ];
     return (
       <div className="login-container">
+        {/* Floating Theme Controller */}
+        <div style={{
+          position: 'absolute',
+          top: '24px',
+          right: '24px',
+          zIndex: 1000,
+          background: theme === 'light' ? 'rgba(255,255,255,0.8)' : 'rgba(15,23,42,0.6)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid var(--border-primary)',
+          padding: '4px',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-sm)',
+          display: 'flex',
+          gap: '4px'
+        }}>
+          <button 
+            onClick={() => setTheme('dark')} 
+            style={{
+              border: 'none',
+              background: theme === 'dark' ? (theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)') : 'transparent',
+              color: theme === 'dark' ? 'var(--color-green)' : 'var(--text-muted)',
+              padding: '8px 12px',
+              borderRadius: 'var(--radius-sm)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.7rem',
+              fontWeight: 600
+            }}
+          >
+            <Moon size={14} /> Dark
+          </button>
+          <button 
+            onClick={() => setTheme('light')} 
+            style={{
+              border: 'none',
+              background: theme === 'light' ? (theme === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(15,23,42,0.08)') : 'transparent',
+              color: theme === 'light' ? 'var(--color-green)' : 'var(--text-muted)',
+              padding: '8px 12px',
+              borderRadius: 'var(--radius-sm)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.7rem',
+              fontWeight: 600
+            }}
+          >
+            <Sun size={14} /> Light
+          </button>
+        </div>
+
         {/* Animated background grid */}
         <div style={{
           position: 'absolute', inset: 0,
@@ -2196,7 +2354,7 @@ export default function App() {
 
         {/* Footer info & theme controller */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: 20 }}>
             <div style={{ display: 'flex', gap: 4 }}>
               <button 
                 onClick={() => setTheme('dark')} 
@@ -2450,7 +2608,7 @@ export default function App() {
           
           {/* 1. DASHBOARD OVERVIEW PAGE */}
           {activeTab === 'dashboard' && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               {/* KPI Cards Grid */}
               <div className="dashboard-grid">
                 {[
@@ -2470,10 +2628,10 @@ export default function App() {
               </div>
 
               {/* Middle Section: Machine Telemetry & Simple Graph */}
-              <div className="resp-grid-mid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '20px', marginBottom: '24px' }}>
+              <div className="resp-grid-mid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '24px' }}>
                 
                 {/* RVM Status Card */}
-                <div className="glass-panel" style={{ padding: '28px' }}>
+                <div className="glass-panel" style={{ padding: '24px' }}>
                   <h3 style={{ fontSize: '1.2rem', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Cpu size={18} style={{ color: 'var(--color-cyan)' }} />
                     RVM Hardware Diagnostic Telemetry
@@ -2586,7 +2744,7 @@ export default function App() {
                 </div>
 
                 {/* Simulated Chart (Custom Premium SVG Chart) */}
-                <div className="glass-panel" style={{ padding: '28px' }}>
+                <div className="glass-panel" style={{ padding: '24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <h3 style={{ fontSize: '1.2rem' }}>Weekly Recycling Efficiency (PET vs Metal)</h3>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Last 7 Days Rollup</span>
@@ -2642,7 +2800,7 @@ export default function App() {
                 </div>
               </div>
                   {/* Bottom Section: Chronological Event Timeline & Export Controls */}
-              <div className="glass-panel" style={{ padding: '28px' }}>
+              <div className="glass-panel" style={{ padding: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
                   <div>
                     <h3 style={{ fontSize: '1.2rem', marginBottom: 4 }}>Telemetry Timeline & Event Stream</h3>
@@ -2744,7 +2902,7 @@ export default function App() {
 
           {/* 2. MACHINE SIMULATOR PAGE */}
           {activeTab === 'simulator' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
               {/* Segment Controller Bar */}
               <div className="glass-panel" style={{ padding: '8px', display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.02)' }}>
@@ -2765,10 +2923,10 @@ export default function App() {
               </div>
 
               {/* Layout splitter */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
                 
                 {/* COLUMN 1: INTERACTIVE HARDWARE SIMULATION */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
                   
                   {/* CONDITIONAL RENDER VIEW */}
                   {!showInternalChassis ? (
@@ -4402,7 +4560,8 @@ export default function App() {
 
           {/* 3. LIVE EVENTS FEED */}
           {activeTab === 'events' && (
-            <div className="glass-panel" style={{ padding: '28px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div className="glass-panel" style={{ padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h3 style={{ fontSize: '1.2rem' }}>Chronological UART Event Ingestion</h3>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -4455,15 +4614,16 @@ export default function App() {
                   </tbody>
                 </table>
               </div>
+              </div>
             </div>
           )}
 
           {/* 4. ALERTS / NOTIFICATIONS */}
           {activeTab === 'alerts' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
               {/* Critical Alerts List */}
-              <div className="glass-panel" style={{ padding: '28px' }}>
+              <div className="glass-panel" style={{ padding: '24px' }}>
                 <h3 style={{ fontSize: '1.2rem', marginBottom: 20 }}>Open Malfunctions & Alerts</h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -4519,7 +4679,7 @@ export default function App() {
               </div>
 
               {/* Resolved Alerts List */}
-              <div className="glass-panel" style={{ padding: '28px' }}>
+              <div className="glass-panel" style={{ padding: '24px' }}>
                 <h3 style={{ fontSize: '1.2rem', marginBottom: 20 }}>Resolved Historical Alarms</h3>
 
                 <div className="table-container">
@@ -4562,13 +4722,13 @@ export default function App() {
 
           {/* 5. DATA ANALYTICS */}
           {activeTab === 'analytics' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
               {/* Analytics Top widgets */}
-              <div className="resp-grid-analytics" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+              <div className="resp-grid-analytics" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
                 
                 {/* Large Line graph */}
-                <div className="glass-panel" style={{ padding: '28px' }}>
+                <div className="glass-panel" style={{ padding: '24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                     <h3 style={{ fontSize: '1.2rem' }}>PET Bottles Recycled Trend (Monthly)</h3>
                     <div style={{ display: 'flex', gap: 10 }}>
@@ -4610,7 +4770,7 @@ export default function App() {
                 </div>
 
                 {/* Efficiency metrics circular charts */}
-                <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <h3 style={{ fontSize: '1.1rem', marginBottom: 12 }}>Recycling Efficiency</h3>
 
                   <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
@@ -4655,7 +4815,7 @@ export default function App() {
               </div>
 
               {/* Summary table */}
-              <div className="glass-panel" style={{ padding: '28px' }}>
+              <div className="glass-panel" style={{ padding: '24px' }}>
                 <h3 style={{ fontSize: '1.2rem', marginBottom: 20 }}>Recycling Database Log Rollups</h3>
                 
                 <div className="table-container">
@@ -4696,10 +4856,10 @@ export default function App() {
 
           {/* 7. MACHINE SETTINGS & ADMINISTRATIVE HUD (UNIFIED) */}
           {activeTab === 'settings' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
               {/* MAINTENANCE MODE TOGGLE ROCKER CARD */}
-              <div className="glass-panel" style={{ padding: '24px 28px', background: isMaintenanceMode ? 'rgba(245,158,11,0.08)' : (theme === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.01)'), border: isMaintenanceMode ? '1px solid var(--color-amber)' : '1px solid var(--border-primary)', transition: 'var(--transition-smooth)' }}>
+              <div className="glass-panel" style={{ padding: '24px', background: isMaintenanceMode ? 'rgba(245,158,11,0.08)' : (theme === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.01)'), border: isMaintenanceMode ? '1px solid var(--color-amber)' : '1px solid var(--border-primary)', transition: 'var(--transition-smooth)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
                   <div>
                     <h4 style={{ fontSize: '1.15rem', color: isMaintenanceMode ? 'var(--color-amber)' : 'var(--text-primary)', marginBottom: 4, fontFamily: 'var(--font-serif)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -4733,10 +4893,10 @@ export default function App() {
               </div>
 
               {/* TWO COLUMN CALIBRATIONS AND INJECTOR */}
-              <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '30px' }}>
+              <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '24px' }}>
                 
                 {/* CALIBRATIONS */}
-                <div className="glass-panel" style={{ padding: '28px', height: 'fit-content' }}>
+                <div className="glass-panel" style={{ padding: '24px', height: 'fit-content' }}>
                   <h3 style={{ fontSize: '1.2rem', marginBottom: 20, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>Calibrations & Heartbeats</h3>
                   
                   <form onSubmit={(e) => {
@@ -4775,16 +4935,24 @@ export default function App() {
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border-primary)', paddingTop: 16 }}>
+                    <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border-primary)', paddingTop: 16, flexWrap: 'wrap' }}>
                       <button type="submit" className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
                         Sync Configurations
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={handleSendTestSMTP} 
+                        className="btn-secondary" 
+                        style={{ padding: '8px 16px', fontSize: '0.8rem', borderColor: 'var(--color-cyan)', color: 'var(--color-cyan)' }}
+                      >
+                        ✉️ Test SMTP Mail Dispatch
                       </button>
                     </div>
                   </form>
                 </div>
 
                 {/* FIREBASE CREDENTIALS INJECTOR */}
-                <div className="glass-panel" style={{ padding: '28px', height: 'fit-content', borderStyle: 'dashed', borderColor: 'var(--color-blue)' }}>
+                <div className="glass-panel" style={{ padding: '24px', height: 'fit-content', borderStyle: 'dashed', borderColor: 'var(--color-blue)' }}>
                   <h4 style={{ fontSize: '1.1rem', color: 'var(--color-blue)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-serif)' }}>
                     <Database size={16} /> Live Firebase Credentials Injector
                   </h4>
@@ -4821,10 +4989,10 @@ export default function App() {
               </div>
 
               {/* EXPANDABLE ACCORDIONS FOR COMBINED PAGES */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 
                 {/* 1. User Directory Accordion */}
-                <div className="glass-panel" style={{ padding: '20px 24px', border: expandedSection === 'users' ? '1px solid var(--color-blue)' : '1px solid var(--border-primary)' }}>
+                <div className="glass-panel" style={{ padding: '24px', border: expandedSection === 'users' ? '1px solid var(--color-blue)' : '1px solid var(--border-primary)' }}>
                   <button 
                     onClick={() => setExpandedSection(expandedSection === 'users' ? null : 'users')}
                     style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0 }}
@@ -4937,7 +5105,7 @@ export default function App() {
                 </div>
 
                 {/* 2. Field Maintenance Logs Accordion */}
-                <div className="glass-panel" style={{ padding: '20px 24px', border: expandedSection === 'maint' ? '1px solid var(--color-green)' : '1px solid var(--border-primary)' }}>
+                <div className="glass-panel" style={{ padding: '24px', border: expandedSection === 'maint' ? '1px solid var(--color-green)' : '1px solid var(--border-primary)' }}>
                   <button 
                     onClick={() => setExpandedSection(expandedSection === 'maint' ? null : 'maint')}
                     style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0 }}
@@ -5058,7 +5226,7 @@ export default function App() {
                 </div>
 
                 {/* 3. Security Audit Trails Accordion */}
-                <div className="glass-panel" style={{ padding: '20px 24px', border: expandedSection === 'audit' ? '1px solid var(--color-purple)' : '1px solid var(--border-primary)' }}>
+                <div className="glass-panel" style={{ padding: '24px', border: expandedSection === 'audit' ? '1px solid var(--color-purple)' : '1px solid var(--border-primary)' }}>
                   <button 
                     onClick={() => setExpandedSection(expandedSection === 'audit' ? null : 'audit')}
                     style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0 }}
@@ -5116,7 +5284,8 @@ export default function App() {
           {/* ========================================================================= */}
           {/* 12. HARDWARE WIRING & PINOUT */}
           {activeTab === 'pinout' && (
-            <div className="glass-panel" style={{ padding: '28px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div className="glass-panel" style={{ padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
                 <div>
                   <h3 style={{ fontSize: '1.4rem', marginBottom: 4, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>Smart RVM Hardware Wiring Pinout</h3>
@@ -5178,16 +5347,17 @@ export default function App() {
                   </tbody>
                 </table>
               </div>
+              </div>
             </div>
           )}
 
           {/* ========================================================================= */}
           {/* 13. DIAGRAMS & ENGINEERING DOCUMENTATION */}
           {activeTab === 'diagrams' && (
-            <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '30px' }}>
+            <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '24px' }}>
               
               {/* Left Selector Sidebar */}
-              <div className="glass-panel" style={{ padding: '20px', height: 'fit-content' }}>
+              <div className="glass-panel" style={{ padding: '24px', height: 'fit-content' }}>
                 <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Diagram Selection</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
@@ -5234,10 +5404,10 @@ export default function App() {
               </div>
 
               {/* Right View Panel */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 
                 {/* Visual Panel Card */}
-                <div className="glass-panel" style={{ padding: '28px', background: 'var(--bg-surface)', border: '1px solid var(--border-primary)' }}>
+                <div className="glass-panel" style={{ padding: '24px', background: 'var(--bg-surface)', border: '1px solid var(--border-primary)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>
                       {[
@@ -5943,11 +6113,11 @@ export default function App() {
           {/* ========================================================================= */}
           {/* 14. SUPERVISOR REVIEW TAB */}
           {activeTab === 'supervisor' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
               {/* Supervisor Welcome Header */}
               <div className="glass-panel" style={{
-                padding: '28px',
+                padding: '24px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -5970,10 +6140,10 @@ export default function App() {
               </div>
 
               {/* Grid 1: Project Specs Checklist and Objectives */}
-              <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '30px' }}>
+              <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '24px' }}>
                 
                 {/* Specs Checklist */}
-                <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                <div className="glass-panel" style={{ padding: '24px' }}>
                   <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>RVM Prototype Technical Spec</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {[
@@ -6000,7 +6170,7 @@ export default function App() {
                 </div>
 
                 {/* Objectives checklist */}
-                <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                <div className="glass-panel" style={{ padding: '24px' }}>
                   <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>FYP Project Academic Objectives</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {[
@@ -6025,7 +6195,7 @@ export default function App() {
               </div>
 
               {/* Section 2: Scenario Demos Guide */}
-              <div className="glass-panel" style={{ padding: '24px 28px' }}>
+              <div className="glass-panel" style={{ padding: '24px' }}>
                 <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Examiner Demonstration Evaluation Guide</h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.4 }}>
                   Academic examiners can click on the <strong>Live Simulator</strong> tab to run highly-detailed physical simulations. Each scenario triggers actual visual loops on the character LCD, illuminates LEDs, sweeps mechanical servos, sends UART strings, pushes Firestore packets, and updates charts:
@@ -6058,10 +6228,10 @@ export default function App() {
               </div>
 
               {/* Section 3: Limitations & Future Recommendations (No camera AI/ML, ML under recommendations) */}
-              <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '30px' }}>
+              <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '24px' }}>
                 
                 {/* Prototype Limitations */}
-                <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                <div className="glass-panel" style={{ padding: '24px' }}>
                   <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Prototype Physical Limitations</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {[
@@ -6078,7 +6248,7 @@ export default function App() {
                 </div>
 
                 {/* Future AI/ML Upgrade Recommendations */}
-                <div className="glass-panel" style={{ padding: '24px 28px' }}>
+                <div className="glass-panel" style={{ padding: '24px' }}>
                   <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Future System Upgrades & AI/ML Recommendations</h4>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.4 }}>
                     To maintain low power and minimal computing cost on the prototype, high-overhead vision processing was avoided. However, the system is designed to support the following advanced upgrade paths:
@@ -6103,13 +6273,13 @@ export default function App() {
           )}
 
           {activeTab === 'prototype' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
               {/* Photo Showcase & Assembly Timeline Split View */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)',
-                gap: 28
+                gap: '24px'
               }}>
                 
                 {/* Interactive High-Fidelity Main Viewer */}
@@ -6365,11 +6535,11 @@ export default function App() {
 
           {/* 11. STANDALONE COMPONENT DATASHEET EXPLORER & OFFICIAL SIGNED PDF CONSOLE */}
           {activeTab === 'datasheets' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
               {/* Document Type Selector Bar */}
               <div className="glass-panel" style={{
-                padding: '20px 28px',
+                padding: '24px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -6438,11 +6608,11 @@ export default function App() {
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)',
-                gap: 28
+                gap: '24px'
               }}>
                 
                 {/* Left Column: Selector tabs & Super Detailed sensory specs */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   
                   {/* Selector tab grid */}
                   <div className="glass-panel" style={{
@@ -6565,7 +6735,7 @@ export default function App() {
 
                   {/* High-Fidelity Specs Inspector Sheet */}
                   <div className={`glass-panel ${activeDocType === 'datasheets' ? 'glow-cyan' : 'glow-green'}`} style={{
-                    padding: '28px',
+                    padding: '24px',
                     borderColor: activeDocType === 'datasheets' ? 'rgba(6, 182, 212, 0.25)' : 'rgba(16, 185, 129, 0.25)',
                     background: 'rgba(255,255,255,0.01)',
                     display: 'flex',
