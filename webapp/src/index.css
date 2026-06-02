@@ -60,6 +60,10 @@
   --diagram-text-muted: var(--text-muted);
   --diagram-line-muted: rgba(255, 255, 255, 0.1);
   --diagram-grid: rgba(255, 255, 255, 0.02);
+  --diagram-db-card: #0c1020;
+  --diagram-ignore-card: #1e1e24;
+  --diagram-accept-card: #062016;
+  --diagram-reject-card: #2d0a11;
 
   /* ── Transitions ── */
   --transition-fast: all 0.1s cubic-bezier(0.16, 1, 0.3, 1);
@@ -115,6 +119,10 @@ body.light-theme {
   --diagram-text-muted: #475569;
   --diagram-line-muted: rgba(0, 0, 0, 0.1);
   --diagram-grid: rgba(0, 0, 0, 0.04);
+  --diagram-db-card: #f1f5f9;
+  --diagram-ignore-card: #e2e8f0;
+  --diagram-accept-card: #d1fae5;
+  --diagram-reject-card: #fee2e2;
 }
 
 /* ── Light Theme Simulator Overrides ── */

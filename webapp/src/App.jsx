@@ -1470,7 +1470,29 @@ export default function App() {
       clonedSvg.setAttribute('height', height);
       
       // 2. Resolve all theme CSS variables into absolute HEX colors for isolated rendering
-      const cssVarMap = {
+      const cssVarMap = theme === 'light' ? {
+        '--color-blue': '#2563eb',
+        '--color-green': '#059669',
+        '--color-cyan': '#06b6d4',
+        '--color-amber': '#d97706',
+        '--color-red': '#dc2626',
+        '--text-primary': '#0f172a',
+        '--text-muted': '#475569',
+        '--text-dim': '#64748b',
+        '--border-primary': '#cbd5e1',
+        '--border-subtle': '#e2e8f0',
+        '--diagram-bg': '#ffffff',
+        '--diagram-card-bg': '#f8fafc',
+        '--diagram-card-border': '#cbd5e1',
+        '--diagram-text': '#0f172a',
+        '--diagram-text-muted': '#475569',
+        '--diagram-line-muted': 'rgba(0, 0, 0, 0.1)',
+        '--diagram-grid': 'rgba(0, 0, 0, 0.04)',
+        '--diagram-db-card': '#f1f5f9',
+        '--diagram-ignore-card': '#e2e8f0',
+        '--diagram-accept-card': '#d1fae5',
+        '--diagram-reject-card': '#fee2e2'
+      } : {
         '--color-blue': '#3b82f6',
         '--color-green': '#10b981',
         '--color-cyan': '#06b6d4',
@@ -1480,7 +1502,18 @@ export default function App() {
         '--text-muted': '#94a3b8',
         '--text-dim': '#64748b',
         '--border-primary': '#334155',
-        '--border-subtle': '#1e293b'
+        '--border-subtle': '#1e293b',
+        '--diagram-bg': '#04091a',
+        '--diagram-card-bg': '#0f172a',
+        '--diagram-card-border': 'rgba(59, 130, 246, 0.12)',
+        '--diagram-text': '#ffffff',
+        '--diagram-text-muted': '#64748b',
+        '--diagram-line-muted': 'rgba(255, 255, 255, 0.1)',
+        '--diagram-grid': 'rgba(255, 255, 255, 0.02)',
+        '--diagram-db-card': '#0c1020',
+        '--diagram-ignore-card': '#1e1e24',
+        '--diagram-accept-card': '#062016',
+        '--diagram-reject-card': '#2d0a11'
       };
 
       const replaceCssVars = (node) => {
@@ -1534,7 +1567,7 @@ export default function App() {
         
         const context = canvas.getContext('2d');
         // Fill canvas with our gorgeous deep dark slate cosmic background #04091a
-        context.fillStyle = '#04091a';
+        context.fillStyle = theme === 'light' ? '#ffffff' : '#04091a';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
         // Apply high-quality image smoothing
@@ -2309,13 +2342,13 @@ export default function App() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         
                         {/* 1. Machine Health Score Gauge */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-subtle)', padding: '14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                           <div style={{ position: 'relative', width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width="50" height="50" viewBox="0 0 36 36">
-                              <path fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                              <path fill="none" stroke="var(--border-subtle)" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                               <path fill="none" stroke={healthScore > 80 ? 'var(--color-green)' : healthScore > 40 ? 'var(--color-amber)' : 'var(--color-red)'} strokeWidth="3" strokeDasharray={`${healthScore}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" strokeLinecap="round" style={{ transition: 'stroke-dasharray 0.5s ease' }} />
                             </svg>
-                            <span style={{ position: 'absolute', fontSize: '0.78rem', fontWeight: 800, color: '#fff', fontFamily: 'var(--font-sans)' }}>{healthScore}%</span>
+                            <span style={{ position: 'absolute', fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-sans)' }}>{healthScore}%</span>
                           </div>
                           <div>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Machine Health Score</div>
@@ -3412,7 +3445,7 @@ export default function App() {
                           gap: 4
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff' }}>{diag.label}</span>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>{diag.label}</span>
                             <span style={{ fontSize: '0.65rem', fontWeight: 800, color: diag.color }}>{diag.status}</span>
                           </div>
                           <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>{diag.details}</span>
@@ -3429,7 +3462,7 @@ export default function App() {
                     
                     {/* SVG wiring panel canvas */}
                     <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 3 }}>
-                      <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span>HARDWARE WIRING SCHEMATIC</span>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>hover components for pins & calibrations</span>
                       </h4>
@@ -4071,7 +4104,7 @@ export default function App() {
                       </select>
 
                       <div style={{
-                        background: '#040b15',
+                        background: 'var(--bg-elevated)',
                         border: '1px solid var(--border-primary)',
                         padding: '12px 16px',
                         borderRadius: 'var(--radius-sm)',
@@ -4082,7 +4115,7 @@ export default function App() {
                         {selectedPinout === 'IR' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>FC-51 IR Sensor:</span><br />
-                            • Arduino Pin: <span style={{ color: '#fff' }}>D11 (Digital INPUT)</span><br />
+                            • Arduino Pin: <span style={{ color: 'var(--text-primary)' }}>D11 (Digital INPUT)</span><br />
                             • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
                             • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>ACTIVE LOW (GND Trigger)</span><br />
                             • Telemetry: <span style={{ color: sensorIRActive ? 'var(--color-green)' : 'var(--text-muted)' }}>
@@ -4093,7 +4126,7 @@ export default function App() {
                         {selectedPinout === 'Capacitive' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>LJC18A3 Capacitive Sensor:</span><br />
-                            • Arduino Pin: <span style={{ color: '#fff' }}>D5 (Digital INPUT)</span><br />
+                            • Arduino Pin: <span style={{ color: 'var(--text-primary)' }}>D5 (Digital INPUT)</span><br />
                             • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
                             • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>ACTIVE HIGH</span><br />
                             • Telemetry: <span style={{ color: sensorCapActive ? 'var(--color-green)' : 'var(--text-muted)' }}>
@@ -4104,7 +4137,7 @@ export default function App() {
                         {selectedPinout === 'Inductive' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>LJ12A3 Inductive Sensor:</span><br />
-                            • Arduino Pin: <span style={{ color: '#fff' }}>D4 (Digital INPUT)</span><br />
+                            • Arduino Pin: <span style={{ color: 'var(--text-primary)' }}>D4 (Digital INPUT)</span><br />
                             • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
                             • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>ACTIVE HIGH</span><br />
                             • Telemetry: <span style={{ color: sensorIndActive ? 'var(--color-green)' : 'var(--text-muted)' }}>
@@ -4115,30 +4148,30 @@ export default function App() {
                         {selectedPinout === 'GateServo' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>SG90 Gate Servo:</span><br />
-                            • Arduino Pin: <span style={{ color: '#fff' }}>D9 (PWM Output)</span><br />
+                            • Arduino Pin: <span style={{ color: 'var(--text-primary)' }}>D9 (PWM Output)</span><br />
                             • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
                             • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>PWM Sweep Control</span><br />
                             • Telemetry: <span style={{ color: gateAngle > 0 ? 'var(--color-green)' : 'var(--text-muted)' }}>
-                              Angle: <span style={{ color: '#fff' }}>{gateAngle}°</span> ({gateAngle > 0 ? "Open" : "Closed"})
+                              Angle: <span style={{ color: 'var(--text-primary)' }}>{gateAngle}°</span> ({gateAngle > 0 ? "Open" : "Closed"})
                             </span>
                           </div>
                         )}
                         {selectedPinout === 'RewardServo' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>SG90 Reward Servo:</span><br />
-                            • Arduino Pin: <span style={{ color: '#fff' }}>D10 (PWM Output)</span><br />
+                            • Arduino Pin: <span style={{ color: 'var(--text-primary)' }}>D10 (PWM Output)</span><br />
                             • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
                             • Signal Mode: <span style={{ color: 'var(--color-cyan)' }}>PWM Sweep Control</span><br />
                             • Telemetry: <span style={{ color: penAngle !== 90 ? 'var(--color-green)' : 'var(--text-muted)' }}>
-                              Angle: <span style={{ color: '#fff' }}>{penAngle}°</span> ({penAngle !== 90 ? "Dispensing" : "Standby"})
+                              Angle: <span style={{ color: 'var(--text-primary)' }}>{penAngle}°</span> ({penAngle !== 90 ? "Dispensing" : "Standby"})
                             </span>
                           </div>
                         )}
                         {selectedPinout === 'Ultrasonic' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>HC-SR04 Ultrasonic:</span><br />
-                            • Trig Pin: <span style={{ color: '#fff' }}>D22 (Output)</span><br />
-                            • Echo Pin: <span style={{ color: '#fff' }}>D23 (Input)</span><br />
+                            • Trig Pin: <span style={{ color: 'var(--text-primary)' }}>D22 (Output)</span><br />
+                            • Echo Pin: <span style={{ color: 'var(--text-primary)' }}>D23 (Input)</span><br />
                             • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
                             • Telemetry: <span style={{ color: machine.binFull ? 'var(--color-red)' : 'var(--color-green)' }}>
                               {machine.binFull ? "● BIN FULL" : "○ Standby / Monitoring"}
@@ -4148,7 +4181,7 @@ export default function App() {
                         {selectedPinout === 'GreenLED' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>Green Status LED:</span><br />
-                            • Arduino Pin: <span style={{ color: '#fff' }}>D6 (Digital Output)</span><br />
+                            • Arduino Pin: <span style={{ color: 'var(--text-primary)' }}>D6 (Digital Output)</span><br />
                             • Voltage: <span style={{ color: 'var(--color-green)' }}>2.2 V (resistor)</span><br />
                             • Telemetry: <span style={{ color: greenLedGlow ? 'var(--color-green)' : 'var(--text-muted)' }}>
                               {greenLedGlow ? "● HIGH (ON)" : "○ LOW (OFF)"}
@@ -4158,7 +4191,7 @@ export default function App() {
                         {selectedPinout === 'RedLED' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>Red Error LED:</span><br />
-                            • Arduino Pin: <span style={{ color: '#fff' }}>D7 (Digital Output)</span><br />
+                            • Arduino Pin: <span style={{ color: 'var(--text-primary)' }}>D7 (Digital Output)</span><br />
                             • Voltage: <span style={{ color: 'var(--color-green)' }}>2.0 V (resistor)</span><br />
                             • Telemetry: <span style={{ color: redLedGlow ? 'var(--color-red)' : 'var(--text-muted)' }}>
                               {redLedGlow ? "● HIGH (ON)" : "○ LOW (OFF)"}
@@ -4168,7 +4201,7 @@ export default function App() {
                         {selectedPinout === 'Buzzer' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>Piezo Buzzer Sounder:</span><br />
-                            • Arduino Pin: <span style={{ color: '#fff' }}>D8 (PWM Output)</span><br />
+                            • Arduino Pin: <span style={{ color: 'var(--text-primary)' }}>D8 (PWM Output)</span><br />
                             • Voltage: <span style={{ color: 'var(--color-green)' }}>5.0 V</span><br />
                             • Telemetry: <span style={{ color: 'var(--text-muted)' }}>Idle</span>
                           </div>
@@ -4176,8 +4209,8 @@ export default function App() {
                         {selectedPinout === 'LCD' && (
                           <div>
                             <span style={{ color: 'var(--color-blue)', fontWeight: 700 }}>Character LCD (I2C):</span><br />
-                            • Pins: <span style={{ color: '#fff' }}>D20(SDA), D21(SCL)</span><br />
-                            • Address: <span style={{ color: '#fff' }}>0x27</span><br />
+                            • Pins: <span style={{ color: 'var(--text-primary)' }}>D20(SDA), D21(SCL)</span><br />
+                            • Address: <span style={{ color: 'var(--text-primary)' }}>0x27</span><br />
                             • Screen:<br />
                             <span style={{ color: 'var(--color-green)', background: '#000', padding: '2px 6px', display: 'inline-block', border: '1px solid #10b981', marginTop: 4, fontFamily: 'var(--font-sans)' }}>
                               [{lcdLine1.padEnd(16, " ")}]<br />
@@ -4909,15 +4942,16 @@ export default function App() {
                         justifyContent: 'flex-start',
                         background: activeDiagramIdx === dIdx ? 'rgba(59,130,246,0.1)' : 'transparent',
                         borderColor: activeDiagramIdx === dIdx ? 'var(--color-blue)' : 'var(--border-subtle)',
-                        color: activeDiagramIdx === dIdx ? '#fff' : 'var(--text-secondary)',
+                        color: activeDiagramIdx === dIdx ? (theme === 'light' ? '#000000' : '#ffffff') : 'var(--text-secondary)',
                         fontFamily: 'var(--font-sans)',
                         width: '100%',
-                        borderRadius: 'var(--radius-sm)'
+                        borderRadius: 'var(--radius-sm)',
+                        fontWeight: activeDiagramIdx === dIdx ? '900' : 'normal'
                       }}
                     >
                       <span style={{
                         width: 18, height: 18, borderRadius: '50%',
-                        background: activeDiagramIdx === dIdx ? 'var(--color-blue)' : 'rgba(255,255,255,0.05)',
+                        background: activeDiagramIdx === dIdx ? 'var(--color-blue)' : (theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'),
                         color: activeDiagramIdx === dIdx ? '#fff' : 'var(--text-muted)',
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '0.7rem', marginRight: 8, fontWeight: 700
@@ -5387,16 +5421,16 @@ export default function App() {
                         <text x="560" y="215" fill="var(--color-red)" fontSize="9" fontWeight="bold">Ind = 1 (metal)</text>
 
                         {/* Action 1: Ignore/Reset Chute */}
-                        <rect x="100" y="180" width="160" height="40" rx="4" fill="#1e1e24" stroke="var(--text-muted)" strokeWidth="1.5" />
+                        <rect x="100" y="180" width="160" height="40" rx="4" fill="var(--diagram-ignore-card)" stroke="var(--text-muted)" strokeWidth="1.5" />
                         <text x="180" y="205" fill="var(--text-muted)" fontSize="11" fontWeight="bold" textAnchor="middle">Ignore Intake / Alarm Off</text>
 
                         {/* Action 2: ACCEPT PET PLASTIC */}
-                        <rect x="100" y="280" width="160" height="60" rx="4" fill="#062016" stroke="var(--color-green)" strokeWidth="2" filter="url(#glow-decision)" />
+                        <rect x="100" y="280" width="160" height="60" rx="4" fill="var(--diagram-accept-card)" stroke="var(--color-green)" strokeWidth="2" filter="url(#glow-decision)" />
                         <text x="180" y="305" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">ACCEPTED: PET Plastic</text>
                         <text x="180" y="325" fill="var(--color-green)" fontSize="9" textAnchor="middle">Gate sweeps 90° · Dispense Reward</text>
 
                         {/* Action 3: REJECT METAL CAN */}
-                        <rect x="540" y="280" width="160" height="60" rx="4" fill="#2d0a11" stroke="var(--color-red)" strokeWidth="2" filter="url(#glow-decision)" />
+                        <rect x="540" y="280" width="160" height="60" rx="4" fill="var(--diagram-reject-card)" stroke="var(--color-red)" strokeWidth="2" filter="url(#glow-decision)" />
                         <text x="620" y="305" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">REJECTED: Metal Can</text>
                         <text x="620" y="325" fill="var(--color-red)" fontSize="9" textAnchor="middle">Intake locks 0° · Buzz Alert chimes</text>
                       </svg>
@@ -5416,7 +5450,7 @@ export default function App() {
                         <text x="150" y="65" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">Firestore DB</text>
 
                         {/* Collection 1: machines */}
-                        <rect x="40" y="110" width="220" height="110" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <rect x="40" y="110" width="220" height="110" rx="4" fill="var(--diagram-db-card)" stroke="#a855f7" strokeWidth="1.5" />
                         <text x="50" y="128" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / machines</text>
                         <line x1="40" y1="135" x2="260" y2="135" stroke="var(--diagram-line-muted)" />
                         <text x="50" y="152" fill="var(--text-muted)" fontSize="9">machineId: "RVM001" (String)</text>
@@ -5425,7 +5459,7 @@ export default function App() {
                         <text x="50" y="197" fill="var(--text-muted)" fontSize="9">binFullThresholdCm: 8 (Number)</text>
 
                         {/* Collection 2: telemetry */}
-                        <rect x="290" y="40" width="220" height="110" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <rect x="290" y="40" width="220" height="110" rx="4" fill="var(--diagram-db-card)" stroke="#a855f7" strokeWidth="1.5" />
                         <text x="300" y="58" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / telemetry</text>
                         <line x1="290" y1="65" x2="510" y2="65" stroke="var(--diagram-line-muted)" />
                         <text x="300" y="82" fill="var(--text-muted)" fontSize="9">cpuTemp: 42.5 (Number)</text>
@@ -5434,7 +5468,7 @@ export default function App() {
                         <text x="300" y="127" fill="var(--text-muted)" fontSize="9">timestamp: Timestamp.now()</text>
 
                         {/* Collection 3: events */}
-                        <rect x="540" y="40" width="220" height="110" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <rect x="540" y="40" width="220" height="110" rx="4" fill="var(--diagram-db-card)" stroke="#a855f7" strokeWidth="1.5" />
                         <text x="550" y="58" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / events</text>
                         <line x1="540" y1="65" x2="760" y2="65" stroke="var(--diagram-line-muted)" />
                         <text x="550" y="82" fill="var(--text-muted)" fontSize="9">type: "PET_ACCEPTED" (String)</text>
@@ -5443,7 +5477,7 @@ export default function App() {
                         <text x="550" y="127" fill="var(--text-muted)" fontSize="9">timestamp: Timestamp.now()</text>
 
                         {/* Collection 4: auditLogs */}
-                        <rect x="290" y="180" width="220" height="95" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <rect x="290" y="180" width="220" height="95" rx="4" fill="var(--diagram-db-card)" stroke="#a855f7" strokeWidth="1.5" />
                         <text x="300" y="198" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / auditLogs</text>
                         <line x1="290" y1="205" x2="510" y2="205" stroke="var(--diagram-line-muted)" />
                         <text x="300" y="222" fill="var(--text-muted)" fontSize="9">actor: "Admin Ejaj" (String)</text>
@@ -5451,7 +5485,7 @@ export default function App() {
                         <text x="300" y="252" fill="var(--text-muted)" fontSize="9">timestamp: Timestamp.now()</text>
 
                         {/* Collection 5: alerts */}
-                        <rect x="540" y="180" width="220" height="95" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
+                        <rect x="540" y="180" width="220" height="95" rx="4" fill="var(--diagram-db-card)" stroke="#a855f7" strokeWidth="1.5" />
                         <text x="550" y="198" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / alerts</text>
                         <line x1="540" y1="205" x2="760" y2="205" stroke="var(--diagram-line-muted)" />
                         <text x="550" y="222" fill="var(--text-muted)" fontSize="9">title: "Intake Chute Jammed" (String)</text>
