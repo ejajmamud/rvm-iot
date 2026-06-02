@@ -210,6 +210,11 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        // Automatically inject bypassAdblocker: true if undefined
+        if (parsed.bypassAdblocker === undefined) {
+          parsed.bypassAdblocker = true;
+          localStorage.setItem('rvm_smtp_config', JSON.stringify(parsed));
+        }
         if (parsed.username !== "tawaqqaltualallah1@gmail.com") {
           const newConfig = {
             mode: "credentials",
@@ -218,7 +223,8 @@ export default function App() {
             password: "dlptrthlrdqikyhr",
             from: "tawaqqaltualallah1@gmail.com",
             to: "ejajjoy3@gmail.com",
-            token: ""
+            token: "",
+            bypassAdblocker: true
           };
           localStorage.setItem('rvm_smtp_config', JSON.stringify(newConfig));
           return newConfig;
@@ -236,7 +242,8 @@ export default function App() {
       password: "dlptrthlrdqikyhr",
       from: "tawaqqaltualallah1@gmail.com",
       to: "ejajjoy3@gmail.com",
-      token: ""
+      token: "",
+      bypassAdblocker: true
     };
     localStorage.setItem('rvm_smtp_config', JSON.stringify(initialConfig));
     return initialConfig;
@@ -244,29 +251,84 @@ export default function App() {
 
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
 
-  // --- Inline SmtpJS Core Engine (Bypasses third-party script filters/adblockers completely) ---
+  // --- Inline SmtpJS Core Engine with Adblocker Bypass & Proxy Fallbacks ---
   const LocalEmail = {
-    send: function (a) {
+    send: function (a, useProxy = false, proxyIndex = 0) {
       return new Promise(function (resolve, reject) {
         a.nocache = Math.random();
         var c = JSON.stringify(a);
-        LocalEmail.ajax("https://smtpjs.com/v1/send.aspx", c, function (response) {
-          resolve(response);
-        });
+        
+        let url = "https://smtpjs.com/v1/send.aspx";
+        
+        // List of reliable public CORS proxies to bypass adblockers
+        const proxies = [
+          "https://corsproxy.io/?url=",
+          "https://api.cors.lol/?url="
+        ];
+
+        if (useProxy) {
+          if (proxyIndex < proxies.length) {
+            url = proxies[proxyIndex] + encodeURIComponent("https://smtpjs.com/v1/send.aspx");
+            console.log(`[SMTP Proxy] Relaying via proxy ${proxyIndex + 1}: ${proxies[proxyIndex]}`);
+          }
+        }
+        
+        LocalEmail.ajax(
+          url, 
+          c, 
+          function (response) {
+            resolve(response);
+          }, 
+          function (error) {
+            // If the direct call failed, retry with the first proxy
+            if (!useProxy) {
+              console.warn("SMTP direct request blocked or failed. Retrying via secure CORS proxy...");
+              LocalEmail.send(a, true, 0).then(resolve).catch(reject);
+            } 
+            // If the first proxy failed, try the next proxy in the list
+            else if (useProxy && proxyIndex + 1 < proxies.length) {
+              console.warn(`SMTP proxy ${proxyIndex + 1} failed. Retrying via alternative proxy...`);
+              LocalEmail.send(a, true, proxyIndex + 1).then(resolve).catch(reject);
+            } 
+            // All options failed
+            else {
+              reject(new Error("All SMTP connection channels (direct and proxy relays) were blocked or failed. Please check your network connection or switch to 'Web API Relay'."));
+            }
+          }
+        );
       });
     },
-    ajax: function (url, data, callback) {
-      var xhr = LocalEmail.createCORSRequest("POST", url);
-      if (!xhr) {
-        console.error("CORS not supported in browser context.");
-        return;
+    ajax: function (url, data, callback, errorCallback) {
+      try {
+        var xhr = LocalEmail.createCORSRequest("POST", url);
+        if (!xhr) {
+          console.error("CORS not supported in browser context.");
+          if (errorCallback) errorCallback(new Error("CORS not supported"));
+          return;
+        }
+        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        
+        xhr.onload = function () {
+          var response = xhr.responseText;
+          if (null != callback) callback(response);
+        };
+        
+        xhr.onerror = function (e) {
+          console.error("XHR request failed for URL:", url);
+          if (errorCallback) errorCallback(e);
+        };
+        
+        xhr.ontimeout = function (e) {
+          console.error("XHR request timed out for URL:", url);
+          if (errorCallback) errorCallback(new Error("Request timed out"));
+        };
+        
+        xhr.timeout = 15000; // 15 seconds timeout
+        xhr.send(data);
+      } catch (err) {
+        console.error("XHR send exception:", err);
+        if (errorCallback) errorCallback(err);
       }
-      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-      xhr.onload = function () {
-        var response = xhr.responseText;
-        if (null != callback) callback(response);
-      };
-      xhr.send(data);
     },
     createCORSRequest: function (method, url) {
       var xhr = new XMLHttpRequest();
@@ -354,11 +416,13 @@ export default function App() {
         Body : htmlBody
       };
 
-      const result = await LocalEmail.send(payload);
+      const useProxy = smtpConfig.bypassAdblocker !== false;
+      const result = await LocalEmail.send(payload, useProxy);
       
       if (result === "OK") {
         console.log("SMTP Relayed successfully:", result);
-        showToast(`✉️ SMTP Alert Notification emailed to ${smtpConfig.to}`, "success");
+        const methodStr = useProxy ? "via Adblocker Bypass Proxy" : "directly";
+        showToast(`✉️ SMTP Alert Notification emailed to ${smtpConfig.to} (${methodStr})`, "success");
       } else {
         console.error("SMTP Relay Server returned failure:", result);
         showToast(`❌ SMTP Relay Failed: ${result}`, "error");
@@ -5524,6 +5588,54 @@ export default function App() {
                           </button>
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  {smtpConfig.mode !== 'api' && (
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: 10, 
+                      padding: '14px 16px', 
+                      background: 'rgba(16, 185, 129, 0.05)', 
+                      border: '1px solid rgba(16, 185, 129, 0.15)', 
+                      borderRadius: 6,
+                      marginTop: 10
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <strong style={{ color: 'var(--color-green)', fontSize: '0.85rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            🛡️ Adblocker-Proof Proxy Relay
+                          </strong>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                            Relays your SMTP requests through a secure public CORS proxy to bypass browser extension & adblock blocks.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSmtpConfig(prev => {
+                            const updated = { ...prev, bypassAdblocker: !prev.bypassAdblocker };
+                            localStorage.setItem('rvm_smtp_config', JSON.stringify(updated));
+                            return updated;
+                          })}
+                          style={{
+                            background: smtpConfig.bypassAdblocker ? 'var(--color-green)' : 'var(--btn-sec-bg)',
+                            color: smtpConfig.bypassAdblocker ? '#000' : 'var(--text-primary)',
+                            border: '1px solid var(--border-primary)',
+                            padding: '6px 12px',
+                            borderRadius: 'var(--radius-xs)',
+                            fontSize: '0.72rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'var(--transition-smooth)'
+                          }}
+                        >
+                          {smtpConfig.bypassAdblocker ? "ACTIVE (RECOMMENDED)" : "INACTIVE (DIRECT)"}
+                        </button>
+                      </div>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontStyle: 'italic', opacity: 0.85 }}>
+                        * Note: If direct connections to <code>smtpjs.com</code> are blocked by your browser adblocker or network shields, leaving this active ensures seamless dynamic Gmail & Namecheap dispatching.
+                      </span>
                     </div>
                   )}
 
