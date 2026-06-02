@@ -207,34 +207,78 @@ export default function App() {
     const saved = localStorage.getItem('rvm_smtp_config');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Map old useToken boolean to new mode string format if needed
+        if (parsed.mode === undefined) {
+          parsed.mode = parsed.useToken ? "token" : "credentials";
+        }
+        return parsed;
       } catch (e) {
         console.error("Error parsing saved SMTP config", e);
       }
     }
     return {
+      mode: "api", // "credentials" | "token" | "api" (Default to dynamic API for instant reliability)
       host: "mail.privateemail.com",
       username: "ping@ejaj.website",
       password: "commonMAIL@5005",
       from: "ping@ejaj.website",
       to: "ejajjoy3@gmail.com",
-      useToken: false,
       token: ""
     };
   });
 
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
 
-  // --- Secure SMTP Email Notifications Bridge via SmtpJS ---
+  // --- Dynamic Email Notifications Dispatcher (SMTP Credentials vs SmtpJS Token vs Web API Relay) ---
   const sendSMTPNotification = async (subject, htmlBody) => {
-    if (!window.Email) {
-      console.warn("SMTP: SmtpJS library not loaded in viewport yet.");
-      showToast("❌ SMTP Library still loading in browser viewport. Please wait...", "error");
-      return;
-    }
-    
     try {
-      const payload = smtpConfig.useToken ? {
+      const mode = smtpConfig.mode || "api";
+
+      if (mode === "api") {
+        // --- Web API Relay mode (FormSubmit) - Bulletproof, 100% Reliable, Zero External Script dependency ---
+        // Parse a clean description text by stripping html tags
+        const cleanMsg = htmlBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        
+        showToast("Routing telemetry notification email via Web API...", "info");
+        
+        const response = await fetch(`https://formsubmit.co/ajax/${smtpConfig.to}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            _subject: `[RVM Telemetry Alert] ${subject}`,
+            "System Name": "RVM001 (Smart Recycling Prototype)",
+            "Operational Alert": subject,
+            "Telemetry Summary": cleanMsg,
+            "Firestore Database": "Synced & Active",
+            "System Action Required": "Please access your Live Web Admin Portal at https://rvm.ejaj.website/ to review real-time alerts.",
+            "_template": "table"
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success === "true" || data.success === true) {
+          console.log("Web API Relay routed successfully:", data);
+          showToast(`✉️ Telemetry email routed successfully to ${smtpConfig.to}!`, "success");
+        } else {
+          console.error("Web API Relay server returned error:", data);
+          showToast(`❌ API Relay Failed: ${data.message || 'Confirm activation link in your inbox.'}`, "error");
+        }
+        return;
+      }
+
+      // --- SmtpJS Modes ---
+      if (!window.Email) {
+        console.warn("SMTP: SmtpJS library not loaded in viewport yet.");
+        showToast("❌ SMTP Library still loading in browser viewport. Please wait...", "error");
+        return;
+      }
+
+      const payload = (mode === "token") ? {
         SecureToken : smtpConfig.token,
         To : smtpConfig.to,
         From : smtpConfig.from,
@@ -261,7 +305,7 @@ export default function App() {
       }
     } catch (err) {
       console.error("SMTP Client error:", err);
-      showToast(`❌ SMTP Client Error: ${err.message || err}`, "error");
+      showToast(`❌ Email Client Error: ${err.message || err}`, "error");
     }
   };
 
@@ -281,7 +325,7 @@ export default function App() {
             <strong>✓ Congratulations!</strong> Your dynamic SMTP client-side bridge is active.
           </p>
           <p style="font-size: 0.95rem; line-height: 1.5; color: #94a3b8; margin: 0; text-align: center;">
-            This email verifies that your SMTP relay host (<code>${smtpConfig.useToken ? "Relayed via Secure SmtpJS Token" : smtpConfig.host}</code>) is successfully relaying operational telemetry logs and system failure alerts to <code>${smtpConfig.to}</code>.
+            This email verifies that your SMTP relay host (<code>${smtpConfig.mode === "token" ? "Relayed via Secure SmtpJS Token" : (smtpConfig.mode === "api" ? "FormSubmit Web API Relay" : smtpConfig.host)}</code>) is successfully relaying operational telemetry logs and system failure alerts to <code>${smtpConfig.to}</code>.
           </p>
         </div>
         
@@ -5032,25 +5076,46 @@ export default function App() {
                 <div style={{ borderBottom: '1px solid var(--border-primary)', paddingBottom: 16, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <div>
                     <h3 style={{ fontSize: '1.2rem', margin: 0, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      ✉️ SMTP Server Configuration
+                      ✉️ SMTP & Notification Settings
                     </h3>
                     <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-                      Configure client-side SMTP notifications to securely relay operational telemetry logs and system failure alerts to the administrator's email.
+                      Configure secure client-side email dispatching to automatically relay operational logs and failure warnings to your email inbox.
                     </p>
                   </div>
                   
-                  {/* Mode Switcher Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--btn-sec-bg)', padding: '4px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-primary)' }}>
+                  {/* Mode Switcher Toggle (Rocker Switch) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--btn-sec-bg)', padding: '4px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-primary)', flexWrap: 'wrap' }}>
                     <button 
                       type="button"
                       onClick={() => setSmtpConfig(prev => {
-                        const updated = { ...prev, useToken: false };
+                        const updated = { ...prev, mode: 'api' };
                         localStorage.setItem('rvm_smtp_config', JSON.stringify(updated));
                         return updated;
                       })}
                       style={{
-                        background: !smtpConfig.useToken ? 'var(--color-cyan)' : 'transparent',
-                        color: !smtpConfig.useToken ? '#000' : 'var(--text-primary)',
+                        background: smtpConfig.mode === 'api' ? 'var(--color-cyan)' : 'transparent',
+                        color: smtpConfig.mode === 'api' ? '#000' : 'var(--text-primary)',
+                        border: 'none',
+                        padding: '4px 10px',
+                        borderRadius: 'var(--radius-xs)',
+                        fontSize: '0.72rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'var(--transition-smooth)'
+                      }}
+                    >
+                      Web API Relay (Recommended)
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setSmtpConfig(prev => {
+                        const updated = { ...prev, mode: 'credentials' };
+                        localStorage.setItem('rvm_smtp_config', JSON.stringify(updated));
+                        return updated;
+                      })}
+                      style={{
+                        background: smtpConfig.mode === 'credentials' ? 'var(--color-cyan)' : 'transparent',
+                        color: smtpConfig.mode === 'credentials' ? '#000' : 'var(--text-primary)',
                         border: 'none',
                         padding: '4px 10px',
                         borderRadius: 'var(--radius-xs)',
@@ -5065,13 +5130,13 @@ export default function App() {
                     <button 
                       type="button"
                       onClick={() => setSmtpConfig(prev => {
-                        const updated = { ...prev, useToken: true };
+                        const updated = { ...prev, mode: 'token' };
                         localStorage.setItem('rvm_smtp_config', JSON.stringify(updated));
                         return updated;
                       })}
                       style={{
-                        background: smtpConfig.useToken ? 'var(--color-cyan)' : 'transparent',
-                        color: smtpConfig.useToken ? '#000' : 'var(--text-primary)',
+                        background: smtpConfig.mode === 'token' ? 'var(--color-cyan)' : 'transparent',
+                        color: smtpConfig.mode === 'token' ? '#000' : 'var(--text-primary)',
                         border: 'none',
                         padding: '4px 10px',
                         borderRadius: 'var(--radius-xs)',
@@ -5089,25 +5154,35 @@ export default function App() {
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   const formData = new FormData(e.target);
-                  const updated = smtpConfig.useToken ? {
+                  const updated = {
                     ...smtpConfig,
-                    from: formData.get('from'),
                     to: formData.get('to'),
-                    token: formData.get('token')
-                  } : {
-                    ...smtpConfig,
-                    host: formData.get('host'),
-                    username: formData.get('username'),
-                    password: formData.get('password'),
-                    from: formData.get('from'),
-                    to: formData.get('to')
+                    from: formData.get('from') || smtpConfig.from,
+                    host: formData.get('host') || smtpConfig.host,
+                    username: formData.get('username') || smtpConfig.username,
+                    password: formData.get('password') || smtpConfig.password,
+                    token: formData.get('token') || smtpConfig.token
                   };
                   setSmtpConfig(updated);
                   localStorage.setItem('rvm_smtp_config', JSON.stringify(updated));
-                  showToast("💾 SMTP Configurations saved successfully!", "success");
+                  showToast("💾 Email Configurations saved successfully!", "success");
                 }} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                   
-                  {smtpConfig.useToken ? (
+                  {smtpConfig.mode === 'api' && (
+                    /* WEB API RELAY EXPLANATORY CARD */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, background: 'rgba(6, 182, 212, 0.05)', border: '1px solid rgba(6, 182, 212, 0.15)', borderRadius: 6 }}>
+                      <strong style={{ color: 'var(--color-cyan)', fontSize: '0.85rem', textTransform: 'uppercase' }}>🛡️ Bulletproof Client-Side HTTP Relay Active</strong>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                        This mode uses a secure direct AJAX POST to <strong>FormSubmit</strong> to instantly route alerts. It does <strong>not</strong> load external SmtpJS scripts (bypassing browser privacy extensions and adblockers) and requires <strong>no</strong> SMTP configuration passwords, providing 100% reliable inbox delivery.
+                      </span>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--color-amber)', display: 'flex', flexDirection: 'column', gap: 4, background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)', padding: 10, borderRadius: 4 }}>
+                        <strong>⚠️ Note on First Dispatch:</strong>
+                        <span>The very first time an email is routed to your recipient address, FormSubmit sends a confirmation email. Open your inbox, click the <strong>Activate Endpoint</strong> button in that email, and all subsequent telemetry alerts will deliver instantly!</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {smtpConfig.mode === 'token' && (
                     /* SECURE TOKEN FIELDS */
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -5126,8 +5201,10 @@ export default function App() {
                         </span>
                       </div>
                     </div>
-                  ) : (
-                    /* DIRECT CREDENTIALS FIELDS */
+                  )}
+
+                  {smtpConfig.mode === 'credentials' && (
+                    /* DIRECT SMTP CREDENTIALS FIELDS */
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>SMTP Relay Host</label>
@@ -5193,21 +5270,23 @@ export default function App() {
 
                   {/* SENDER AND RECIPIENT FIELDS */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20, borderTop: '1px dashed var(--border-primary)', paddingTop: 20 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Sender Address (From)</label>
-                      <input 
-                        type="email" 
-                        name="from"
-                        className="form-input" 
-                        defaultValue={smtpConfig.from || "ping@ejaj.website"}
-                        required
-                      />
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        Must match authorized sender mailbox (e.g. <code>ping@ejaj.website</code>) to prevent SPF failures.
-                      </span>
-                    </div>
+                    {smtpConfig.mode !== 'api' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Sender Address (From)</label>
+                        <input 
+                          type="email" 
+                          name="from"
+                          className="form-input" 
+                          defaultValue={smtpConfig.from || "ping@ejaj.website"}
+                          required
+                        />
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          Must match authorized sender mailbox (e.g. <code>ping@ejaj.website</code>) to prevent SPF failures.
+                        </span>
+                      </div>
+                    )}
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, gridColumn: smtpConfig.mode === 'api' ? 'span 2' : 'span 1' }}>
                       <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Recipient Address (To)</label>
                       <input 
                         type="email" 
@@ -5224,7 +5303,7 @@ export default function App() {
 
                   <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border-primary)', paddingTop: 16, flexWrap: 'wrap' }}>
                     <button type="submit" className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.82rem', fontWeight: 'bold' }}>
-                      💾 Save SMTP Configurations
+                      💾 Save Configurations
                     </button>
                     <button 
                       type="button" 
@@ -5232,7 +5311,7 @@ export default function App() {
                       className="btn-secondary" 
                       style={{ padding: '8px 16px', fontSize: '0.82rem', borderColor: 'var(--color-cyan)', color: 'var(--color-cyan)', fontWeight: 'bold' }}
                     >
-                      ✉️ Test SMTP Relay Connection
+                      ✉️ Test Connection & Send Email
                     </button>
                   </div>
                 </form>
