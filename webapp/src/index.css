@@ -52,6 +52,15 @@
   --btn-sec-bg-hover: linear-gradient(180deg, #22242f 0%, #101116 100%);
   --btn-sec-border-hover: rgba(255, 255, 255, 0.15);
 
+  /* -- Diagram & Simulator theme variables -- */
+  --diagram-bg: #04091a;
+  --diagram-card-bg: #0f172a;
+  --diagram-card-border: var(--border-primary);
+  --diagram-text: #ffffff;
+  --diagram-text-muted: var(--text-muted);
+  --diagram-line-muted: rgba(255, 255, 255, 0.1);
+  --diagram-grid: rgba(255, 255, 255, 0.02);
+
   /* ── Transitions ── */
   --transition-fast: all 0.1s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-base: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -97,6 +106,64 @@ body.light-theme {
   --btn-sec-bg: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
   --btn-sec-bg-hover: linear-gradient(180deg, #f9fafb 0%, #e5e7eb 100%);
   --btn-sec-border-hover: rgba(0, 0, 0, 0.15);
+
+  /* -- Diagram & Simulator theme variables (Light Theme) -- */
+  --diagram-bg: #ffffff;
+  --diagram-card-bg: #f8fafc;
+  --diagram-card-border: #cbd5e1;
+  --diagram-text: #0f172a;
+  --diagram-text-muted: #475569;
+  --diagram-line-muted: rgba(0, 0, 0, 0.1);
+  --diagram-grid: rgba(0, 0, 0, 0.04);
+}
+
+/* ── Light Theme Simulator Overrides ── */
+body.light-theme .cabinet-3d-model {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .cabinet-front-panel {
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  border-color: #cbd5e1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme .blue-lcd-container {
+  border-color: #94a3b8;
+}
+
+body.light-theme .diagnostic-viewport-panel {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+}
+
+body.light-theme .waste-viewport-bin {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
+}
+
+body.light-theme .wiring-chassis-wrapper {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.05), var(--shadow-md);
+}
+
+body.light-theme .chassis-grid-overlay {
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px);
+}
+
+body.light-theme .interactive-component:hover {
+  filter: brightness(0.95) drop-shadow(0 0 4px rgba(0,0,0,0.05));
+}
+
+body.light-theme .glass-panel:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* ══════════════════════════════════════════════

@@ -2407,7 +2407,7 @@ export default function App() {
                       <line x1="0" y1="80" x2="500" y2="80" stroke="rgba(255,255,255,0.05)" />
                       <line x1="0" y1="120" x2="500" y2="120" stroke="rgba(255,255,255,0.05)" />
                       <line x1="0" y1="160" x2="500" y2="160" stroke="rgba(255,255,255,0.05)" />
-                      <line x1="0" y1="190" x2="500" y2="190" stroke="rgba(255,255,255,0.1)" />
+                      <line x1="0" y1="190" x2="500" y2="190" stroke="var(--diagram-line-muted)" />
 
                       {/* Line 1: PET Bottles (Green Accent) */}
                       <path
@@ -2790,7 +2790,7 @@ export default function App() {
                                       
                                       {/* White sweep horn rotating */}
                                       <g transform={`rotate(${gateAngle}, 26, 14)`} className="servo-arm" style={{ transformOrigin: '26px 14px' }}>
-                                        <path d="M 23 14 L 23 -8 A 3 3 0 0 1 29 -8 L 29 14 Z" fill="#fff" stroke="#cbd5e1" strokeWidth="0.4" />
+                                        <path d="M 23 14 L 23 -8 A 3 3 0 0 1 29 -8 L 29 14 Z" fill="var(--diagram-text)" stroke="#cbd5e1" strokeWidth="0.4" />
                                         <circle cx="26" cy="-5" r="0.8" fill="#475569" />
                                         <circle cx="26" cy="14" r="1.8" fill="#94a3b8" />
                                       </g>
@@ -2864,7 +2864,7 @@ export default function App() {
                                       <rect width="120" height="60" fill="url(#mega-pcb-grad)" rx="4" stroke="#1e40af" strokeWidth="1" />
                                       <rect x="3" y="3" width="114" height="54" fill="none" stroke="rgba(255,255,255,0.12)" rx="3" />
                                       <rect x="8" y="18" width="18" height="24" fill="url(#ic-body-grad)" stroke="#475569" rx="1.5" />
-                                      <text x="17" y="32" fill="#fff" fontSize="5" fontWeight="800" textAnchor="middle">MEGA</text>
+                                      <text x="17" y="32" fill="var(--diagram-text)" fontSize="5" fontWeight="800" textAnchor="middle">MEGA</text>
                                       
                                       {/* Arduino Mega RX/TX leds */}
                                       <circle cx="85" cy="20" r="1.5" fill={isPowerOn && serialBlinkTx ? "#ef4444" : "#3b0709"} />
@@ -2873,7 +2873,7 @@ export default function App() {
                                       <text x="91" y="27" fill="#64748b" fontSize="4.5">RX</text>
 
                                       <rect x="5" y="-3" width="15" height="10" fill="url(#silver-metallic-grad)" rx="0.5" />
-                                      <text x="60" y="52" fill="#fff" fontSize="7" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ARDUINO MEGA</text>
+                                      <text x="60" y="52" fill="var(--diagram-text)" fontSize="7" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ARDUINO MEGA</text>
                                       <title>Arduino Mega 2560 board: central logic unit. Controls D9/D10 servos, reads proximity lines, and serializes packets.</title>
                                     </g>
 
@@ -2896,7 +2896,7 @@ export default function App() {
                                       <circle cx="104" cy="24" r="1.5" fill={isPowerOn && espSerialBlinkTx ? "#ef4444" : "#3b0709"} />
 
                                       <rect x="50" y="56" width="15" height="7" fill="url(#silver-metallic-grad)" rx="0.5" />
-                                      <text x="60" y="50" fill="#fff" fontSize="6.5" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ESP32 DevKit V1</text>
+                                      <text x="60" y="50" fill="var(--diagram-text)" fontSize="6.5" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ESP32 DevKit V1</text>
                                       <title>ESP32 DevKit V1: WiFi & Database bridge. Ingests packages over TX1/RX2, rings offline memory if internet fails.</title>
                                     </g>
                                   </svg>
@@ -2919,9 +2919,9 @@ export default function App() {
                                       <g transform="translate(48, 5)" className="interactive-component">
                                         <rect width="64" height="24" fill="#0369a1" rx="2" stroke="#0284c7" strokeWidth="0.8" />
                                         <circle cx="18" cy="12" r="9" fill="url(#steel-metallic-grad)" stroke="#334155" strokeWidth="0.5" />
-                                        <circle cx="18" cy="12" r="6" fill="#0f172a" />
+                                        <circle cx="18" cy="12" r="6" fill="var(--diagram-card-bg)" />
                                         <circle cx="46" cy="12" r="9" fill="url(#steel-metallic-grad)" stroke="#334155" strokeWidth="0.5" />
-                                        <circle cx="46" cy="12" r="6" fill="#0f172a" />
+                                        <circle cx="46" cy="12" r="6" fill="var(--diagram-card-bg)" />
                                         <title>HC-SR04 Ultrasonic Sensor: measures bin depth content. Lockouts machine if waste height reaches D22/D23 threshold (8 cm).</title>
                                       </g>
 
@@ -2992,7 +2992,7 @@ export default function App() {
                                         <rect width="54" height="54" fill="#2563eb" stroke="#1d4ed8" strokeWidth="1.8" rx="6" />
                                         <circle cx="27" cy="27" r="10" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="1" />
                                         <g transform={`rotate(${penAngle}, 27, 27)`} className="servo-arm" style={{ transformOrigin: '27px 27px' }}>
-                                          <path d="M 24 27 L 24 -15 A 3 3 0 0 1 30 -15 L 30 27 Z" fill="#fff" stroke="#cbd5e1" strokeWidth="0.5" />
+                                          <path d="M 24 27 L 24 -15 A 3 3 0 0 1 30 -15 L 30 27 Z" fill="var(--diagram-text)" stroke="#cbd5e1" strokeWidth="0.5" />
                                           <circle cx="27" cy="-10" r="1.5" fill="#475569" />
                                           <circle cx="27" cy="27" r="3" fill="#94a3b8" />
                                         </g>
@@ -3699,7 +3699,7 @@ export default function App() {
 
                           {/* USB & Power jacks */}
                           <rect x="15" y="-12" width="28" height="40" fill="url(#silver-metallic-grad)" stroke="#475569" rx="2" />
-                          <rect x="130" y="-10" width="24" height="32" fill="#0f172a" stroke="#1e293b" rx="2" />
+                          <rect x="130" y="-10" width="24" height="32" fill="var(--diagram-card-bg)" stroke="#1e293b" rx="2" />
                           <circle cx="142" cy="18" r="4.5" fill="url(#silver-metallic-grad)" />
 
                           {/* MCU Chip ATmega2560 */}
@@ -3723,13 +3723,13 @@ export default function App() {
                           <text x="36" y="80" fill="#94a3b8" fontSize="6" fontWeight="700">RX</text>
 
                           {/* Golden header pin blocks */}
-                          <rect x="6" y="20" width="10" height="225" fill="#0f172a" stroke="#334155" rx="1" />
+                          <rect x="6" y="20" width="10" height="225" fill="var(--diagram-card-bg)" stroke="#334155" rx="1" />
                           {Array.from({ length: 22 }).map((_, i) => (
                             <circle key={i} cx="11" cy={28 + i * 10} r="1.5" fill="#ca8a04" />
                           ))}
                           <text x="20" y="28" fill="rgba(255,255,255,0.4)" fontSize="6">D0-D21</text>
 
-                          <rect x="154" y="20" width="10" height="225" fill="#0f172a" stroke="#334155" rx="1" />
+                          <rect x="154" y="20" width="10" height="225" fill="var(--diagram-card-bg)" stroke="#334155" rx="1" />
                           {Array.from({ length: 22 }).map((_, i) => (
                             <circle key={i} cx="159" cy={28 + i * 10} r="1.5" fill="#ca8a04" />
                           ))}
@@ -3756,12 +3756,12 @@ export default function App() {
                           <text x="55" y="32" fill="#334155" fontSize="4.5" textAnchor="middle">FCC ID: 2AC7Z-ESPWROOM32</text>
 
                           {/* WiFi wavy antenna lines on PCB head */}
-                          <path d="M 32 10 L 78 10 L 78 5 L 32 5 Z" fill="#0f172a" />
+                          <path d="M 32 10 L 78 10 L 78 5 L 32 5 Z" fill="var(--diagram-card-bg)" />
                           <path d="M 35 12 L 40 8 L 45 12 L 50 8 L 55 12 L 60 8 L 65 12 L 70 8 L 75 12" stroke="#e2e8f0" strokeWidth="0.8" fill="none" />
 
                           {/* Dual inline header sockets */}
-                          <rect x="6" y="20" width="10" height="130" fill="#0f172a" rx="1" />
-                          <rect x="94" y="20" width="10" height="130" fill="#0f172a" rx="1" />
+                          <rect x="6" y="20" width="10" height="130" fill="var(--diagram-card-bg)" rx="1" />
+                          <rect x="94" y="20" width="10" height="130" fill="var(--diagram-card-bg)" rx="1" />
                           {Array.from({ length: 12 }).map((_, i) => (
                             <g key={i}>
                               <circle cx="11" cy={26 + i * 11} r="1.5" fill="#ca8a04" />
@@ -3785,7 +3785,7 @@ export default function App() {
                           {/* Micro USB Port */}
                           <rect x="42" y="146" width="26" height="15" fill="url(#silver-metallic-grad)" stroke="#475569" rx="1.5" />
 
-                          <text x="55" y="92" fill="#fff" fontSize="8" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ESP32 DEVKIT</text>
+                          <text x="55" y="92" fill="var(--diagram-text)" fontSize="8" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ESP32 DEVKIT</text>
                           <text x="55" y="99" fill="var(--color-green)" fontSize="6" fontWeight="700" textAnchor="middle">
                             {isWiFiActive ? "ONLINE" : `OFFLINE (${offlineQueueCount})`}
                           </text>
@@ -3804,7 +3804,7 @@ export default function App() {
 
                           {/* Black Emitter and Blue photodiode pointing down (drawn side by side) */}
                           <rect x="25" y="-12" width="12" height="15" fill="#1e293b" stroke="#475569" rx="1" />
-                          <circle cx="31" cy="-12" r="3.5" fill="#0f172a" stroke="#475569" /> {/* Emitter */}
+                          <circle cx="31" cy="-12" r="3.5" fill="var(--diagram-card-bg)" stroke="#475569" /> {/* Emitter */}
                           
                           <rect x="43" y="-12" width="12" height="15" fill="#1e293b" stroke="#475569" rx="1" />
                           <circle cx="49" cy="-12" r="3.5" fill="#3b82f6" stroke="#2563eb" /> {/* Photodiode */}
@@ -3813,7 +3813,7 @@ export default function App() {
                           <rect x="10" y="20" width="15" height="15" fill="#2563eb" rx="1.5" />
                           <circle cx="17.5" cy="27.5" r="3" fill="url(#brass-screw-grad)" stroke="#a16207" strokeWidth="0.5" />
 
-                          <text x="50" y="28" fill="#fff" fontSize="6.5" fontWeight="900">TCRT5000</text>
+                          <text x="50" y="28" fill="var(--diagram-text)" fontSize="6.5" fontWeight="900">TCRT5000</text>
                           <text x="50" y="36" fill="#93c5fd" fontSize="5.5" fontWeight="700">IR ENTRY</text>
 
                           {/* Status indicator line glow */}
@@ -3833,16 +3833,16 @@ export default function App() {
 
                           {/* Two large steel eyes (Transducer cylinders) */}
                           <circle cx="28" cy="25" r="18" fill="url(#steel-metallic-grad)" stroke="#475569" strokeWidth="1" />
-                          <circle cx="28" cy="25" r="14" fill="#0f172a" />
+                          <circle cx="28" cy="25" r="14" fill="var(--diagram-card-bg)" />
                           <text x="28" y="28" fill="#334155" fontSize="8" fontWeight="800" textAnchor="middle">T</text>
 
                           <circle cx="68" cy="25" r="18" fill="url(#steel-metallic-grad)" stroke="#475569" strokeWidth="1" />
-                          <circle cx="68" cy="25" r="14" fill="#0f172a" />
+                          <circle cx="68" cy="25" r="14" fill="var(--diagram-card-bg)" />
                           <text x="68" y="28" fill="#334155" fontSize="8" fontWeight="800" textAnchor="middle">R</text>
 
                           {/* Crystal and pins */}
                           <rect x="44" y="48" width="8" height="12" fill="url(#silver-metallic-grad)" rx="2" />
-                          <text x="48" y="58" fill="#fff" fontSize="5" textAnchor="middle">HC-SR04</text>
+                          <text x="48" y="58" fill="var(--diagram-text)" fontSize="5" textAnchor="middle">HC-SR04</text>
 
                           <div className="rvm-tooltip">
                             <div className="rvm-tooltip-header">HC-SR04 Ultrasonic</div>
@@ -3853,7 +3853,7 @@ export default function App() {
                         {/* COMPONENT 5: LM2596 BUCK REGULATOR 1 */}
                         <g transform="translate(430, 40)" className="interactive-component">
                           <rect width="115" height="70" fill="url(#buck-pcb-grad)" stroke="#0284c7" strokeWidth="1.8" rx="6" />
-                          <rect x="4" y="4" width="107" height="62" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" rx="4" />
+                          <rect x="4" y="4" width="107" height="62" fill="none" stroke="var(--diagram-line-muted)" strokeWidth="1" rx="4" />
 
                           {/* Gold Toroidal Inductor coil */}
                           <circle cx="22" cy="24" r="13" fill="none" stroke="url(#copper-toroid-grad)" strokeWidth="4" />
@@ -3885,7 +3885,7 @@ export default function App() {
                         {/* COMPONENT 6: LM2596 BUCK REGULATOR 2 */}
                         <g transform="translate(430, 135)" className="interactive-component">
                           <rect width="115" height="70" fill="url(#buck-pcb-grad)" stroke="#0284c7" strokeWidth="1.8" rx="6" />
-                          <rect x="4" y="4" width="107" height="62" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" rx="4" />
+                          <rect x="4" y="4" width="107" height="62" fill="none" stroke="var(--diagram-line-muted)" strokeWidth="1" rx="4" />
 
                           <circle cx="22" cy="24" r="13" fill="none" stroke="url(#copper-toroid-grad)" strokeWidth="4" />
                           <circle cx="22" cy="24" r="9" fill="#78350f" stroke="#000" strokeWidth="0.8" />
@@ -3966,7 +3966,7 @@ export default function App() {
                             <circle cx="27" cy="-10" r="1.5" fill="#475569" />
                             <circle cx="27" cy="27" r="3" fill="#94a3b8" />
                           </g>
-                          <text x="27" y="48" fill="#fff" fontSize="8" fontWeight="900" textAnchor="middle">GATE</text>
+                          <text x="27" y="48" fill="var(--diagram-text)" fontSize="8" fontWeight="900" textAnchor="middle">GATE</text>
 
                           <div className="rvm-tooltip">
                             <div className="rvm-tooltip-header">SG90 Servo Gate (D9)</div>
@@ -3985,7 +3985,7 @@ export default function App() {
                             <circle cx="27" cy="-10" r="1.5" fill="#475569" />
                             <circle cx="27" cy="27" r="3" fill="#94a3b8" />
                           </g>
-                          <text x="27" y="48" fill="#fff" fontSize="8" fontWeight="900" textAnchor="middle">REWARD</text>
+                          <text x="27" y="48" fill="var(--diagram-text)" fontSize="8" fontWeight="900" textAnchor="middle">REWARD</text>
 
                           <div className="rvm-tooltip">
                             <div className="rvm-tooltip-header">SG90 Servo Reward (D10)</div>
@@ -4009,7 +4009,7 @@ export default function App() {
 
                           {/* signal indicator glow */}
                           <circle cx="28" cy="30" r="8" fill={sensorCapActive ? "#10b981" : "#1e293b"} stroke="#fff" strokeWidth="0.5" />
-                          <text x="28" y="33" fill="#fff" fontSize="7.5" fontWeight="900" textAnchor="middle">CAP</text>
+                          <text x="28" y="33" fill="var(--diagram-text)" fontSize="7.5" fontWeight="900" textAnchor="middle">CAP</text>
 
                           <div className="rvm-tooltip">
                             <div className="rvm-tooltip-header">LJC18A3 Capacitive Sensor</div>
@@ -4030,7 +4030,7 @@ export default function App() {
                           <rect x="20" y="2" width="16" height="12" fill="#eab308" rx="1" />
 
                           <circle cx="28" cy="30" r="8" fill={sensorIndActive ? "#ef4444" : "#1e293b"} stroke="#fff" strokeWidth="0.5" />
-                          <text x="28" y="33" fill="#fff" fontSize="7.5" fontWeight="900" textAnchor="middle">IND</text>
+                          <text x="28" y="33" fill="var(--diagram-text)" fontSize="7.5" fontWeight="900" textAnchor="middle">IND</text>
 
                           <div className="rvm-tooltip">
                             <div className="rvm-tooltip-header">LJ12A3 Inductive Sensor</div>
@@ -4381,7 +4381,7 @@ export default function App() {
                       <line x1="0" y1="80" x2="500" y2="80" stroke="rgba(255,255,255,0.05)" />
                       <line x1="0" y1="120" x2="500" y2="120" stroke="rgba(255,255,255,0.05)" />
                       <line x1="0" y1="160" x2="500" y2="160" stroke="rgba(255,255,255,0.05)" />
-                      <line x1="0" y1="190" x2="500" y2="190" stroke="rgba(255,255,255,0.1)" />
+                      <line x1="0" y1="190" x2="500" y2="190" stroke="var(--diagram-line-muted)" />
 
                       <path
                         d="M 10 150 L 80 120 L 150 160 L 220 90 L 290 140 L 360 70 L 430 40 L 490 20"
@@ -4934,7 +4934,7 @@ export default function App() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 
                 {/* Visual Panel Card */}
-                <div className="glass-panel" style={{ padding: '28px', background: '#020612', border: '1px solid var(--border-primary)' }}>
+                <div className="glass-panel" style={{ padding: '28px', background: 'var(--bg-surface)', border: '1px solid var(--border-primary)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>
                       {[
@@ -4995,7 +4995,7 @@ export default function App() {
                     height: '420px',
                     borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--border-subtle)',
-                    background: '#04091a',
+                    background: 'var(--diagram-bg)',
                     padding: '20px',
                     display: 'flex',
                     alignItems: 'center',
@@ -5014,7 +5014,7 @@ export default function App() {
                         </defs>
                         {/* Grid Background */}
                         <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
-                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="1"/>
+                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="var(--diagram-grid)" strokeWidth="1"/>
                         </pattern>
                         <rect width="800" height="400" fill="url(#grid-pattern)" />
                         
@@ -5037,17 +5037,17 @@ export default function App() {
 
                         {/* ── CARD NODES LAYER (Second) ── */}
                         {/* Physical RVM */}
-                        <rect x="30" y="150" width="130" height="100" rx="6" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <rect x="30" y="150" width="130" height="100" rx="6" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="2" />
 
                         {/* Atmega2560 Box */}
-                        <rect x="220" y="140" width="140" height="120" rx="6" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="2" filter="url(#glow-arch)" />
+                        <rect x="220" y="140" width="140" height="120" rx="6" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" filter="url(#glow-arch)" />
 
                         {/* ESP32 Box */}
-                        <rect x="420" y="150" width="120" height="100" rx="6" fill="#0f172a" stroke="var(--color-green)" strokeWidth="2" />
+                        <rect x="420" y="150" width="120" height="100" rx="6" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="2" />
 
                         {/* Firebase Box */}
-                        <rect x="600" y="130" width="170" height="140" rx="8" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
-                        <line x1="615" y1="180" x2="755" y2="180" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                        <rect x="600" y="130" width="170" height="140" rx="8" fill="var(--diagram-card-bg)" stroke="#a855f7" strokeWidth="2" />
+                        <line x1="615" y1="180" x2="755" y2="180" stroke="var(--diagram-line-muted)" strokeWidth="1" />
                         
                         {/* Telemetry and Events nodes */}
                         <rect x="615" y="195" width="65" height="22" rx="3" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.3)" />
@@ -5056,32 +5056,32 @@ export default function App() {
 
                         {/* Admin Panel / Flutter */}
                         <circle cx="500" cy="340" r="4" fill="var(--color-cyan)" />
-                        <rect x="360" y="320" width="140" height="40" rx="4" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="1.5" />
+                        <rect x="360" y="320" width="140" height="40" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="1.5" />
 
                         {/* ── TEXTS AND LABELS LAYER (Third / Last) ── */}
-                        <text x="95" y="195" fill="#fff" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Physical RVM</text>
+                        <text x="95" y="195" fill="var(--diagram-text)" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Physical RVM</text>
                         <text x="95" y="220" fill="var(--color-cyan)" fontSize="10" textAnchor="middle" fontWeight="bold">Sensors & Actuators</text>
                         
                         <text x="190" y="190" fill="var(--text-muted)" fontSize="9" textAnchor="middle">Physical</text>
                         
-                        <text x="290" y="180" fill="#fff" fontSize="14" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Arduino Mega</text>
+                        <text x="290" y="180" fill="var(--diagram-text)" fontSize="14" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Arduino Mega</text>
                         <text x="290" y="205" fill="var(--color-blue)" fontSize="11" textAnchor="middle" fontWeight="bold">ATmega2560 logic</text>
                         <text x="290" y="230" fill="var(--text-muted)" fontSize="9" textAnchor="middle">Ch chute controller</text>
                         
                         <text x="390" y="190" fill="var(--color-green)" fontSize="9" textAnchor="middle" fontWeight="bold">UART Serial</text>
                         
-                        <text x="480" y="195" fill="#fff" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">ESP32 DevKit</text>
+                        <text x="480" y="195" fill="var(--diagram-text)" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">ESP32 DevKit</text>
                         <text x="480" y="220" fill="var(--color-green)" fontSize="10" textAnchor="middle" fontWeight="bold">WiFi 2.4GHz Link</text>
                         
                         <text x="570" y="190" fill="#a855f7" fontSize="9" textAnchor="middle" fontWeight="bold">HTTPS/WSS</text>
                         
-                        <text x="685" y="165" fill="#fff" fontSize="14" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Google Firebase</text>
+                        <text x="685" y="165" fill="var(--diagram-text)" fontSize="14" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Google Firebase</text>
                         <text x="647.5" y="210" fill="#a855f7" fontSize="9" textAnchor="middle" fontWeight="bold">telemetry/</text>
                         <text x="722.5" y="210" fill="var(--color-green)" fontSize="9" textAnchor="middle" fontWeight="bold">events/</text>
                         <text x="685" y="245" fill="var(--color-amber)" fontSize="9" textAnchor="middle" fontWeight="bold">realtime snapshot updates</text>
                         
                         <text x="600" y="330" fill="var(--color-cyan)" fontSize="9" textAnchor="middle" fontWeight="bold">Live Dashboard (Vite React)</text>
-                        <text x="430" y="345" fill="#fff" fontSize="11" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Admin Panel / Flutter</text>
+                        <text x="430" y="345" fill="var(--diagram-text)" fontSize="11" fontWeight="700" textAnchor="middle" fontFamily="var(--font-serif)">Admin Panel / Flutter</text>
                       </svg>
                     )}
 
@@ -5129,50 +5129,50 @@ export default function App() {
 
                         {/* ── CENTRAL MCU AND PERIPHERAL PANELS LAYER (Second) ── */}
                         {/* central Mega MCU */}
-                        <rect x="300" y="120" width="200" height="160" rx="8" fill="#0c1d33" stroke="var(--color-cyan)" strokeWidth="3" filter="url(#glow-mega)" />
+                        <rect x="300" y="120" width="200" height="160" rx="8" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="3" filter="url(#glow-mega)" />
 
                         {/* SENSORS INPUT PANELS */}
-                        <rect x="50" y="40" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <rect x="50" y="120" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <rect x="50" y="200" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
-                        <rect x="50" y="280" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <rect x="50" y="40" width="180" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <rect x="50" y="120" width="180" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <rect x="50" y="200" width="180" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <rect x="50" y="280" width="180" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="1.5" />
 
                         {/* ACTUATORS OUTPUT PANELS */}
-                        <rect x="570" y="40" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <rect x="570" y="120" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <rect x="570" y="200" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <rect x="570" y="280" width="180" height="50" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <rect x="570" y="40" width="180" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <rect x="570" y="120" width="180" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <rect x="570" y="200" width="180" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <rect x="570" y="280" width="180" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="1.5" />
 
                         {/* ── TEXTS LAYER (Third / Last) ── */}
                         {/* ATmega Texts */}
-                        <text x="400" y="190" fill="#fff" fontSize="16" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">ATmega2560</text>
+                        <text x="400" y="190" fill="var(--diagram-text)" fontSize="16" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">ATmega2560</text>
                         <text x="400" y="215" fill="var(--color-cyan)" fontSize="10" textAnchor="middle" fontWeight="bold" letterSpacing="0.05em">ARDUINO MEGA BOARD</text>
                         <text x="400" y="235" fill="rgba(255,255,255,0.4)" fontSize="9" textAnchor="middle">5V Logic Rail</text>
 
                         {/* Sensor Texts (Centered) */}
-                        <text x="140" y="65" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">IR Proximity Entry (FC-51)</text>
+                        <text x="140" y="65" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">IR Proximity Entry (FC-51)</text>
                         <text x="140" y="80" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Pin: D11 (INPUT) · 5.0V</text>
 
-                        <text x="140" y="145" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Capacitive Proximity (D5)</text>
+                        <text x="140" y="145" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">Capacitive Proximity (D5)</text>
                         <text x="140" y="160" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Pin: D5 (INPUT) · 12V (Div)</text>
 
-                        <text x="140" y="225" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Inductive Proximity (D4)</text>
+                        <text x="140" y="225" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">Inductive Proximity (D4)</text>
                         <text x="140" y="240" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Pin: D4 (INPUT) · 12V (Div)</text>
 
-                        <text x="140" y="305" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Ultrasonic Bin (HC-SR04)</text>
+                        <text x="140" y="305" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">Ultrasonic Bin (HC-SR04)</text>
                         <text x="140" y="320" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Pins: D22(Trig)/D23(Echo) · 5V</text>
 
                         {/* Actuator Texts (Centered) */}
-                        <text x="660" y="65" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">SG90 Chute Gate Servo</text>
+                        <text x="660" y="65" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">SG90 Chute Gate Servo</text>
                         <text x="660" y="80" fill="var(--color-green)" fontSize="9" textAnchor="middle">Pin: D9 (PWM OUT) · 5V Buck</text>
 
-                        <text x="660" y="145" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">SG90 Reward Dispenser</text>
+                        <text x="660" y="145" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">SG90 Reward Dispenser</text>
                         <text x="660" y="160" fill="var(--color-green)" fontSize="9" textAnchor="middle">Pin: D10 (PWM OUT) · 5V Buck</text>
 
-                        <text x="660" y="225" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">HD44780 16x2 LCD (I2C)</text>
+                        <text x="660" y="225" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">HD44780 16x2 LCD (I2C)</text>
                         <text x="660" y="240" fill="var(--color-green)" fontSize="9" textAnchor="middle">Pins: D20(SDA)/D21(SCL) · 5V</text>
 
-                        <text x="660" y="305" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Red(D6)/Grn(D7) LEDs + Buzzer(D8)</text>
+                        <text x="660" y="305" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">Red(D6)/Grn(D7) LEDs + Buzzer(D8)</text>
                         <text x="660" y="320" fill="var(--color-green)" fontSize="9" textAnchor="middle">Digital Outputs · 5.0V rails</text>
                       </svg>
                     )}
@@ -5189,8 +5189,8 @@ export default function App() {
                         {/* Draw flowchart steps in rows */}
                         {/* Row 1 */}
                         {/* Step 1: Insertion */}
-                        <rect x="40" y="50" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
-                        <text x="115" y="75" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">1. Bottle Insertion</text>
+                        <rect x="40" y="50" width="150" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="115" y="75" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">1. Bottle Insertion</text>
                         <text x="115" y="95" fill="var(--color-blue)" fontSize="9" textAnchor="middle">TCRT5000 IR pin D11</text>
 
                         {/* Arrow */}
@@ -5198,8 +5198,8 @@ export default function App() {
                         <polygon points="230,80 222,76 222,84" fill="var(--color-green)" />
 
                         {/* Step 2: Sensor Ingestion */}
-                        <rect x="230" y="50" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
-                        <text x="305" y="75" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">2. Material Scanning</text>
+                        <rect x="230" y="50" width="150" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="305" y="75" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">2. Material Scanning</text>
                         <text x="305" y="95" fill="var(--color-blue)" fontSize="9" textAnchor="middle">D5 Capacitive + D4 Inductive</text>
 
                         {/* Arrow */}
@@ -5207,8 +5207,8 @@ export default function App() {
                         <polygon points="420,80 412,76 412,84" fill="var(--color-green)" />
 
                         {/* Step 3: Local Verification */}
-                        <rect x="420" y="50" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
-                        <text x="495" y="75" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">3. ATmega Classification</text>
+                        <rect x="420" y="50" width="150" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="495" y="75" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">3. ATmega Classification</text>
                         <text x="495" y="95" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Applies sorting logic rules</text>
 
                         {/* Arrow */}
@@ -5216,8 +5216,8 @@ export default function App() {
                         <polygon points="610,80 602,76 602,84" fill="var(--color-green)" />
 
                         {/* Step 4: UART Serial Transmit */}
-                        <rect x="610" y="50" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" filter="url(#glow-flow)" />
-                        <text x="685" y="75" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">4. UART Packet Transmit</text>
+                        <rect x="610" y="50" width="150" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" filter="url(#glow-flow)" />
+                        <text x="685" y="75" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">4. UART Packet Transmit</text>
                         <text x="685" y="95" fill="var(--color-green)" fontSize="9" textAnchor="middle">Mega serial link TX0 to ESP32</text>
 
                         {/* Loop down and left */}
@@ -5226,8 +5226,8 @@ export default function App() {
 
                         {/* Row 2 */}
                         {/* Step 5: ESP32 Package */}
-                        <rect x="460" y="140" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
-                        <text x="535" y="165" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">5. ESP32 DevKit Parse</text>
+                        <rect x="460" y="140" width="150" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="535" y="165" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">5. ESP32 DevKit Parse</text>
                         <text x="535" y="185" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Encapsulates JSON payload</text>
 
                         {/* Arrow */}
@@ -5235,8 +5235,8 @@ export default function App() {
                         <polygon points="420,170 428,174 428,166" fill="var(--color-green)" />
 
                         {/* Step 6: Firestore Synchronization */}
-                        <rect x="270" y="140" width="150" height="60" rx="4" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
-                        <text x="345" y="165" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">6. Firebase Cloud DB</text>
+                        <rect x="270" y="140" width="150" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="345" y="165" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">6. Firebase Cloud DB</text>
                         <text x="345" y="185" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Updates Firestore collection</text>
 
                         {/* Arrow */}
@@ -5244,8 +5244,8 @@ export default function App() {
                         <polygon points="230,170 238,174 238,166" fill="#a855f7" />
 
                         {/* Step 7: Webapp listener trigger */}
-                        <rect x="80" y="140" width="150" height="60" rx="4" fill="#0c1d30" stroke="#a855f7" strokeWidth="2" filter="url(#glow-flow)" />
-                        <text x="155" y="165" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">7. Web Portal Sync</text>
+                        <rect x="80" y="140" width="150" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="#a855f7" strokeWidth="2" filter="url(#glow-flow)" />
+                        <text x="155" y="165" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">7. Web Portal Sync</text>
                         <text x="155" y="185" fill="#a855f7" fontSize="9" textAnchor="middle">Live snapshot listener reload</text>
 
                         {/* Loop down and right */}
@@ -5255,7 +5255,7 @@ export default function App() {
                         {/* Row 3 */}
                         {/* Step 8: Dashboard Telemetry refresh */}
                         <rect x="250" y="230" width="300" height="70" rx="6" fill="#1e293b" stroke="var(--color-cyan)" strokeWidth="2" />
-                        <text x="400" y="255" fill="#fff" fontSize="13" fontWeight="bold" textAnchor="middle">8. Web Interface Update & Chart Rendering</text>
+                        <text x="400" y="255" fill="var(--diagram-text)" fontSize="13" fontWeight="bold" textAnchor="middle">8. Web Interface Update & Chart Rendering</text>
                         <text x="400" y="275" fill="var(--color-cyan)" fontSize="10" textAnchor="middle">Renders health (%), forecast full time, increments rewards stock.</text>
                       </svg>
                     )}
@@ -5269,8 +5269,8 @@ export default function App() {
                           </filter>
                         </defs>
                         {/* Bubble 1: BOOT */}
-                        <circle cx="80" cy="180" r="40" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2" />
-                        <text x="80" y="178" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">BOOT</text>
+                        <circle cx="80" cy="180" r="40" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="80" y="178" fill="var(--diagram-text)" fontSize="10" fontWeight="bold" textAnchor="middle">BOOT</text>
                         <text x="80" y="192" fill="var(--color-blue)" fontSize="7" textAnchor="middle">Sys Starting</text>
 
                         {/* transition to IDLE */}
@@ -5279,8 +5279,8 @@ export default function App() {
                         <text x="155" y="170" fill="var(--text-muted)" fontSize="8" textAnchor="middle">Boot finished</text>
 
                         {/* Bubble 2: IDLE (Glowing) */}
-                        <circle cx="230" cy="180" r="40" fill="#0c1d30" stroke="var(--color-green)" strokeWidth="2.5" filter="url(#glow-state)" />
-                        <text x="230" y="175" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">IDLE</text>
+                        <circle cx="230" cy="180" r="40" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="2.5" filter="url(#glow-state)" />
+                        <text x="230" y="175" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">IDLE</text>
                         <text x="230" y="190" fill="var(--color-green)" fontSize="7" textAnchor="middle">"Insert Bottle"</text>
                         <text x="230" y="200" fill="var(--text-muted)" fontSize="7" textAnchor="middle">Grn solid LED</text>
 
@@ -5290,8 +5290,8 @@ export default function App() {
                         <text x="310" y="170" fill="var(--color-cyan)" fontSize="8" textAnchor="middle">IR Trigger D11 = 1</text>
 
                         {/* Bubble 3: DETECTING */}
-                        <circle cx="390" cy="180" r="40" fill="#0c1d30" stroke="var(--color-cyan)" strokeWidth="2" />
-                        <text x="390" y="178" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">DETECTING</text>
+                        <circle cx="390" cy="180" r="40" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="390" y="178" fill="var(--diagram-text)" fontSize="10" fontWeight="bold" textAnchor="middle">DETECTING</text>
                         <text x="390" y="192" fill="var(--color-cyan)" fontSize="7" textAnchor="middle">"Scanning..."</text>
 
                         {/* Split transition: Accepted (Up) and Rejected (Down) */}
@@ -5301,8 +5301,8 @@ export default function App() {
                         <text x="490" y="100" fill="var(--color-green)" fontSize="8" textAnchor="middle" fontWeight="bold">Cap=1, Ind=0</text>
 
                         {/* Bubble 4: PET ACCEPTED */}
-                        <circle cx="570" cy="120" r="40" fill="#0c1d30" stroke="var(--color-green)" strokeWidth="2" />
-                        <text x="570" y="115" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">PET_ACCEPTED</text>
+                        <circle cx="570" cy="120" r="40" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="2" />
+                        <text x="570" y="115" fill="var(--diagram-text)" fontSize="10" fontWeight="bold" textAnchor="middle">PET_ACCEPTED</text>
                         <text x="570" y="128" fill="var(--color-green)" fontSize="7" textAnchor="middle">Gate 90° / Pen 180°</text>
                         <text x="570" y="138" fill="var(--text-muted)" fontSize="7" textAnchor="middle">High Chime</text>
 
@@ -5312,8 +5312,8 @@ export default function App() {
                         <text x="490" y="270" fill="var(--color-red)" fontSize="8" textAnchor="middle" fontWeight="bold">Cap=1, Ind=1</text>
 
                         {/* Bubble 5: METAL REJECTED */}
-                        <circle cx="570" cy="240" r="40" fill="#0c1d30" stroke="var(--color-red)" strokeWidth="2" />
-                        <text x="570" y="235" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">METAL_REJECT</text>
+                        <circle cx="570" cy="240" r="40" fill="var(--diagram-card-bg)" stroke="var(--color-red)" strokeWidth="2" />
+                        <text x="570" y="235" fill="var(--diagram-text)" fontSize="10" fontWeight="bold" textAnchor="middle">METAL_REJECT</text>
                         <text x="570" y="248" fill="var(--color-red)" fontSize="7" textAnchor="middle">Gate locked 0°</text>
                         <text x="570" y="258" fill="var(--text-muted)" fontSize="7" textAnchor="middle">Buzzer Alert</text>
 
@@ -5331,8 +5331,8 @@ export default function App() {
                         <text x="210" y="270" fill="var(--color-amber)" fontSize="8" textAnchor="middle" fontWeight="bold">Maint override=1</text>
 
                         {/* Bubble 6: MAINTENANCE */}
-                        <circle cx="230" cy="340" r="30" fill="#0c1d30" stroke="var(--color-amber)" strokeWidth="2" />
-                        <text x="230" y="338" fill="#fff" fontSize="8" fontWeight="bold" textAnchor="middle">MAINTENANCE</text>
+                        <circle cx="230" cy="340" r="30" fill="var(--diagram-card-bg)" stroke="var(--color-amber)" strokeWidth="2" />
+                        <text x="230" y="338" fill="var(--diagram-text)" fontSize="8" fontWeight="bold" textAnchor="middle">MAINTENANCE</text>
                         <text x="230" y="348" fill="var(--color-amber)" fontSize="6" textAnchor="middle">System locked</text>
                       </svg>
                     )}
@@ -5348,8 +5348,8 @@ export default function App() {
                         </defs>
                         {/* Rule-based sorting decision tree */}
                         {/* Node 1: Entry Object detector */}
-                        <rect x="320" y="20" width="160" height="50" rx="4" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
-                        <text x="400" y="45" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">1. TCRT5000 IR sensor D11</text>
+                        <rect x="320" y="20" width="160" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="400" y="45" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">1. TCRT5000 IR sensor D11</text>
                         <text x="400" y="62" fill="var(--color-cyan)" fontSize="8" textAnchor="middle">Entry presence detection beam</text>
 
                         {/* Arrow Down */}
@@ -5358,8 +5358,8 @@ export default function App() {
                         <text x="420" y="90" fill="var(--color-green)" fontSize="9" fontWeight="bold">Beam broken</text>
 
                         {/* Node 2: Capacitive Proximity */}
-                        <rect x="320" y="110" width="160" height="50" rx="4" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
-                        <text x="400" y="135" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">2. LJC18 Capacitive D5</text>
+                        <rect x="320" y="110" width="160" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="400" y="135" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">2. LJC18 Capacitive D5</text>
                         <text x="400" y="152" fill="var(--color-cyan)" fontSize="8" textAnchor="middle">Checks object density / organic</text>
 
                         {/* Arrow splits: 0 (No Bottle) and 1 (Recyclable) */}
@@ -5373,8 +5373,8 @@ export default function App() {
                         <text x="440" y="180" fill="var(--color-green)" fontSize="9" fontWeight="bold">Cap = 1 (recyclable)</text>
 
                         {/* Node 3: Inductive Proximity */}
-                        <rect x="320" y="200" width="160" height="50" rx="4" fill="#0f172a" stroke="var(--color-cyan)" strokeWidth="2" />
-                        <text x="400" y="225" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">3. LJ12A3 Inductive D4</text>
+                        <rect x="320" y="200" width="160" height="50" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="400" y="225" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">3. LJ12A3 Inductive D4</text>
                         <text x="400" y="242" fill="var(--color-cyan)" fontSize="8" textAnchor="middle">Checks metallic proximity induction</text>
 
                         {/* Arrow splits: 0 (PET Plastic) and 1 (Metal Can) */}
@@ -5392,12 +5392,12 @@ export default function App() {
 
                         {/* Action 2: ACCEPT PET PLASTIC */}
                         <rect x="100" y="280" width="160" height="60" rx="4" fill="#062016" stroke="var(--color-green)" strokeWidth="2" filter="url(#glow-decision)" />
-                        <text x="180" y="305" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">ACCEPTED: PET Plastic</text>
+                        <text x="180" y="305" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">ACCEPTED: PET Plastic</text>
                         <text x="180" y="325" fill="var(--color-green)" fontSize="9" textAnchor="middle">Gate sweeps 90° · Dispense Reward</text>
 
                         {/* Action 3: REJECT METAL CAN */}
                         <rect x="540" y="280" width="160" height="60" rx="4" fill="#2d0a11" stroke="var(--color-red)" strokeWidth="2" filter="url(#glow-decision)" />
-                        <text x="620" y="305" fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">REJECTED: Metal Can</text>
+                        <text x="620" y="305" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">REJECTED: Metal Can</text>
                         <text x="620" y="325" fill="var(--color-red)" fontSize="9" textAnchor="middle">Intake locks 0° · Buzz Alert chimes</text>
                       </svg>
                     )}
@@ -5412,13 +5412,13 @@ export default function App() {
                           </filter>
                         </defs>
                         {/* Firestore DB icon top left */}
-                        <path d="M 120 40 C 120 20 180 20 180 40 L 180 80 C 180 100 120 100 120 80 Z" fill="#0f172a" stroke="#a855f7" strokeWidth="2" filter="url(#glow-db)" />
-                        <text x="150" y="65" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">Firestore DB</text>
+                        <path d="M 120 40 C 120 20 180 20 180 40 L 180 80 C 180 100 120 100 120 80 Z" fill="var(--diagram-card-bg)" stroke="#a855f7" strokeWidth="2" filter="url(#glow-db)" />
+                        <text x="150" y="65" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">Firestore DB</text>
 
                         {/* Collection 1: machines */}
                         <rect x="40" y="110" width="220" height="110" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
-                        <text x="50" y="128" fill="#fff" fontSize="11" fontWeight="bold">collections / machines</text>
-                        <line x1="40" y1="135" x2="260" y2="135" stroke="rgba(255,255,255,0.1)" />
+                        <text x="50" y="128" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / machines</text>
+                        <line x1="40" y1="135" x2="260" y2="135" stroke="var(--diagram-line-muted)" />
                         <text x="50" y="152" fill="var(--text-muted)" fontSize="9">machineId: "RVM001" (String)</text>
                         <text x="50" y="167" fill="var(--text-muted)" fontSize="9">location: "UniKL Base" (String)</text>
                         <text x="50" y="182" fill="var(--text-muted)" fontSize="9">rewardStock: 7 (Number)</text>
@@ -5426,8 +5426,8 @@ export default function App() {
 
                         {/* Collection 2: telemetry */}
                         <rect x="290" y="40" width="220" height="110" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
-                        <text x="300" y="58" fill="#fff" fontSize="11" fontWeight="bold">collections / telemetry</text>
-                        <line x1="290" y1="65" x2="510" y2="65" stroke="rgba(255,255,255,0.1)" />
+                        <text x="300" y="58" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / telemetry</text>
+                        <line x1="290" y1="65" x2="510" y2="65" stroke="var(--diagram-line-muted)" />
                         <text x="300" y="82" fill="var(--text-muted)" fontSize="9">cpuTemp: 42.5 (Number)</text>
                         <text x="300" y="97" fill="var(--text-muted)" fontSize="9">freeRam: 6184 (Number)</text>
                         <text x="300" y="112" fill="var(--text-muted)" fontSize="9">rssi: -64 (Number)</text>
@@ -5435,8 +5435,8 @@ export default function App() {
 
                         {/* Collection 3: events */}
                         <rect x="540" y="40" width="220" height="110" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
-                        <text x="550" y="58" fill="#fff" fontSize="11" fontWeight="bold">collections / events</text>
-                        <line x1="540" y1="65" x2="760" y2="65" stroke="rgba(255,255,255,0.1)" />
+                        <text x="550" y="58" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / events</text>
+                        <line x1="540" y1="65" x2="760" y2="65" stroke="var(--diagram-line-muted)" />
                         <text x="550" y="82" fill="var(--text-muted)" fontSize="9">type: "PET_ACCEPTED" (String)</text>
                         <text x="550" y="97" fill="var(--text-muted)" fontSize="9">acceptedCount: 45 (Number)</text>
                         <text x="550" y="112" fill="var(--text-muted)" fontSize="9">rejectedCount: 12 (Number)</text>
@@ -5444,16 +5444,16 @@ export default function App() {
 
                         {/* Collection 4: auditLogs */}
                         <rect x="290" y="180" width="220" height="95" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
-                        <text x="300" y="198" fill="#fff" fontSize="11" fontWeight="bold">collections / auditLogs</text>
-                        <line x1="290" y1="205" x2="510" y2="205" stroke="rgba(255,255,255,0.1)" />
+                        <text x="300" y="198" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / auditLogs</text>
+                        <line x1="290" y1="205" x2="510" y2="205" stroke="var(--diagram-line-muted)" />
                         <text x="300" y="222" fill="var(--text-muted)" fontSize="9">actor: "Admin Ejaj" (String)</text>
                         <text x="300" y="237" fill="var(--text-muted)" fontSize="9">action: "CALIBRATION_FORM" (String)</text>
                         <text x="300" y="252" fill="var(--text-muted)" fontSize="9">timestamp: Timestamp.now()</text>
 
                         {/* Collection 5: alerts */}
                         <rect x="540" y="180" width="220" height="95" rx="4" fill="#0c1020" stroke="#a855f7" strokeWidth="1.5" />
-                        <text x="550" y="198" fill="#fff" fontSize="11" fontWeight="bold">collections / alerts</text>
-                        <line x1="540" y1="205" x2="760" y2="205" stroke="rgba(255,255,255,0.1)" />
+                        <text x="550" y="198" fill="var(--diagram-text)" fontSize="11" fontWeight="bold">collections / alerts</text>
+                        <line x1="540" y1="205" x2="760" y2="205" stroke="var(--diagram-line-muted)" />
                         <text x="550" y="222" fill="var(--text-muted)" fontSize="9">title: "Intake Chute Jammed" (String)</text>
                         <text x="550" y="237" fill="var(--text-muted)" fontSize="9">status: "open" (String)</text>
                         <text x="550" y="252" fill="var(--text-muted)" fontSize="9">timestamp: Timestamp.now()</text>
@@ -5470,9 +5470,9 @@ export default function App() {
                         </defs>
                         {/* Draw vertical roles matrices */}
                         {/* 1. Admin Role */}
-                        <rect x="40" y="80" width="210" height="240" rx="8" fill="#0c1d30" stroke="var(--color-blue)" strokeWidth="2.5" filter="url(#glow-security)" />
-                        <text x="145" y="120" fill="#fff" fontSize="15" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Admin (Ejaj)</text>
-                        <line x1="55" y1="135" x2="235" y2="135" stroke="rgba(255,255,255,0.1)" />
+                        <rect x="40" y="80" width="210" height="240" rx="8" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2.5" filter="url(#glow-security)" />
+                        <text x="145" y="120" fill="var(--diagram-text)" fontSize="15" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Admin (Ejaj)</text>
+                        <line x1="55" y1="135" x2="235" y2="135" stroke="var(--diagram-line-muted)" />
                         <text x="60" y="160" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Read Dashboards</text>
                         <text x="60" y="185" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Run Live Simulators</text>
                         <text x="60" y="210" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Save Calibration Configs</text>
@@ -5481,9 +5481,9 @@ export default function App() {
                         <text x="145" y="295" fill="var(--color-blue)" fontSize="10" fontWeight="bold" textAnchor="middle">FULL WRITE ACCESS</text>
 
                         {/* 2. Supervisor Role */}
-                        <rect x="295" y="80" width="210" height="240" rx="8" fill="#0f172a" stroke="var(--color-green)" strokeWidth="2" />
-                        <text x="400" y="120" fill="#fff" fontSize="15" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Supervisor (Hannah)</text>
-                        <line x1="310" y1="135" x2="490" y2="135" stroke="rgba(255,255,255,0.1)" />
+                        <rect x="295" y="80" width="210" height="240" rx="8" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="2" />
+                        <text x="400" y="120" fill="var(--diagram-text)" fontSize="15" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Supervisor (Hannah)</text>
+                        <line x1="310" y1="135" x2="490" y2="135" stroke="var(--diagram-line-muted)" />
                         <text x="315" y="160" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Read Dashboards</text>
                         <text x="315" y="185" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ View Construction Milestones</text>
                         <text x="315" y="210" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Audit Security Trails</text>
@@ -5492,9 +5492,9 @@ export default function App() {
                         <text x="400" y="295" fill="var(--color-green)" fontSize="10" fontWeight="bold" textAnchor="middle">demoGuard INTERCEPT</text>
 
                         {/* 3. Guest Viewer Role */}
-                        <rect x="550" y="80" width="210" height="240" rx="8" fill="#0f172a" stroke="var(--text-muted)" strokeWidth="2" />
-                        <text x="655" y="120" fill="#fff" fontSize="15" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Guest Viewer</text>
-                        <line x1="565" y1="135" x2="745" y2="135" stroke="rgba(255,255,255,0.1)" />
+                        <rect x="550" y="80" width="210" height="240" rx="8" fill="var(--diagram-card-bg)" stroke="var(--text-muted)" strokeWidth="2" />
+                        <text x="655" y="120" fill="var(--diagram-text)" fontSize="15" fontWeight="800" textAnchor="middle" fontFamily="var(--font-serif)">Guest Viewer</text>
+                        <line x1="565" y1="135" x2="745" y2="135" stroke="var(--diagram-line-muted)" />
                         <text x="570" y="160" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Read Overview Telemetry</text>
                         <text x="570" y="185" fill="var(--color-green)" fontSize="10" fontWeight="bold">✓ Roam Portal Screens</text>
                         <text x="570" y="210" fill="var(--color-red)" fontSize="10" fontWeight="bold">✗ Restricted: Write simulator</text>
@@ -5513,8 +5513,8 @@ export default function App() {
                           </filter>
                         </defs>
                         {/* 12V DC Adapter source */}
-                        <rect x="40" y="150" width="130" height="80" rx="4" fill="#0f172a" stroke="var(--color-amber)" strokeWidth="2" filter="url(#glow-power)" />
-                        <text x="105" y="190" fill="#fff" fontSize="13" fontWeight="bold" textAnchor="middle">12V DC Adapter</text>
+                        <rect x="40" y="150" width="130" height="80" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-amber)" strokeWidth="2" filter="url(#glow-power)" />
+                        <text x="105" y="190" fill="var(--diagram-text)" fontSize="13" fontWeight="bold" textAnchor="middle">12V DC Adapter</text>
                         <text x="105" y="210" fill="var(--color-amber)" fontSize="9" textAnchor="middle">Power Supply Source</text>
 
                         {/* Power splitting lines */}
@@ -5527,8 +5527,8 @@ export default function App() {
                         <polygon points="260,300 252,296 252,304" fill="var(--color-amber)" />
 
                         {/* Buck 1: Regulator for sensors and Mega Vin */}
-                        <rect x="260" y="50" width="180" height="60" rx="4" fill="#0f172a" stroke="var(--color-blue)" strokeWidth="2" />
-                        <text x="350" y="75" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 1</text>
+                        <rect x="260" y="50" width="180" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="350" y="75" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 1</text>
                         <text x="350" y="95" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Outputs: 7.58V DC (Mega VIN rail)</text>
 
                         {/* Direct line to Mega Vin */}
@@ -5536,8 +5536,8 @@ export default function App() {
                         <polygon points="530,140 526,132 534,132" fill="var(--color-blue)" />
 
                         {/* Buck 2: Regulator for Servos */}
-                        <rect x="260" y="270" width="180" height="60" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="2" />
-                        <text x="350" y="295" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 2</text>
+                        <rect x="260" y="270" width="180" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="2" />
+                        <text x="350" y="295" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 2</text>
                         <text x="350" y="315" fill="var(--color-green)" fontSize="9" textAnchor="middle">Outputs: 5.00V DC (Servos Dedicated)</text>
 
                         {/* Direct line to Servos */}
@@ -5545,8 +5545,8 @@ export default function App() {
                         <polygon points="580,300 572,296 572,304" fill="var(--color-green)" />
 
                         {/* Mega central logic unit */}
-                        <rect x="440" y="140" width="180" height="80" rx="6" fill="#0c1d30" stroke="var(--color-cyan)" strokeWidth="2" />
-                        <text x="530" y="175" fill="#fff" fontSize="13" fontWeight="bold" textAnchor="middle">Atmega2560 Logic</text>
+                        <rect x="440" y="140" width="180" height="80" rx="6" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="530" y="175" fill="var(--diagram-text)" fontSize="13" fontWeight="bold" textAnchor="middle">Atmega2560 Logic</text>
                         <text x="530" y="195" fill="var(--color-cyan)" fontSize="9" textAnchor="middle">5.0V Logic / 3.3V Logic Rails</text>
 
                         {/* Power lines to sensors */}
@@ -5554,8 +5554,8 @@ export default function App() {
                         <polygon points="100,230 96,238 104,238" fill="var(--color-cyan)" />
 
                         {/* Direct line to ESP32 */}
-                        <rect x="650" y="150" width="110" height="60" rx="4" fill="#0f172a" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <text x="705" y="180" fill="#fff" fontSize="11" fontWeight="bold" textAnchor="middle">ESP32 DevKit</text>
+                        <rect x="650" y="150" width="110" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <text x="705" y="180" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">ESP32 DevKit</text>
                         <text x="705" y="195" fill="var(--color-green)" fontSize="8" textAnchor="middle">3.3V Logic Power Rail</text>
                         
                         <path d="M 620 180 L 650 180" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
