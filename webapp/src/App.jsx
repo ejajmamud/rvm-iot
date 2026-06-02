@@ -549,31 +549,32 @@ export default function App() {
           if (isLiveMode) {
             setEvents(evList);
             
-            // Real-time toast alerts for live events
-            evList.forEach(ev => {
-              if (!seenEventIdsRef.current.has(ev.id)) {
-                seenEventIdsRef.current.add(ev.id);
-                if (!isFirstEventsLoadRef.current) {
-                  let toastMsg = "";
-                  let toastType = "info";
-                  if (ev.type === "PET_ACCEPTED") {
-                    toastMsg = `♻️ Live Event: PET Bottle Accepted! Total: ${ev.acceptedCount}`;
-                    toastType = "success";
-                  } else if (ev.type === "METAL_REJECTED" || ev.type === "METAL_REJECT") {
-                    toastMsg = `⚠️ Live Event: Metal Can Rejected! Total: ${ev.rejectedCount}`;
-                    toastType = "error";
-                  } else if (ev.type === "HEARTBEAT") {
-                    toastMsg = `📡 Live Event: Machine Heartbeat received. Online.`;
-                    toastType = "info";
-                  } else {
-                    toastMsg = `📡 Live Event: ${ev.type} registered.`;
-                    toastType = "info";
-                  }
-                  showToast(toastMsg, toastType);
+            // Real-time toast alerts for live events (only check the single latest event to prevent spam)
+            if (isFirstEventsLoadRef.current) {
+              evList.forEach(ev => seenEventIdsRef.current.add(ev.id));
+              isFirstEventsLoadRef.current = false;
+            } else {
+              const latest = evList[0];
+              if (latest && !seenEventIdsRef.current.has(latest.id)) {
+                seenEventIdsRef.current.add(latest.id);
+                let toastMsg = "";
+                let toastType = "info";
+                if (latest.type === "PET_ACCEPTED") {
+                  toastMsg = `♻️ Live Event: PET Bottle Accepted! Total: ${latest.acceptedCount}`;
+                  toastType = "success";
+                } else if (latest.type === "METAL_REJECTED" || latest.type === "METAL_REJECT") {
+                  toastMsg = `⚠️ Live Event: Metal Can Rejected! Total: ${latest.rejectedCount}`;
+                  toastType = "error";
+                } else if (latest.type === "HEARTBEAT") {
+                  toastMsg = `📡 Live Event: Machine Heartbeat received. Online.`;
+                  toastType = "info";
+                } else {
+                  toastMsg = `📡 Live Event: ${latest.type} registered.`;
+                  toastType = "info";
                 }
+                showToast(toastMsg, toastType);
               }
-            });
-            isFirstEventsLoadRef.current = false;
+            }
 
             // Map latest event to LCD feedback simulation
             const latest = evList[0];
