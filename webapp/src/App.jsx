@@ -3006,16 +3006,16 @@ export default function App() {
                                       <rect width="120" height="60" fill="url(#mega-pcb-grad)" rx="4" stroke="#1e40af" strokeWidth="1" />
                                       <rect x="3" y="3" width="114" height="54" fill="none" stroke="rgba(255,255,255,0.12)" rx="3" />
                                       <rect x="8" y="18" width="18" height="24" fill="url(#ic-body-grad)" stroke="#475569" rx="1.5" />
-                                      <text x="17" y="32" fill="var(--diagram-text)" fontSize="5" fontWeight="800" textAnchor="middle">MEGA</text>
+                                      <text x="17" y="32" fill="#ffffff" fontSize="5" fontWeight="800" textAnchor="middle">MEGA</text>
                                       
                                       {/* Arduino Mega RX/TX leds */}
                                       <circle cx="85" cy="20" r="1.5" fill={isPowerOn && serialBlinkTx ? "#ef4444" : "#3b0709"} />
                                       <circle cx="85" cy="26" r="1.5" fill={isPowerOn && serialBlinkRx ? "#10b981" : "#022c22"} />
-                                      <text x="91" y="21" fill="#64748b" fontSize="4.5">TX</text>
-                                      <text x="91" y="27" fill="#64748b" fontSize="4.5">RX</text>
+                                      <text x="91" y="21" fill="#cbd5e1" fontSize="4.5">TX</text>
+                                      <text x="91" y="27" fill="#cbd5e1" fontSize="4.5">RX</text>
 
                                       <rect x="5" y="-3" width="15" height="10" fill="url(#silver-metallic-grad)" rx="0.5" />
-                                      <text x="60" y="52" fill="var(--diagram-text)" fontSize="7" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ARDUINO MEGA</text>
+                                      <text x="60" y="52" fill="#ffffff" fontSize="7" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ARDUINO MEGA</text>
                                       <title>Arduino Mega 2560 board: central logic unit. Controls D9/D10 servos, reads proximity lines, and serializes packets.</title>
                                     </g>
 
@@ -3031,14 +3031,14 @@ export default function App() {
                                         !isWiFiActive ? "#ef4444" :
                                         (depositStep === 'firebase' ? "#3b82f6" : "#10b981")
                                       } className={isPowerOn && isWiFiActive && depositStep === 'firebase' ? "pulse-indicator" : ""} />
-                                      <text x="85" y="32" fill="#64748b" fontSize="4.5" textAnchor="middle" fontWeight="800">WIFI LED</text>
+                                      <text x="85" y="32" fill="#cbd5e1" fontSize="4.5" textAnchor="middle" fontWeight="800">WIFI LED</text>
 
                                       {/* ESP32 serial blinks */}
                                       <circle cx="104" cy="18" r="1.5" fill={isPowerOn && espSerialBlinkRx ? "#10b981" : "#022c22"} />
                                       <circle cx="104" cy="24" r="1.5" fill={isPowerOn && espSerialBlinkTx ? "#ef4444" : "#3b0709"} />
 
                                       <rect x="50" y="56" width="15" height="7" fill="url(#silver-metallic-grad)" rx="0.5" />
-                                      <text x="60" y="50" fill="var(--diagram-text)" fontSize="6.5" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ESP32 DevKit V1</text>
+                                      <text x="60" y="50" fill="#ffffff" fontSize="6.5" fontWeight="900" textAnchor="middle" letterSpacing="0.05em">ESP32 DevKit V1</text>
                                       <title>ESP32 DevKit V1: WiFi & Database bridge. Ingests packages over TX1/RX2, rings offline memory if internet fails.</title>
                                     </g>
                                   </svg>
@@ -3182,7 +3182,7 @@ export default function App() {
                                           CLAIM REWARD
                                         </div>
                                       ) : (
-                                        <div style={{ fontSize: '0.62rem', color: '#334155', fontWeight: 800 }}>DRAWER EMPTY</div>
+                                        <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 800 }}>DRAWER EMPTY</div>
                                       )}
                                     </div>
                                   </div>
