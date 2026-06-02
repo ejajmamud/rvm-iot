@@ -3358,14 +3358,27 @@ export default function App() {
                       <button onClick={runUltrasonicDiagnosticPing} className="btn-secondary" style={{ flex: 1, fontSize: '0.75rem', padding: '8px', justifyContent: 'center' }} disabled={!isPowerOn}>
                         Ultrasonic sonar ping test
                       </button>
-                      <button onClick={runHardwareCalibration} className="btn-primary" style={{ flex: 1, fontSize: '0.75rem', padding: '8px', justifyContent: 'center', background: 'rgba(16, 185, 129, 0.2)' }} disabled={!isPowerOn}>
+                      <button 
+                        onClick={runHardwareCalibration} 
+                        className="btn-primary" 
+                        style={{ 
+                          flex: 1, 
+                          fontSize: '0.75rem', 
+                          padding: '8px', 
+                          justifyContent: 'center', 
+                          background: theme === 'light' ? 'rgba(5, 150, 105, 0.15)' : 'rgba(16, 185, 129, 0.2)',
+                          color: theme === 'light' ? '#047857' : '#ffffff',
+                          border: '1px solid ' + (theme === 'light' ? 'rgba(5, 150, 105, 0.3)' : 'rgba(16, 185, 129, 0.4)')
+                        }} 
+                        disabled={!isPowerOn}
+                      >
                         Auto Calibrate & Resolve Faults
                       </button>
                     </div>
 
                     {/* Sonar Log Panel */}
                     <div style={{
-                      background: '#040b15',
+                      background: 'var(--bg-base)',
                       border: '1px solid var(--border-primary)',
                       padding: '10px 14px',
                       borderRadius: 'var(--radius-sm)',
@@ -3381,7 +3394,7 @@ export default function App() {
                       {oscilloscopeLogs.map((log, idx) => (
                         <div key={idx} style={{ display: 'flex', gap: 6 }}>
                           <span style={{ color: 'var(--text-muted)' }}>[{idx + 1}]</span>
-                          <span style={{ color: log.includes('RESULT') ? '#fff' : 'var(--text-secondary)' }}>{log}</span>
+                          <span style={{ color: log.includes('RESULT') ? 'var(--color-green)' : 'var(--text-secondary)' }}>{log}</span>
                         </div>
                       ))}
                     </div>
@@ -4198,7 +4211,7 @@ export default function App() {
                         value={selectedPinout}
                         onChange={e => setSelectedPinout(e.target.value)}
                         className="form-input"
-                        style={{ width: '100%', fontSize: '0.75rem', background: '#040b15', border: '1px solid var(--border-primary)', padding: '10px' }}
+                        style={{ width: '100%', fontSize: '0.75rem', background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border-primary)', padding: '10px' }}
                       >
                         <option value="IR">FC-51 Proximity IR Sensor (Object Entry Detector)</option>
                         <option value="Capacitive">LJC18A3 Capacitive Sensor (Plastic Classifier)</option>
@@ -4321,7 +4334,7 @@ export default function App() {
                             • Pins: <span style={{ color: 'var(--text-primary)' }}>D20(SDA), D21(SCL)</span><br />
                             • Address: <span style={{ color: 'var(--text-primary)' }}>0x27</span><br />
                             • Screen:<br />
-                            <span style={{ color: 'var(--color-green)', background: '#000', padding: '2px 6px', display: 'inline-block', border: '1px solid #10b981', marginTop: 4, fontFamily: 'var(--font-sans)' }}>
+                            <span style={{ color: '#22c55e', background: '#000', padding: '2px 6px', display: 'inline-block', border: '1px solid #22c55e', marginTop: 4, fontFamily: 'var(--font-sans)' }}>
                               [{lcdLine1.padEnd(16, " ")}]<br />
                               [{lcdLine2.padEnd(16, " ")}]
                             </span>
@@ -4635,10 +4648,10 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
               
               {/* MAINTENANCE MODE TOGGLE ROCKER CARD */}
-              <div className="glass-panel" style={{ padding: '24px 28px', background: isMaintenanceMode ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.01)', border: isMaintenanceMode ? '1px solid var(--color-amber)' : '1px solid var(--border-primary)', transition: 'var(--transition-smooth)' }}>
+              <div className="glass-panel" style={{ padding: '24px 28px', background: isMaintenanceMode ? 'rgba(245,158,11,0.08)' : (theme === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.01)'), border: isMaintenanceMode ? '1px solid var(--color-amber)' : '1px solid var(--border-primary)', transition: 'var(--transition-smooth)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
                   <div>
-                    <h4 style={{ fontSize: '1.15rem', color: isMaintenanceMode ? 'var(--color-amber)' : '#fff', marginBottom: 4, fontFamily: 'var(--font-serif)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h4 style={{ fontSize: '1.15rem', color: isMaintenanceMode ? 'var(--color-amber)' : 'var(--text-primary)', marginBottom: 4, fontFamily: 'var(--font-serif)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
                       {isMaintenanceMode ? "⚠️ RVM Maintenance Override Lockout Active" : "🛡️ RVM Operational Protection Override"}
                     </h4>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -4648,9 +4661,9 @@ export default function App() {
                   <button
                     onClick={handleToggleMaintenance}
                     style={{
-                      background: isMaintenanceMode ? 'var(--color-amber)' : 'rgba(255,255,255,0.04)',
-                      border: '1px solid ' + (isMaintenanceMode ? 'var(--color-amber)' : 'var(--border-subtle)'),
-                      color: isMaintenanceMode ? '#000' : '#fff',
+                      background: isMaintenanceMode ? 'var(--color-amber)' : 'var(--btn-sec-bg)',
+                      border: '1px solid ' + (isMaintenanceMode ? 'var(--color-amber)' : 'var(--border-primary)'),
+                      color: isMaintenanceMode ? '#000000' : 'var(--text-primary)',
                       padding: '10px 20px',
                       borderRadius: 'var(--radius-sm)',
                       fontSize: '0.82rem',
@@ -5886,7 +5899,7 @@ export default function App() {
                 alignItems: 'center',
                 gap: 20,
                 flexWrap: 'wrap',
-                background: 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%)'
+                background: theme === 'light' ? 'linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%)' : 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%)'
               }}>
                 <div>
                   <h3 style={{ fontSize: '1.4rem', marginBottom: 4, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>Academic Supervisor Evaluation Portal</h3>
@@ -6115,8 +6128,8 @@ export default function App() {
                         top: '50%',
                         transform: 'translateY(-50%)',
                         background: 'rgba(3,7,15,0.75)',
-                        border: '1px solid var(--border-primary)',
-                        color: activePhotoIdx === 0 ? 'var(--text-dim)' : 'var(--text-primary)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        color: activePhotoIdx === 0 ? 'rgba(255,255,255,0.25)' : '#ffffff',
                         padding: '12px 14px',
                         borderRadius: '50%',
                         cursor: activePhotoIdx === 0 ? 'not-allowed' : 'pointer',
@@ -6137,8 +6150,8 @@ export default function App() {
                         top: '50%',
                         transform: 'translateY(-50%)',
                         background: 'rgba(3,7,15,0.75)',
-                        border: '1px solid var(--border-primary)',
-                        color: activePhotoIdx === 9 ? 'var(--text-dim)' : 'var(--text-primary)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        color: activePhotoIdx === 9 ? 'rgba(255,255,255,0.25)' : '#ffffff',
                         padding: '12px 14px',
                         borderRadius: '50%',
                         cursor: activePhotoIdx === 9 ? 'not-allowed' : 'pointer',
@@ -6308,7 +6321,7 @@ export default function App() {
                 alignItems: 'center',
                 gap: 20,
                 flexWrap: 'wrap',
-                background: 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%)'
+                background: theme === 'light' ? 'linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%)' : 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.8) 100%)'
               }}>
                 <div>
                   <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, fontFamily: 'Marcellus, Georgia, serif' }}>
@@ -6322,7 +6335,7 @@ export default function App() {
                 {/* Segmented Controller Tabs */}
                 <div style={{
                   display: 'flex',
-                  background: 'rgba(255,255,255,0.02)',
+                  background: theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.02)',
                   border: '1px solid var(--border-primary)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '3px',
@@ -6332,8 +6345,9 @@ export default function App() {
                     onClick={() => setActiveDocType('datasheets')}
                     style={{
                       border: 'none',
-                      background: activeDocType === 'datasheets' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
-                      color: activeDocType === 'datasheets' ? 'var(--color-cyan)' : 'var(--text-muted)',
+                      background: activeDocType === 'datasheets' ? (theme === 'light' ? '#ffffff' : 'rgba(6, 182, 212, 0.15)') : 'transparent',
+                      color: activeDocType === 'datasheets' ? (theme === 'light' ? '#0891b2' : 'var(--color-cyan)') : (theme === 'light' ? '#475569' : 'var(--text-muted)'),
+                      boxShadow: activeDocType === 'datasheets' && theme === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                       padding: '8px 16px',
                       fontSize: '0.78rem',
                       fontWeight: 700,
@@ -6349,8 +6363,9 @@ export default function App() {
                     onClick={() => setActiveDocType('reports')}
                     style={{
                       border: 'none',
-                      background: activeDocType === 'reports' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                      color: activeDocType === 'reports' ? 'var(--color-green)' : 'var(--text-muted)',
+                      background: activeDocType === 'reports' ? (theme === 'light' ? '#ffffff' : 'rgba(16, 185, 129, 0.15)') : 'transparent',
+                      color: activeDocType === 'reports' ? (theme === 'light' ? '#059669' : 'var(--color-green)') : (theme === 'light' ? '#475569' : 'var(--text-muted)'),
+                      boxShadow: activeDocType === 'reports' && theme === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                       padding: '8px 16px',
                       fontSize: '0.78rem',
                       fontWeight: 700,
@@ -6854,7 +6869,7 @@ export default function App() {
                   flexDirection: 'column',
                   gap: 16,
                   boxSizing: 'border-box',
-                  background: 'linear-gradient(180deg, #091324 0%, #040810 100%)'
+                  background: 'var(--bg-surface)'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Marcellus, Georgia, serif' }}>
@@ -6891,7 +6906,7 @@ export default function App() {
                     borderRadius: 'var(--radius-md)',
                     overflow: 'hidden',
                     border: '1px solid var(--border-primary)',
-                    background: '#03070f',
+                    background: 'var(--bg-base)',
                     position: 'relative'
                   }}>
                     <iframe 
