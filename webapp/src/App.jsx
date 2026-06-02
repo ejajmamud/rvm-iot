@@ -5664,7 +5664,7 @@ export default function App() {
                           </filter>
                         </defs>
                         {/* Firestore DB icon top left */}
-                        <path d="M 120 40 C 120 20 180 20 180 40 L 180 80 C 180 100 120 100 120 80 Z" fill="var(--diagram-card-bg)" stroke="#a855f7" strokeWidth="2" filter="url(#glow-db)" />
+                        <path d="M 80 40 C 80 20 220 20 220 40 L 220 80 C 220 100 80 100 80 80 Z" fill="var(--diagram-card-bg)" stroke="#a855f7" strokeWidth="2" filter="url(#glow-db)" />
                         <text x="150" y="65" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">Firestore DB</text>
 
                         {/* Collection 1: machines */}
