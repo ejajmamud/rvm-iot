@@ -245,32 +245,46 @@ export default function App() {
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
 
   // --- Dynamic Email Notifications Dispatcher (SMTP Credentials vs SmtpJS Token vs Web API Relay) ---
-  const sendSMTPNotification = async (subject, htmlBody) => {
+  const sendSMTPNotification = async (subject, htmlBody, extraFields = null) => {
     try {
       const mode = smtpConfig.mode || "api";
 
       if (mode === "api") {
         // --- Web API Relay mode (FormSubmit) - Bulletproof, 100% Reliable, Zero External Script dependency ---
-        // Parse a clean description text by stripping html tags
-        const cleanMsg = htmlBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-        
         showToast("Routing telemetry notification email via Web API...", "info");
         
+        let apiPayload = {
+          _subject: `[RVM Telemetry Alert] ${subject}`,
+          "System Terminal": "RVM001 (Smart Recycling Portal)",
+          "Diagnostic Date": new Date().toLocaleString()
+        };
+
+        if (extraFields) {
+          apiPayload = {
+            ...apiPayload,
+            ...extraFields
+          };
+        } else {
+          // Parse a clean description text by stripping html tags
+          const cleanMsg = htmlBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+          apiPayload = {
+            ...apiPayload,
+            "Operational Alert": subject,
+            "Telemetry Summary": cleanMsg,
+            "System Action Required": "Please access your Live Web Admin Portal at https://rvm.ejaj.website/ to review real-time alerts."
+          };
+        }
+
+        // Add default formatting layout
+        apiPayload["_template"] = "table";
+
         const response = await fetch(`https://formsubmit.co/ajax/${smtpConfig.to}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
-          body: JSON.stringify({
-            _subject: `[RVM Telemetry Alert] ${subject}`,
-            "System Name": "RVM001 (Smart Recycling Prototype)",
-            "Operational Alert": subject,
-            "Telemetry Summary": cleanMsg,
-            "Firestore Database": "Synced & Active",
-            "System Action Required": "Please access your Live Web Admin Portal at https://rvm.ejaj.website/ to review real-time alerts.",
-            "_template": "table"
-          })
+          body: JSON.stringify(apiPayload)
         });
         
         const data = await response.json();
@@ -349,7 +363,15 @@ export default function App() {
       </div>
     `;
     
-    await sendSMTPNotification(subject, htmlBody);
+    const extraFields = {
+      "✉️ Diagnostic Status": "✓ Relay Connection Verified",
+      "🛡️ Terminal Code": "RVM001 (Main Telemetry Portal)",
+      "👤 Target Recipient": smtpConfig.to,
+      "📡 Active Relay Node": smtpConfig.mode === "token" ? "Encrypted SmtpJS Token" : (smtpConfig.mode === "api" ? "Direct FormSubmit Web API" : smtpConfig.host),
+      "🎓 Academic Core": "Planned and Developed by Ejaj Mahmud · Final Year Project 2"
+    };
+
+    await sendSMTPNotification(subject, htmlBody, extraFields);
   };
 
   // --- Alerts & Toast Notification Sync (Notification Center) ---
@@ -395,7 +417,7 @@ export default function App() {
         }
         showToast(msg, a.severity === 'critical' ? 'error' : 'info');
 
-        // Trigger SMTP email alert notification to admin via Namecheap
+        // Trigger SMTP email alert notification to admin via Namecheap/Gmail
         const emailSubject = a.severity === 'critical' ? `CRITICAL SYSTEM ERROR: ${a.type}` : `SYSTEM WARNING: ${a.type}`;
         const emailHtmlBody = `
           <div style="font-family: Arial, sans-serif; background-color: #03070f; color: #fafafa; padding: 30px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.12); max-width: 600px; margin: 0 auto;">
@@ -445,7 +467,16 @@ export default function App() {
             </div>
           </div>
         `;
-        sendSMTPNotification(emailSubject, emailHtmlBody);
+
+        const emailExtraFields = {
+          "🚨 Operational Alert": msg,
+          "🔴 Alarm Type": a.type,
+          "⚠️ Severity Level": a.severity.toUpperCase(),
+          "🛡️ Machine Terminal": "RVM001 (Main Prototype)",
+          "📡 Firestore Cloud Database": "Synced & Active (Real-Time logs)"
+        };
+
+        sendSMTPNotification(emailSubject, emailHtmlBody, emailExtraFields);
       }
     });
   }, [alerts]);
@@ -761,12 +792,16 @@ export default function App() {
                 seenEventIdsRef.current.add(latest.id);
                 let toastMsg = "";
                 let toastType = "info";
+                let isDepositOrReject = false;
+                
                 if (latest.type === "PET_ACCEPTED") {
                   toastMsg = `♻️ Live Event: PET Bottle Accepted! Total: ${latest.acceptedCount}`;
                   toastType = "success";
+                  isDepositOrReject = true;
                 } else if (latest.type === "METAL_REJECTED" || latest.type === "METAL_REJECT") {
                   toastMsg = `⚠️ Live Event: Metal Can Rejected! Total: ${latest.rejectedCount}`;
                   toastType = "error";
+                  isDepositOrReject = true;
                 } else if (latest.type === "HEARTBEAT") {
                   toastMsg = `📡 Live Event: Machine Heartbeat received. Online.`;
                   toastType = "info";
@@ -775,6 +810,69 @@ export default function App() {
                   toastType = "info";
                 }
                 showToast(toastMsg, toastType);
+
+                // Dynamically route deposit transactions directly to administrator via email
+                if (isDepositOrReject) {
+                  const emailSubject = latest.type === "PET_ACCEPTED" ? "RECYCLING DEPOSIT SUCCESSFUL (PET BOTTLE)" : "INGESTION REJECT WARNING (METAL CAN)";
+                  const emailHtmlBody = `
+                    <div style="font-family: Arial, sans-serif; background-color: #03070f; color: #fafafa; padding: 30px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.12); max-width: 600px; margin: 0 auto;">
+                      <div style="text-align: center; border-bottom: 1px solid rgba(59, 130, 246, 0.12); padding-bottom: 20px; margin-bottom: 20px;">
+                        <h2 style="color: ${latest.type === "PET_ACCEPTED" ? "#10b981" : "#ef4444"}; margin: 0; font-size: 1.5rem; letter-spacing: 0.05em;">♻️ RVM TELEMETRY TRANSACTION REPORT</h2>
+                        <p style="color: #94a3b8; font-size: 0.85rem; margin: 5px 0 0 0;">UniKL MIIT · Smart Recycling RVM001 Telemetry Hub</p>
+                      </div>
+                      
+                      <div style="margin-bottom: 25px;">
+                        <p style="font-size: 1rem; line-height: 1.5; color: #fafafa; margin: 0 0 16px 0;">
+                          A new telemetry transaction has been completed by the Reverse Vending Machine and synced to Cloud Firestore:
+                        </p>
+                        
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem;">
+                          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 10px 0; color: #64748b; font-weight: 600; width: 140px;">Machine ID</td>
+                            <td style="padding: 10px 0; color: #fafafa; font-weight: 700;">RVM001 (Main Prototype)</td>
+                          </tr>
+                          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Transaction Type</td>
+                            <td style="padding: 10px 0; color: ${latest.type === "PET_ACCEPTED" ? "#10b981" : "#ef4444"}; font-weight: 700;">${latest.type}</td>
+                          </tr>
+                          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Transaction Status</td>
+                            <td style="padding: 10px 0; color: #fafafa; font-weight: 700;">${toastMsg}</td>
+                          </tr>
+                          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Accumulated Session Stats</td>
+                            <td style="padding: 10px 0; color: #fafafa; font-family: monospace;">Accepted: ${latest.acceptedCount || 0} | Rejected: ${latest.rejectedCount || 0} | Reward Pens: ${latest.penCount || 0}</td>
+                          </tr>
+                          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Timestamp</td>
+                            <td style="padding: 10px 0; color: #fafafa;">${latest.timestamp ? latest.timestamp.toLocaleString() : new Date().toLocaleString()}</td>
+                          </tr>
+                        </table>
+                      </div>
+                      
+                      <div style="background-color: rgba(16, 185, 129, 0.04); border: 1px dashed rgba(16, 185, 129, 0.15); padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+                        <strong style="color: #10b981; display: block; font-size: 0.85rem; margin-bottom: 4px; text-transform: uppercase;">♻️ Smart Recycling Reward Verification:</strong>
+                        <span style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; display: block;">
+                          ${latest.type === "PET_ACCEPTED" ? "The physical RVM co-processor has verified a clean non-metallic PET bottle. The mechanical gate was actuated and a ballpoint pen dropped to the reward slot slot." : "Inductive metallic conductivity sensor has flagged metal can insertion. Intake gate remains physically closed and user is notified on LCD screen to remove the item."}
+                        </span>
+                      </div>
+                      
+                      <div style="text-align: center; border-top: 1px solid rgba(59, 130, 246, 0.12); padding-top: 15px; font-size: 0.72rem; color: #475569;">
+                        Planned and Built by Ejaj Mahmud · Final Year Project 2 · UniKL MIIT
+                      </div>
+                    </div>
+                  `;
+
+                  const emailExtraFields = {
+                    "♻️ Telemetry Action": latest.type === "PET_ACCEPTED" ? "PET Plastic Bottle Accepted" : "Metal Can Ingestion REJECTED",
+                    "📊 Session Telemetry Counts": `Accepted: ${latest.acceptedCount || 0} | Rejected: ${latest.rejectedCount || 0} | Reward Pens: ${latest.penCount || 0}`,
+                    "💰 Gate / Reward Status": latest.type === "PET_ACCEPTED" ? "90° Chute open & Pen dispensed successfully" : "0° Lockout Maintained & Intake Jam avoided",
+                    "🛡️ Terminal": "RVM001 (Main Prototype)",
+                    "📡 Cloud Database Integration": "Active (Firestore Sync)"
+                  };
+
+                  sendSMTPNotification(emailSubject, emailHtmlBody, emailExtraFields);
+                }
               }
             }
 
@@ -1403,11 +1501,126 @@ export default function App() {
         const next = updateMachineFn(prev);
         if (!isLiveMode) {
           setMachine(next);
+          let toastMsg = "";
+          let emailSubject = "";
+          let emailHtmlBody = "";
+          
           if (isAccepted) {
-            showToast(`♻️ Simulated Event: PET Bottle Accepted! Total: ${next.acceptedCount}`, "success");
+            toastMsg = `♻️ Simulated Event: PET Bottle Accepted! Total: ${next.acceptedCount}`;
+            showToast(toastMsg, "success");
+            
+            emailSubject = "SIMULATED DEPOSIT: PET BOTTLE ACCEPTED";
+            emailHtmlBody = `
+              <div style="font-family: Arial, sans-serif; background-color: #03070f; color: #fafafa; padding: 30px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.12); max-width: 600px; margin: 0 auto;">
+                <div style="text-align: center; border-bottom: 1px solid rgba(59, 130, 246, 0.12); padding-bottom: 20px; margin-bottom: 20px;">
+                  <h2 style="color: #10b981; margin: 0; font-size: 1.5rem; letter-spacing: 0.05em;">♻️ SIMULATED TELEMETRY TRANSACTION REPORT</h2>
+                  <p style="color: #94a3b8; font-size: 0.85rem; margin: 5px 0 0 0;">UniKL MIIT · Smart Recycling RVM001 Telemetry Hub</p>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                  <p style="font-size: 1rem; line-height: 1.5; color: #fafafa; margin: 0 0 16px 0;">
+                    A simulated recycling ingestion event has occurred inside the Standalone RVM001 Simulator:
+                  </p>
+                  
+                  <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem;">
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600; width: 140px;">Machine ID</td>
+                      <td style="padding: 10px 0; color: #fafafa; font-weight: 700;">RVM001_SIM (Simulated Prototype)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Transaction Type</td>
+                      <td style="padding: 10px 0; color: #10b981; font-weight: 700;">PET_ACCEPTED</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Status Message</td>
+                      <td style="padding: 10px 0; color: #fafafa; font-weight: 700;">${toastMsg}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Accumulated Stats</td>
+                      <td style="padding: 10px 0; color: #fafafa; font-family: monospace;">Accepted: ${next.acceptedCount} | Rejected: ${next.rejectedCount} | Reward Pens: ${next.penDispensedCount}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Timestamp</td>
+                      <td style="padding: 10px 0; color: #fafafa;">${new Date().toLocaleString()}</td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <div style="background-color: rgba(16, 185, 129, 0.04); border: 1px dashed rgba(16, 185, 129, 0.15); padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+                  <strong style="color: #10b981; display: block; font-size: 0.85rem; margin-bottom: 4px; text-transform: uppercase;">♻️ Simulation Mode:</strong>
+                  <span style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; display: block;">
+                    This is a simulated transaction triggered inside the Operator Sandboxed Simulator to audit serial response routines.
+                  </span>
+                </div>
+                
+                <div style="text-align: center; border-top: 1px solid rgba(59, 130, 246, 0.12); padding-top: 15px; font-size: 0.72rem; color: #475569;">
+                  Planned and Built by Ejaj Mahmud · Final Year Project 2 · UniKL MIIT
+                </div>
+              </div>
+            `;
           } else {
-            showToast(`⚠️ Simulated Event: Metal Can Rejected! Total: ${next.rejectedCount}`, "error");
+            toastMsg = `⚠️ Simulated Event: Metal Can Rejected! Total: ${next.rejectedCount}`;
+            showToast(toastMsg, "error");
+            
+            emailSubject = "SIMULATED DEPOSIT REJECTED: METAL CAN";
+            emailHtmlBody = `
+              <div style="font-family: Arial, sans-serif; background-color: #03070f; color: #fafafa; padding: 30px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.12); max-width: 600px; margin: 0 auto;">
+                <div style="text-align: center; border-bottom: 1px solid rgba(59, 130, 246, 0.12); padding-bottom: 20px; margin-bottom: 20px;">
+                  <h2 style="color: #ef4444; margin: 0; font-size: 1.5rem; letter-spacing: 0.05em;">⚠️ SIMULATED INGESTION REJECTION REPORT</h2>
+                  <p style="color: #94a3b8; font-size: 0.85rem; margin: 5px 0 0 0;">UniKL MIIT · Smart Recycling RVM001 Telemetry Hub</p>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                  <p style="font-size: 1rem; line-height: 1.5; color: #fafafa; margin: 0 0 16px 0;">
+                    A simulated non-recyclable item ingestion event has occurred inside the Standalone RVM001 Simulator:
+                  </p>
+                  
+                  <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem;">
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600; width: 140px;">Machine ID</td>
+                      <td style="padding: 10px 0; color: #fafafa; font-weight: 700;">RVM001_SIM (Simulated Prototype)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Transaction Type</td>
+                      <td style="padding: 10px 0; color: #ef4444; font-weight: 700;">METAL_REJECTED</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Status Message</td>
+                      <td style="padding: 10px 0; color: #fafafa; font-weight: 700;">${toastMsg}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Accumulated Stats</td>
+                      <td style="padding: 10px 0; color: #fafafa; font-family: monospace;">Accepted: ${next.acceptedCount} | Rejected: ${next.rejectedCount} | Reward Pens: ${next.penDispensedCount}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Timestamp</td>
+                      <td style="padding: 10px 0; color: #fafafa;">${new Date().toLocaleString()}</td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <div style="background-color: rgba(239, 68, 68, 0.04); border: 1px dashed rgba(239, 68, 68, 0.15); padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+                  <strong style="color: #ef4444; display: block; font-size: 0.85rem; margin-bottom: 4px; text-transform: uppercase;">⚠️ Rejection Warning:</strong>
+                  <span style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; display: block;">
+                    The inductive proximity sensor has identified high metallic conductivity. The SG90 gate servo has remained locked at 0 degrees to block chute entry, requesting manual item retrieval.
+                  </span>
+                </div>
+                
+                <div style="text-align: center; border-top: 1px solid rgba(59, 130, 246, 0.12); padding-top: 15px; font-size: 0.72rem; color: #475569;">
+                  Planned and Built by Ejaj Mahmud · Final Year Project 2 · UniKL MIIT
+                </div>
+              </div>
+            `;
           }
+
+          const emailExtraFields = {
+            "♻️ Telemetry Action": isAccepted ? "PET Plastic Bottle Accepted" : "Metal Can Ingestion REJECTED",
+            "📊 Session Telemetry Counts": `Accepted: ${next.acceptedCount} | Rejected: ${next.rejectedCount} | Reward Pens: ${next.penDispensedCount}`,
+            "💰 Gate / Reward Status": isAccepted ? "90° Chute open & Pen dispensed successfully" : "0° Lockout Maintained & Intake Jam avoided",
+            "🛡️ Terminal": "RVM001_SIM (Simulated Console)"
+          };
+
+          sendSMTPNotification(emailSubject, emailHtmlBody, emailExtraFields);
         }
         return next;
       });
