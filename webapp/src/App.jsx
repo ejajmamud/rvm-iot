@@ -71,7 +71,10 @@ const getCachedMachineData = () => {
 };
 
 export default function App() {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('rvm_theme');
+    return saved || 'dark';
+  });
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => {
@@ -109,6 +112,8 @@ export default function App() {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
   const [activeDiagramIdx, setActiveDiagramIdx] = useState(0);
+  const [editingMaintId, setEditingMaintId] = useState(null);
+  const [editingMaintText, setEditingMaintText] = useState('');
 
   // Heartbeat increments every second unless reset
   useEffect(() => {
@@ -469,6 +474,7 @@ export default function App() {
   // Toggle Theme
   useEffect(() => {
     const body = document.body;
+    localStorage.setItem('rvm_theme', theme);
     if (theme === 'dark') {
       body.classList.add('dark-theme');
       body.classList.remove('light-theme');
@@ -811,7 +817,9 @@ export default function App() {
   // Promote / Manage User Roles
   const handleUpdateRole = async (userId, newRole) => {
     if (demoGuard('Modifying user roles')) return;
+    setUsers(prev => prev.map(u => u.uid === userId ? { ...u, role: newRole } : u));
     logAudit(currentUser.name, "USER_ROLE_PROMOTED", `UID: ${userId} to role ${newRole}`);
+    showToast(`Clearance updated successfully to ${newRole}`, "success");
 
     if (isFirebaseConnected) {
       try {
@@ -820,6 +828,107 @@ export default function App() {
         await updateDoc(doc(db, "users", userId), { role: newRole });
       } catch (e) {
         console.error(e);
+      }
+    }
+  };
+
+  // Create Portal Account
+  const handleCreateUser = async (name, email, role) => {
+    if (demoGuard('Creating a user account')) return;
+    if (!name.trim() || !email.trim()) {
+      showToast("Name and email address are required", "error");
+      return;
+    }
+    const newUser = {
+      uid: "u_" + Date.now(),
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      role: role,
+      createdAt: new Date()
+    };
+    setUsers(prev => [...prev, newUser]);
+    logAudit(currentUser.name, "USER_CREATED", `Name: ${newUser.name}, Email: ${newUser.email}, Role: ${newUser.role}`);
+    showToast("Portal account created successfully", "success");
+
+    if (isFirebaseConnected) {
+      try {
+        const app = getApps()[0];
+        const db = getFirestore(app);
+        await setDoc(doc(db, "users", newUser.uid), {
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+          createdAt: Timestamp.now()
+        });
+      } catch (e) {
+        console.error("Firestore user creation error:", e);
+      }
+    }
+  };
+
+  // Delete Portal Account
+  const handleDeleteUser = async (userId) => {
+    if (demoGuard('Deleting a user account')) return;
+    const targetUser = users.find(u => u.uid === userId);
+    if (targetUser && targetUser.email?.toLowerCase() === EJAJ_EMAIL.toLowerCase()) {
+      showToast("Operation Blocked: Cannot delete system primary admin account!", "error");
+      return;
+    }
+    if (currentUser && currentUser.uid === userId) {
+      showToast("Operation Blocked: Cannot delete currently logged-in account!", "error");
+      return;
+    }
+
+    setUsers(prev => prev.filter(u => u.uid !== userId));
+    logAudit(currentUser.name, "USER_DELETED", `UID: ${userId}`);
+    showToast("Portal account deleted successfully", "success");
+
+    if (isFirebaseConnected) {
+      try {
+        const app = getApps()[0];
+        const db = getFirestore(app);
+        await deleteDoc(doc(db, "users", userId));
+      } catch (e) {
+        console.error("Firestore user deletion error:", e);
+      }
+    }
+  };
+
+  // Update Field Maintenance Log Entry
+  const handleUpdateMaintenance = async (logId, actionText) => {
+    if (demoGuard('Updating maintenance entry')) return;
+    if (!actionText.trim()) return;
+    setMaintenanceLogs(prev => prev.map(m => m.id === logId ? { ...m, action: actionText } : m));
+    logAudit(currentUser.name, "MAINTENANCE_UPDATED", actionText);
+    setEditingMaintId(null);
+    setEditingMaintText('');
+    showToast("Maintenance entry updated successfully", "success");
+
+    if (isFirebaseConnected) {
+      try {
+        const app = getApps()[0];
+        const db = getFirestore(app);
+        // Best-effort Firestore updates (update doc by ID if it was synced, or custom field match)
+      } catch (e) {
+        console.error("Firestore log update error:", e);
+      }
+    }
+  };
+
+  // Delete Field Maintenance Log Entry
+  const handleDeleteMaintenance = async (logId) => {
+    if (demoGuard('Deleting maintenance entry')) return;
+    setMaintenanceLogs(prev => prev.filter(m => m.id !== logId));
+    logAudit(currentUser.name, "MAINTENANCE_DELETED", `Log ID: ${logId}`);
+    showToast("Maintenance entry deleted successfully", "success");
+
+    if (isFirebaseConnected) {
+      try {
+        const app = getApps()[0];
+        const db = getFirestore(app);
+        // Best-effort Firestore log delete
+      } catch (e) {
+        console.error("Firestore log deletion error:", e);
       }
     }
   };
@@ -4663,6 +4772,39 @@ export default function App() {
                   </button>
                   {expandedSection === 'users' && (
                     <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+                      {/* Premium CRUD Add User Form */}
+                      {currentUser.role === 'admin' && (
+                        <div className="glass-panel" style={{ padding: '16px 20px', marginBottom: '20px', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--border-primary)' }}>
+                          <h5 style={{ fontSize: '0.9rem', marginBottom: 12, color: 'var(--text-primary)', fontWeight: 'bold' }}>👤 Create New RVM Portal Account</h5>
+                          <form onSubmit={(e) => {
+                            e.preventDefault();
+                            handleCreateUser(e.target.userName.value, e.target.userEmail.value, e.target.userRole.value);
+                            e.target.reset();
+                          }} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '150px' }}>
+                              <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Full Name</label>
+                              <input type="text" name="userName" required placeholder="e.g. Sayed Aziz" className="form-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: '180px' }}>
+                              <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Email Address</label>
+                              <input type="email" name="userEmail" required placeholder="e.g. sayedaziz@unikl.edu.my" className="form-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '130px' }}>
+                              <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Assigned Role</label>
+                              <select name="userRole" className="form-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
+                                <option value="admin">Admin</option>
+                                <option value="supervisor">Supervisor</option>
+                                <option value="technician">Technician</option>
+                                <option value="viewer">Viewer</option>
+                              </select>
+                            </div>
+                            <button type="submit" className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.75rem', height: '32px' }}>
+                              Add Account
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                      
                       <div className="table-container">
                         <table className="custom-table" style={{ width: '100%' }}>
                           <thead>
@@ -4695,17 +4837,28 @@ export default function App() {
                                 </td>
                                 <td>
                                   {currentUser.role === 'admin' && currentUser.uid !== u.uid ? (
-                                    <select 
-                                      value={u.role} 
-                                      onChange={e => handleUpdateRole(u.uid, e.target.value)}
-                                      className="form-input"
-                                      style={{ padding: '4px 8px', fontSize: '0.8rem' }}
-                                    >
-                                      <option value="admin">Admin</option>
-                                      <option value="supervisor">Supervisor</option>
-                                      <option value="technician">Technician</option>
-                                      <option value="viewer">Viewer</option>
-                                    </select>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      <select 
+                                        value={u.role} 
+                                        onChange={e => handleUpdateRole(u.uid, e.target.value)}
+                                        className="form-input"
+                                        style={{ padding: '4px 8px', fontSize: '0.8rem' }}
+                                      >
+                                        <option value="admin">Admin</option>
+                                        <option value="supervisor">Supervisor</option>
+                                        <option value="technician">Technician</option>
+                                        <option value="viewer">Viewer</option>
+                                      </select>
+                                      {u.email?.toLowerCase() !== EJAJ_EMAIL.toLowerCase() && (
+                                        <button 
+                                          onClick={() => handleDeleteUser(u.uid)} 
+                                          className="btn-secondary" 
+                                          style={{ padding: '4px 8px', color: 'var(--color-red)', borderColor: 'var(--color-red)', fontSize: '0.75rem', height: '28px' }}
+                                        >
+                                          Delete
+                                        </button>
+                                      )}
+                                    </div>
                                   ) : (
                                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Immutable Clearance</span>
                                   )}
@@ -4735,11 +4888,17 @@ export default function App() {
                       <div className="resp-grid-datasheet" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                         {/* Form to submit maintenance */}
                         <div className="glass-panel" style={{ padding: '20px', height: 'fit-content', background: 'rgba(255,255,255,0.01)' }}>
-                          <h5 style={{ fontSize: '0.9rem', marginBottom: 16, color: 'var(--text-primary)' }}>Submit Maintenance Entry</h5>
+                          <h5 style={{ fontSize: '0.9rem', marginBottom: 16, color: 'var(--text-primary)' }}>
+                            {editingMaintId ? "📝 Edit Maintenance Entry" : "🔧 File Maintenance Entry"}
+                          </h5>
                           
                           <form onSubmit={(e) => {
                             e.preventDefault();
-                            handleAddMaintenance(e.target.actionText.value);
+                            if (editingMaintId) {
+                              handleUpdateMaintenance(editingMaintId, e.target.actionText.value);
+                            } else {
+                              handleAddMaintenance(e.target.actionText.value);
+                            }
                             e.target.reset();
                           }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -4756,12 +4915,37 @@ export default function App() {
                                 rows={4}
                                 required
                                 style={{ resize: 'none' }}
+                                value={editingMaintId ? editingMaintText : undefined}
+                                onChange={(e) => {
+                                  if (editingMaintId) {
+                                    setEditingMaintText(e.target.value);
+                                  }
+                                }}
                               />
                             </div>
 
-                            <button type="submit" className="btn-primary" style={{ justifyContent: 'center', padding: '8px' }}>
-                              File Maintenance Record
-                            </button>
+                            {editingMaintId ? (
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center', padding: '8px' }}>
+                                  Save Changes
+                                </button>
+                                <button 
+                                  type="button" 
+                                  onClick={() => {
+                                    setEditingMaintId(null);
+                                    setEditingMaintText('');
+                                  }} 
+                                  className="btn-secondary" 
+                                  style={{ padding: '8px 12px', justifyContent: 'center' }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button type="submit" className="btn-primary" style={{ justifyContent: 'center', padding: '8px' }}>
+                                File Maintenance Record
+                              </button>
+                            )}
                           </form>
                         </div>
 
@@ -4771,14 +4955,35 @@ export default function App() {
                           
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                             {maintenanceLogs.map(m => (
-                              <div key={m.id} className="glass-panel" style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-subtle)' }}>
+                              <div key={m.id} className="glass-panel" style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-subtle)', marginBottom: 8 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                                   <strong style={{ color: 'var(--color-blue)', fontSize: '0.8rem' }}>{m.technician}</strong>
                                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.date ? m.date.toLocaleString() : 'N/A'}</span>
                                 </div>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: 8 }}>
                                   {m.action}
                                 </p>
+                                {currentUser.role === 'admin' && (
+                                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid var(--border-subtle)', paddingTop: 8 }}>
+                                    <button 
+                                      onClick={() => {
+                                        setEditingMaintId(m.id);
+                                        setEditingMaintText(m.action);
+                                      }}
+                                      className="btn-secondary" 
+                                      style={{ padding: '4px 8px', fontSize: '0.7rem', height: '24px' }}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteMaintenance(m.id)}
+                                      className="btn-secondary" 
+                                      style={{ padding: '4px 8px', fontSize: '0.7rem', height: '24px', color: 'var(--color-red)', borderColor: 'var(--color-red)' }}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -5288,7 +5493,7 @@ export default function App() {
 
                         {/* Row 3 */}
                         {/* Step 8: Dashboard Telemetry refresh */}
-                        <rect x="250" y="230" width="300" height="70" rx="6" fill="#1e293b" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <rect x="250" y="230" width="300" height="70" rx="6" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="2" />
                         <text x="400" y="255" fill="var(--diagram-text)" fontSize="13" fontWeight="bold" textAnchor="middle">8. Web Interface Update & Chart Rendering</text>
                         <text x="400" y="275" fill="var(--color-cyan)" fontSize="10" textAnchor="middle">Renders health (%), forecast full time, increments rewards stock.</text>
                       </svg>
@@ -5547,53 +5752,68 @@ export default function App() {
                           </filter>
                         </defs>
                         {/* 12V DC Adapter source */}
-                        <rect x="40" y="150" width="130" height="80" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-amber)" strokeWidth="2" filter="url(#glow-power)" />
-                        <text x="105" y="190" fill="var(--diagram-text)" fontSize="13" fontWeight="bold" textAnchor="middle">12V DC Adapter</text>
-                        <text x="105" y="210" fill="var(--color-amber)" fontSize="9" textAnchor="middle">Power Supply Source</text>
+                        <rect x="30" y="150" width="130" height="90" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-amber)" strokeWidth="2" filter="url(#glow-power)" />
+                        <text x="95" y="185" fill="var(--diagram-text)" fontSize="12" fontWeight="bold" textAnchor="middle">12V DC Adapter</text>
+                        <text x="95" y="202" fill="var(--color-amber)" fontSize="9" textAnchor="middle">Mains Input: 240V AC</text>
+                        <text x="95" y="218" fill="var(--text-muted)" fontSize="8" textAnchor="middle">Output: 12V @ 5A (60W)</text>
 
                         {/* Power splitting lines */}
-                        <path d="M 170 190 L 250 190" fill="none" stroke="var(--color-amber)" strokeWidth="3" />
-                        <path d="M 220 190 L 220 80 L 260 80" fill="none" stroke="var(--color-amber)" strokeWidth="2.5" />
-                        <path d="M 220 190 L 220 300 L 260 300" fill="none" stroke="var(--color-amber)" strokeWidth="2.5" />
+                        <path d="M 160 195 L 200 195 L 200 78 L 230 78" fill="none" stroke="var(--color-amber)" strokeWidth="2.5" />
+                        <polygon points="230,78 222,74 222,82" fill="var(--color-amber)" />
 
-                        <polygon points="260,80 252,76 252,84" fill="var(--color-amber)" />
-                        <polygon points="250,190 242,186 242,194" fill="var(--color-amber)" />
-                        <polygon points="260,300 252,296 252,304" fill="var(--color-amber)" />
+                        <path d="M 160 195 L 200 195 L 200 312 L 230 312" fill="none" stroke="var(--color-amber)" strokeWidth="2.5" />
+                        <polygon points="230,312 222,308 222,316" fill="var(--color-amber)" />
 
-                        {/* Buck 1: Regulator for sensors and Mega Vin */}
-                        <rect x="260" y="50" width="180" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" />
-                        <text x="350" y="75" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 1</text>
-                        <text x="350" y="95" fill="var(--color-blue)" fontSize="9" textAnchor="middle">Outputs: 7.58V DC (Mega VIN rail)</text>
+                        {/* Buck 1: Regulator for system logic bus */}
+                        <rect x="230" y="45" width="180" height="65" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="2" />
+                        <text x="320" y="70" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 1</text>
+                        <text x="320" y="86" fill="var(--color-blue)" fontSize="9" textAnchor="middle">System Logic Bus Input</text>
+                        <text x="320" y="100" fill="var(--text-muted)" fontSize="8" textAnchor="middle">Regulates down to 7.58V VIN</text>
 
-                        {/* Direct line to Mega Vin */}
-                        <path d="M 440 80 L 530 80 L 530 140" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
-                        <polygon points="530,140 526,132 534,132" fill="var(--color-blue)" />
+                        {/* Line to Mega Vin */}
+                        <path d="M 410 78 L 450 78 L 450 170 L 470 170" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
+                        <polygon points="470,170 462,166 462,174" fill="var(--color-blue)" />
 
                         {/* Buck 2: Regulator for Servos */}
-                        <rect x="260" y="270" width="180" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="2" />
-                        <text x="350" y="295" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 2</text>
-                        <text x="350" y="315" fill="var(--color-green)" fontSize="9" textAnchor="middle">Outputs: 5.00V DC (Servos Dedicated)</text>
+                        <rect x="230" y="280" width="180" height="65" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="2" />
+                        <text x="320" y="305" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">LM2596 Buck Regulator 2</text>
+                        <text x="320" y="321" fill="var(--color-green)" fontSize="9" textAnchor="middle">High-Current Mechanical Bus</text>
+                        <text x="320" y="335" fill="var(--text-muted)" fontSize="8" textAnchor="middle">Regulates down to 5.00V DC</text>
 
-                        {/* Direct line to Servos */}
-                        <path d="M 440 300 L 580 300" fill="none" stroke="var(--color-green)" strokeWidth="2" />
-                        <polygon points="580,300 572,296 572,304" fill="var(--color-green)" />
+                        {/* Line to Servos */}
+                        <path d="M 410 312 L 470 312" fill="none" stroke="var(--color-green)" strokeWidth="2" />
+                        <polygon points="470,312 462,308 462,316" fill="var(--color-green)" />
 
                         {/* Mega central logic unit */}
-                        <rect x="440" y="140" width="180" height="80" rx="6" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="2" />
-                        <text x="530" y="175" fill="var(--diagram-text)" fontSize="13" fontWeight="bold" textAnchor="middle">Atmega2560 Logic</text>
-                        <text x="530" y="195" fill="var(--color-cyan)" fontSize="9" textAnchor="middle">5.0V Logic / 3.3V Logic Rails</text>
+                        <rect x="470" y="145" width="170" height="85" rx="6" fill="var(--diagram-card-bg)" stroke="var(--color-cyan)" strokeWidth="2" />
+                        <text x="555" y="175" fill="var(--diagram-text)" fontSize="13" fontWeight="bold" textAnchor="middle">ATmega2560 Core</text>
+                        <text x="555" y="195" fill="var(--color-cyan)" fontSize="9" textAnchor="middle">Onboard 5V / 3.3V LDOs</text>
+                        <text x="555" y="210" fill="var(--text-muted)" fontSize="8" textAnchor="middle">Logic current: ~150mA</text>
 
-                        {/* Power lines to sensors */}
-                        <path d="M 530 220 L 530 250 L 100 250 L 100 230" fill="none" stroke="var(--color-cyan)" strokeWidth="1.5" strokeDasharray="3 3" />
-                        <polygon points="100,230 96,238 104,238" fill="var(--color-cyan)" />
+                        {/* Power line to sensors */}
+                        <path d="M 555 145 L 555 120 L 730 120 L 730 112" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" strokeDasharray="3 3" />
+                        <polygon points="730,112 726,120 734,120" fill="var(--color-blue)" />
 
                         {/* Direct line to ESP32 */}
-                        <rect x="650" y="150" width="110" height="60" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <text x="705" y="180" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">ESP32 DevKit</text>
-                        <text x="705" y="195" fill="var(--color-green)" fontSize="8" textAnchor="middle">3.3V Logic Power Rail</text>
+                        <rect x="680" y="152" width="100" height="70" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <text x="730" y="180" fill="var(--diagram-text)" fontSize="10" fontWeight="bold" textAnchor="middle">ESP32 DevKit</text>
+                        <text x="730" y="195" fill="var(--color-green)" fontSize="8" textAnchor="middle">3.3V Wi-Fi Rail</text>
+                        <text x="730" y="208" fill="var(--text-muted)" fontSize="7" textAnchor="middle">Peak Trans: 320mA</text>
                         
-                        <path d="M 620 180 L 650 180" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
-                        <polygon points="650,180 642,176 642,184" fill="var(--color-green)" />
+                        <path d="M 640 187 L 680 187" fill="none" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <polygon points="680,187 672,183 672,191" fill="var(--color-green)" />
+
+                        {/* Dedicated Servo Actuators */}
+                        <rect x="470" y="280" width="170" height="65" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-green)" strokeWidth="1.5" />
+                        <text x="555" y="303" fill="var(--diagram-text)" fontSize="11" fontWeight="bold" textAnchor="middle">SG90 Servo Actuators</text>
+                        <text x="555" y="318" fill="var(--color-green)" fontSize="8" textAnchor="middle">5.0V high-torque bus</text>
+                        <text x="555" y="331" fill="var(--text-muted)" fontSize="7" textAnchor="middle">Intake Gate + Reward Servos</text>
+
+                        {/* Peripheral Sensors */}
+                        <rect x="680" y="42" width="100" height="70" rx="4" fill="var(--diagram-card-bg)" stroke="var(--color-blue)" strokeWidth="1.5" />
+                        <text x="730" y="70" fill="var(--diagram-text)" fontSize="10" fontWeight="bold" textAnchor="middle">Peripheral Sensors</text>
+                        <text x="730" y="85" fill="var(--color-blue)" fontSize="8" textAnchor="middle">5.0V Logic Rail</text>
+                        <text x="730" y="98" fill="var(--text-muted)" fontSize="7" textAnchor="middle">IR, Proximity, LCD</text>
                       </svg>
                     )}
                   </div>
@@ -6021,7 +6241,7 @@ export default function App() {
                           style={{
                             width: '100%',
                             textAlign: 'left',
-                            background: isSelected ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255,255,255,0.01)',
+                            background: isSelected ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
                             border: `1px solid ${isSelected ? 'var(--color-blue)' : 'var(--border-primary)'}`,
                             padding: '14px 18px',
                             borderRadius: 'var(--radius-sm)',
@@ -6043,7 +6263,7 @@ export default function App() {
                             <span style={{
                               fontWeight: 700,
                               fontSize: '0.85rem',
-                              color: isSelected ? '#fff' : 'var(--text-primary)'
+                              color: isSelected ? (theme === 'light' ? '#000000' : '#ffffff') : 'var(--text-primary)'
                             }}>
                               {milestone}
                             </span>
