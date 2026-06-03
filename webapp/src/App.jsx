@@ -1641,48 +1641,40 @@ export default function App() {
       setDepositStep('gate');
       
       // Updates local machine states
-      const updateMachineFn = prev => {
-        return {
-          ...prev,
-          acceptedCount: isAccepted ? prev.acceptedCount + 1 : prev.acceptedCount,
-          rejectedCount: !isAccepted ? prev.rejectedCount + 1 : prev.rejectedCount,
-          penDispensedCount: isAccepted ? prev.penDispensedCount + 1 : prev.penDispensedCount,
-          lastSeenAt: new Date()
-        };
+      const currentMachine = simulatedMachine;
+      const nextMachineState = {
+        ...currentMachine,
+        acceptedCount: isAccepted ? currentMachine.acceptedCount + 1 : currentMachine.acceptedCount,
+        rejectedCount: !isAccepted ? currentMachine.rejectedCount + 1 : currentMachine.rejectedCount,
+        penDispensedCount: isAccepted ? currentMachine.penDispensedCount + 1 : currentMachine.penDispensedCount,
+        lastSeenAt: new Date()
       };
       
-      let nextMachineState = null;
-
-      setSimulatedMachine(prev => {
-        const next = updateMachineFn(prev);
-        nextMachineState = next;
-        if (!isLiveModeRef.current) {
-          setMachine(next);
-        }
-        return next;
-      });
+      setSimulatedMachine(nextMachineState);
+      if (!isLiveModeRef.current) {
+        setMachine(nextMachineState);
+      }
 
       // Create Chronological Event Log
-      setSimulatedEvents(prev => {
-        const newEvent = {
-          id: "ev_" + Date.now(),
-          type: type,
-          machineId: "RVM001_SIM",
-          acceptedCount: (prev[0]?.acceptedCount || 0) + (isAccepted ? 1 : 0),
-          rejectedCount: (prev[0]?.rejectedCount || 0) + (!isAccepted ? 1 : 0),
-          penCount: (prev[0]?.penCount || 0) + (isAccepted ? 1 : 0),
-          binFull: prev[0]?.binFull || false,
-          timestamp: new Date()
-        };
-        const nextList = [newEvent, ...prev];
-        if (!isLiveModeRef.current) setEvents(nextList);
-        return nextList;
-      });
+      const currentEvents = simulatedEvents;
+      const newEvent = {
+        id: "ev_" + Date.now(),
+        type: type,
+        machineId: "RVM001_SIM",
+        acceptedCount: (currentEvents[0]?.acceptedCount || 0) + (isAccepted ? 1 : 0),
+        rejectedCount: (currentEvents[0]?.rejectedCount || 0) + (!isAccepted ? 1 : 0),
+        penCount: (currentEvents[0]?.penCount || 0) + (isAccepted ? 1 : 0),
+        binFull: currentEvents[0]?.binFull || false,
+        timestamp: new Date()
+      };
+      const nextEventsList = [newEvent, ...currentEvents];
+      setSimulatedEvents(nextEventsList);
+      if (!isLiveModeRef.current) {
+        setEvents(nextEventsList);
+      }
 
       // Run side-effects outside of state updates to prevent React loops & warnings
       setTimeout(() => {
-        if (!nextMachineState) return;
-
         let toastMsg = "";
         let emailSubject = "";
         let emailHtmlBody = "";
