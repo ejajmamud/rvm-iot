@@ -207,6 +207,8 @@ export default function App() {
     isLiveModeRef.current = isLiveMode;
   }, [isLiveMode]);
 
+  const lcdLockRef = useRef(false);
+
   // --- Dynamic SMTP Server Configurations State (Million-Dollar Panel Core) ---
   const [smtpConfig, setSmtpConfig] = useState(() => {
     const saved = localStorage.getItem('rvm_smtp_config');
@@ -675,35 +677,77 @@ export default function App() {
       setEvents(liveEvents);
       setAlerts(liveAlerts);
       setAuditLogs(liveAuditLogs);
-      
-      if (liveMachine.binFull) {
-        setLcdLine1("BIN FULL!");
-        setLcdLine2("PLEASE TRY LATER");
-        setRedLedGlow(true);
-        setGreenLedGlow(false);
-      } else {
-        setLcdLine1("INSERT BOTTLE");
-        setLcdLine2("PET or CAN      ");
-        setRedLedGlow(false);
-      }
     } else {
       setMachine(simulatedMachine);
       setEvents(simulatedEvents);
       setAlerts(simulatedAlerts);
       setAuditLogs(simulatedAuditLogs);
-      
-      if (simulatedMachine.binFull) {
-        setLcdLine1("BIN FULL!");
-        setLcdLine2("PLEASE TRY LATER");
-        setRedLedGlow(true);
-        setGreenLedGlow(false);
-      } else {
-        setLcdLine1("INSERT BOTTLE");
-        setLcdLine2("PET or CAN      ");
-        setRedLedGlow(false);
-      }
     }
   }, [isLiveMode, liveMachine, liveEvents, liveAlerts, liveAuditLogs, simulatedMachine, simulatedEvents, simulatedAlerts, simulatedAuditLogs]);
+
+  // --- Targeted Sync for Idle LCD and LED States ---
+  useEffect(() => {
+    if (!isPowerOn) return;
+    if (depositStep !== 'idle') return;
+    if (lcdLockRef.current) return;
+    if (isBooting) return;
+
+    if (!isLiveMode) {
+      // In simulation mode, check for active simulated hardware faults first
+      if (sensorIRFault) {
+        setLcdLine1("ERR: TCRT5000 IR");
+        setLcdLine2("CALIBRATION REQD");
+        setRedLedGlow(true);
+        setGreenLedGlow(false);
+        return;
+      }
+      if (sensorUSFault) {
+        setLcdLine1("ERR: HC-SR04 SON");
+        setLcdLine2("CHECK SONAR PIN ");
+        setRedLedGlow(true);
+        setGreenLedGlow(false);
+        return;
+      }
+      if (servoGateFault) {
+        setLcdLine1("ERR: GATE SERVO ");
+        setLcdLine2("OBSTRUCTION JAM ");
+        setRedLedGlow(true);
+        setGreenLedGlow(false);
+        return;
+      }
+      if (servoRewardFault) {
+        setLcdLine1("ERR: REWARD PWM ");
+        setLcdLine2("PIN DISPENSER   ");
+        setRedLedGlow(true);
+        setGreenLedGlow(false);
+        return;
+      }
+    }
+
+    const activeMachine = isLiveMode ? liveMachine : simulatedMachine;
+    if (activeMachine?.binFull) {
+      setLcdLine1("BIN FULL!");
+      setLcdLine2("PLEASE TRY LATER");
+      setRedLedGlow(true);
+      setGreenLedGlow(false);
+    } else {
+      setLcdLine1("INSERT BOTTLE");
+      setLcdLine2("PET or CAN      ");
+      setRedLedGlow(false);
+      setGreenLedGlow(false);
+    }
+  }, [
+    isLiveMode, 
+    liveMachine?.binFull, 
+    simulatedMachine?.binFull, 
+    depositStep, 
+    isPowerOn, 
+    isBooting,
+    sensorIRFault,
+    sensorUSFault,
+    servoGateFault,
+    servoRewardFault
+  ]);
 
   // --- Simulation states for local demo ---
   const [isSimulating, setIsSimulating] = useState(false);
@@ -852,18 +896,6 @@ export default function App() {
           
           if (isLiveMode) {
             setMachine(data);
-            
-            // Map database state to simulated LCD screen
-            if (data.binFull) {
-              setLcdLine1("BIN FULL!");
-              setLcdLine2("PLEASE TRY LATER");
-              setRedLedGlow(true);
-              setGreenLedGlow(false);
-            } else {
-              setLcdLine1("INSERT BOTTLE");
-              setLcdLine2("PET or CAN      ");
-              setRedLedGlow(false);
-            }
           }
         }
       });
@@ -980,24 +1012,44 @@ export default function App() {
             // Map latest event to LCD feedback simulation
             const latest = evList[0];
             if (latest.type === "PET_ACCEPTED") {
+              lcdLockRef.current = true;
               setLcdLine1("PET ACCEPTED");
               setLcdLine2("THANK YOU!");
               setGreenLedGlow(true);
               setRedLedGlow(false);
               setTimeout(() => {
-                setGreenLedGlow(false);
-                setLcdLine1("INSERT BOTTLE");
-                setLcdLine2("PET or CAN      ");
+                lcdLockRef.current = false;
+                const activeMachine = isLiveModeRef.current ? liveMachine : simulatedMachine;
+                if (activeMachine?.binFull) {
+                  setLcdLine1("BIN FULL!");
+                  setLcdLine2("PLEASE TRY LATER");
+                  setRedLedGlow(true);
+                  setGreenLedGlow(false);
+                } else {
+                  setGreenLedGlow(false);
+                  setLcdLine1("INSERT BOTTLE");
+                  setLcdLine2("PET or CAN      ");
+                }
               }, 3000);
             } else if (latest.type === "METAL_REJECTED") {
+              lcdLockRef.current = true;
               setLcdLine1("METAL DETECTED");
               setLcdLine2("PLEASE REMOVE!");
               setRedLedGlow(true);
               setGreenLedGlow(false);
               setTimeout(() => {
-                setRedLedGlow(false);
-                setLcdLine1("INSERT BOTTLE");
-                setLcdLine2("PET or CAN      ");
+                lcdLockRef.current = false;
+                const activeMachine = isLiveModeRef.current ? liveMachine : simulatedMachine;
+                if (activeMachine?.binFull) {
+                  setLcdLine1("BIN FULL!");
+                  setLcdLine2("PLEASE TRY LATER");
+                  setRedLedGlow(true);
+                  setGreenLedGlow(false);
+                } else {
+                  setRedLedGlow(false);
+                  setLcdLine1("INSERT BOTTLE");
+                  setLcdLine2("PET or CAN      ");
+                }
               }, 3000);
             }
           } else {
@@ -1877,6 +1929,7 @@ export default function App() {
       return;
     }
     
+    lcdLockRef.current = true;
     setLcdLine1("CALIBRATING...  ");
     setLcdLine2("SWEEP SCANNING  ");
     
@@ -1900,10 +1953,19 @@ export default function App() {
     setRedLedGlow(true);
     
     setTimeout(() => {
+      lcdLockRef.current = false;
       setGreenLedGlow(false);
       setRedLedGlow(false);
-      setLcdLine1("INSERT BOTTLE   ");
-      setLcdLine2("PET or CAN      ");
+      const activeMachine = isLiveModeRef.current ? liveMachine : simulatedMachine;
+      if (activeMachine?.binFull) {
+        setLcdLine1("BIN FULL!");
+        setLcdLine2("PLEASE TRY LATER");
+        setRedLedGlow(true);
+        setGreenLedGlow(false);
+      } else {
+        setLcdLine1("INSERT BOTTLE   ");
+        setLcdLine2("PET or CAN      ");
+      }
       showToast("Calibration Complete: 0 faults detected across all 4 modules", "success");
       logAudit("Diagnostics Engine", "CALIBRATION_COMPLETED", "All sensors restored to green-line state", true);
     }, 1500);
@@ -3937,13 +3999,24 @@ export default function App() {
                               setIsWiFiActive(nextWifi);
                               if (nextWifi && offlineQueueCount > 0) {
                                 // Flush offline queue like real ESP32 recovery!
+                                lcdLockRef.current = true;
                                 setLcdLine1("FLUSHING CACHE  ");
                                 setLcdLine2(`UPLOADING ${offlineQueueCount} EVTS`);
                                 playBuzzerTone(1500, 300);
                                 setTimeout(() => {
                                   setOfflineQueueCount(0);
-                                  setLcdLine1("INSERT BOTTLE   ");
-                                  setLcdLine2("PET or CAN      ");
+                                  lcdLockRef.current = false;
+                                  const activeMachine = isLiveModeRef.current ? liveMachine : simulatedMachine;
+                                  if (activeMachine?.binFull) {
+                                    setLcdLine1("BIN FULL!");
+                                    setLcdLine2("PLEASE TRY LATER");
+                                    setRedLedGlow(true);
+                                    setGreenLedGlow(false);
+                                  } else {
+                                    setLcdLine1("INSERT BOTTLE   ");
+                                    setLcdLine2("PET or CAN      ");
+                                    setRedLedGlow(false);
+                                  }
                                 }, 1800);
                               }
                             }}
