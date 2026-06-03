@@ -181,10 +181,15 @@ void classifyObject() {
 }
 
 // ============================================================
-void sendEvent(const char* e) {
-  Serial1.println(e);          // to ESP32 -> Firestore -> dashboard
+void sendEvent(const char* type) {
+  String json = "{\"type\":\"" + String(type) + 
+                "\",\"acceptedCount\":" + String(totalAccepted) + 
+                ",\"rejectedCount\":" + String(totalRejected) + 
+                ",\"penCount\":" + String(totalAccepted) + 
+                ",\"binFull\":" + String(currentState == BIN_FULL ? "true" : "false") + "}";
+  Serial1.println(json);          // to ESP32 -> Firestore -> dashboard
   Serial.print(F("[IoT] -> "));
-  Serial.println(e);
+  Serial.println(json);
 }
 
 void handleAccept() {
