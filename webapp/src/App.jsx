@@ -646,6 +646,44 @@ export default function App() {
     }
   }, [machine?.binFull, isLiveMode, isFirebaseConnected]);
 
+  // --- Simulation states for local demo ---
+  const [isSimulating, setIsSimulating] = useState(false);
+  const simInterval = useRef(null);
+
+  // --- Aligned Hardware Simulator & exact 3D/wiring states ---
+  const [isPowerOn, setIsPowerOn] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showInternalChassis, setShowInternalChassis] = useState(false);
+  const [isBooting, setIsBooting] = useState(false);
+  
+  const [lcdLine1, setLcdLine1] = useState("INSERT BOTTLE");
+  const [lcdLine2, setLcdLine2] = useState("PET or CAN      ");
+  const [greenLedGlow, setGreenLedGlow] = useState(false);
+  const [redLedGlow, setRedLedGlow] = useState(false);
+  
+  // Real-time animated mechanical servos & sensors status
+  const [gateAngle, setGateAngle] = useState(0); // 0deg (closed) -> 90deg (open)
+  const [penAngle, setPenAngle] = useState(90); // 90deg (hold) -> 0deg (drop)
+  const [sensorCapActive, setSensorCapActive] = useState(false);
+  const [sensorIndActive, setSensorIndActive] = useState(false);
+  const [sensorIRActive, setSensorIRActive] = useState(false);
+  const [simulatedPenRewardCount, setSimulatedPenRewardCount] = useState(45);
+  
+  // Flash indicators for Arduino Serial Rx/Tx
+  const [serialBlinkTx, setSerialBlinkTx] = useState(false);
+  const [serialBlinkRx, setSerialBlinkRx] = useState(false);
+
+  // Extra granular simulation states for 100% complete physical simulation
+  const [depositItem, setDepositItem] = useState(null); // null | 'pet' | 'metal'
+  const [depositStep, setDepositStep] = useState('idle'); // 'idle' | 'entry' | 'scanning' | 'uart' | 'firebase' | 'gate' | 'reward' | 'complete'
+  const [scanProgress, setScanProgress] = useState(0);
+  const [isWiFiActive, setIsWiFiActive] = useState(true);
+  const [offlineQueueCount, setOfflineQueueCount] = useState(0);
+  const [espSerialBlinkRx, setEspSerialBlinkRx] = useState(false);
+  const [espSerialBlinkTx, setEspSerialBlinkTx] = useState(false);
+  const [isPenInDrawer, setIsPenInDrawer] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+
   // --- Standalone Live Telemetry Memory Cache ---
   const [liveMachine, setLiveMachine] = useState(getCachedMachineData);
   const [liveEvents, setLiveEvents] = useState(INITIAL_MOCK_EVENTS);
@@ -749,43 +787,6 @@ export default function App() {
     servoRewardFault
   ]);
 
-  // --- Simulation states for local demo ---
-  const [isSimulating, setIsSimulating] = useState(false);
-  const simInterval = useRef(null);
-
-  // --- Aligned Hardware Simulator & exact 3D/wiring states ---
-  const [isPowerOn, setIsPowerOn] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
-  const [showInternalChassis, setShowInternalChassis] = useState(false);
-  const [isBooting, setIsBooting] = useState(false);
-  
-  const [lcdLine1, setLcdLine1] = useState("INSERT BOTTLE");
-  const [lcdLine2, setLcdLine2] = useState("PET or CAN      ");
-  const [greenLedGlow, setGreenLedGlow] = useState(false);
-  const [redLedGlow, setRedLedGlow] = useState(false);
-  
-  // Real-time animated mechanical servos & sensors status
-  const [gateAngle, setGateAngle] = useState(0); // 0deg (closed) -> 90deg (open)
-  const [penAngle, setPenAngle] = useState(90); // 90deg (hold) -> 0deg (drop)
-  const [sensorCapActive, setSensorCapActive] = useState(false);
-  const [sensorIndActive, setSensorIndActive] = useState(false);
-  const [sensorIRActive, setSensorIRActive] = useState(false);
-  const [simulatedPenRewardCount, setSimulatedPenRewardCount] = useState(45);
-  
-  // Flash indicators for Arduino Serial Rx/Tx
-  const [serialBlinkTx, setSerialBlinkTx] = useState(false);
-  const [serialBlinkRx, setSerialBlinkRx] = useState(false);
-
-  // Extra granular simulation states for 100% complete physical simulation
-  const [depositItem, setDepositItem] = useState(null); // null | 'pet' | 'metal'
-  const [depositStep, setDepositStep] = useState('idle'); // 'idle' | 'entry' | 'scanning' | 'uart' | 'firebase' | 'gate' | 'reward' | 'complete'
-  const [scanProgress, setScanProgress] = useState(0);
-  const [isWiFiActive, setIsWiFiActive] = useState(true);
-  const [offlineQueueCount, setOfflineQueueCount] = useState(0);
-  const [espSerialBlinkRx, setEspSerialBlinkRx] = useState(false);
-  const [espSerialBlinkTx, setEspSerialBlinkTx] = useState(false);
-  const [isPenInDrawer, setIsPenInDrawer] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
   const showToast = (msg, type = 'success') => {
     setToastMessage({ msg, type });
     setTimeout(() => setToastMessage(null), 3500);
